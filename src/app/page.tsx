@@ -1,101 +1,156 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+interface Article {
+  title: string;
+  content: string;
+  seoTitle: string;
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string[];
+  summary: string;
+  primaryCategory: string;
+  secondaryCategory: string;
+}
+
+function ArticleDisplay({ article }: { article: Article }) {
+  return (
+    <Card className="w-full max-w-4xl mx-auto my-8">
+      <CardHeader>
+        <CardTitle>{article.title}</CardTitle>
+        <div className="flex space-x-2 mt-2">
+          <Badge variant="default">{article.primaryCategory}</Badge>
+          <Badge variant="outline">{article.secondaryCategory}</Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div
+          className="prose max-w-none"
+          dangerouslySetInnerHTML={{ __html: article.content }}
+        />
+
+        <div className="mt-8 space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold">SEO-Friendly Title</h3>
+            <p>{article.seoTitle}</p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold">Meta Information</h3>
+            <ul className="list-disc pl-5">
+              <li>
+                <strong>Title:</strong> {article.metaTitle}
+              </li>
+              <li>
+                <strong>Description:</strong> {article.metaDescription}
+              </li>
+              <li>
+                <strong>Keywords:</strong> {article.metaKeywords.join(", ")}
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold">Summary</h3>
+            <p>{article.summary}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [feedUrl, setFeedUrl] = useState("");
+  const [numArticles, setNumArticles] = useState(1);
+  const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ feedUrl, numArticles }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate articles");
+      }
+
+      setGeneratedArticles(data.articles);
+    } catch (error) {
+      console.error("Error:", error);
+      setError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">RSS Article Generator</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Label htmlFor="feedUrl">RSS Feed URL</Label>
+          <Input
+            id="feedUrl"
+            type="url"
+            value={feedUrl}
+            onChange={(e) => setFeedUrl(e.target.value)}
+            required
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+        <div>
+          <Label htmlFor="numArticles">Number of Articles</Label>
+          <Input
+            id="numArticles"
+            type="number"
+            min="1"
+            max="10"
+            value={numArticles}
+            onChange={(e) => setNumArticles(parseInt(e.target.value))}
+            required
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </div>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Generating..." : "Generate Articles"}
+        </Button>
+      </form>
+
+      {error && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {generatedArticles.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-xl font-bold mb-4">Generated Articles</h2>
+          {generatedArticles.map((article, index) => (
+            <ArticleDisplay key={index} article={article} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
