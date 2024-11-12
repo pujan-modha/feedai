@@ -19,6 +19,7 @@ import {
 interface Article {
   title: string;
   content: string;
+  heading: string;
   seoTitle: string;
   metaTitle: string;
   metaDescription: string;
@@ -30,9 +31,6 @@ interface Article {
 
 function ArticleDisplay({ article }: { article: Article }) {
   // Split the content into article body and metadata
-  const [articleBody, articleMetadata] =
-    article.content.split("ARTICLE METADATA");
-
   return (
     <Card className="w-full max-w-4xl mx-auto my-8">
       <CardHeader>
@@ -44,8 +42,8 @@ function ArticleDisplay({ article }: { article: Article }) {
       </CardHeader>
       <CardContent>
         <div
-          className="prose max-w-none mb-8"
-          dangerouslySetInnerHTML={{ __html: articleBody }}
+          className="prose max-w-none mb-8 bg-gray-200 p-4 rounded-lg"
+          dangerouslySetInnerHTML={{ __html: article.content }}
         />
 
         <div className="mt-8 space-y-4">
@@ -73,15 +71,6 @@ function ArticleDisplay({ article }: { article: Article }) {
             <h3 className="text-lg font-semibold">Summary</h3>
             <p>{article.summary}</p>
           </div>
-
-          {articleMetadata && (
-            <div>
-              <h3 className="text-lg font-semibold">Additional Metadata</h3>
-              <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
-                {articleMetadata}
-              </pre>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>
@@ -91,7 +80,7 @@ function ArticleDisplay({ article }: { article: Article }) {
 export default function Home() {
   const [feedUrl, setFeedUrl] = useState("https://chopaltv.com/feed.xml");
   const [numArticles, setNumArticles] = useState(1);
-  const [language, setLanguage] = useState("en");
+  const [language, setLanguage] = useState(["en"]);
   const [temperature, setTemperature] = useState(0.5);
   const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -130,7 +119,7 @@ export default function Home() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">RSS Article Generator</h1>
+      <h1 className="text-2xl font-bold mb-4">FeedAI</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="feedUrl">RSS Feed URL</Label>
@@ -143,21 +132,47 @@ export default function Home() {
           />
         </div>
         <div>
-          <Label htmlFor="language">Language</Label>
+          <Label htmlFor="numArticles">Number of Articles</Label>
           <Select
-            defaultValue={language}
-            onValueChange={(val) => setLanguage(val)}
+            defaultValue={numArticles.toString()}
+            onValueChange={(val) => setNumArticles(parseInt(val))}
           >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select a language" />
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select number of articles" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="hi">Hindi</SelectItem>
+              <SelectItem value="1">1</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="3">3</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1">
+        <div className="flex gap-4">
+          {Array.from({ length: numArticles }).map((_, index) => (
+            <div key={index}>
+              <Label htmlFor={`language-${index}`}>
+                Language {index + 1}
+              </Label>
+              <Select
+                defaultValue={language[index] || "en"}
+                onValueChange={(val) => {
+                  const newLanguages = [...language];
+                  newLanguages[index] = val;
+                  setLanguage(newLanguages);
+                }}
+              >
+                <SelectTrigger className="w-auto">
+                  <SelectValue placeholder="Select a language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="hi">Hindi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+        </div>
+        {/* <div className="space-y-1">
           <Label htmlFor="temperature">Temperature ({temperature})</Label>
           <Slider
             defaultValue={[0.5]}
@@ -166,19 +181,7 @@ export default function Home() {
             className="w-full"
             onValueChange={(val) => setTemperature(val[0])}
           />
-        </div>
-        <div>
-          <Label htmlFor="numArticles">Number of Articles</Label>
-          <Input
-            id="numArticles"
-            type="number"
-            min="1"
-            max="10"
-            value={numArticles}
-            onChange={(e) => setNumArticles(parseInt(e.target.value))}
-            required
-          />
-        </div>
+        </div> */}
 
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "Generating..." : "Generate Articles"}
@@ -195,9 +198,11 @@ export default function Home() {
       {generatedArticles.length > 0 && (
         <div className="mt-8">
           <h2 className="text-xl font-bold mb-4">Generated Articles</h2>
-          {generatedArticles.map((article, index) => (
-            <ArticleDisplay key={index} article={article} />
-          ))}
+          <div className="lg:flex gap-4">
+            {generatedArticles.map((article, index) => (
+              <ArticleDisplay key={index} article={article} />
+            ))}
+          </div>
         </div>
       )}
     </div>
