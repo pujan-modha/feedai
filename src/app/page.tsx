@@ -7,6 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Article {
   title: string;
@@ -21,6 +29,10 @@ interface Article {
 }
 
 function ArticleDisplay({ article }: { article: Article }) {
+  // Split the content into article body and metadata
+  const [articleBody, articleMetadata] =
+    article.content.split("ARTICLE METADATA");
+
   return (
     <Card className="w-full max-w-4xl mx-auto my-8">
       <CardHeader>
@@ -32,8 +44,8 @@ function ArticleDisplay({ article }: { article: Article }) {
       </CardHeader>
       <CardContent>
         <div
-          className="prose max-w-none"
-          dangerouslySetInnerHTML={{ __html: article.content }}
+          className="prose max-w-none mb-8"
+          dangerouslySetInnerHTML={{ __html: articleBody }}
         />
 
         <div className="mt-8 space-y-4">
@@ -61,6 +73,15 @@ function ArticleDisplay({ article }: { article: Article }) {
             <h3 className="text-lg font-semibold">Summary</h3>
             <p>{article.summary}</p>
           </div>
+
+          {articleMetadata && (
+            <div>
+              <h3 className="text-lg font-semibold">Additional Metadata</h3>
+              <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
+                {articleMetadata}
+              </pre>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -68,8 +89,10 @@ function ArticleDisplay({ article }: { article: Article }) {
 }
 
 export default function Home() {
-  const [feedUrl, setFeedUrl] = useState("");
+  const [feedUrl, setFeedUrl] = useState("https://chopaltv.com/feed.xml");
   const [numArticles, setNumArticles] = useState(1);
+  const [language, setLanguage] = useState("en");
+  const [temperature, setTemperature] = useState(0.5);
   const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +108,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ feedUrl, numArticles }),
+        body: JSON.stringify({ feedUrl, numArticles, language, temperature }),
       });
 
       const data = await response.json();
@@ -120,6 +143,31 @@ export default function Home() {
           />
         </div>
         <div>
+          <Label htmlFor="language">Language</Label>
+          <Select
+            defaultValue={language}
+            onValueChange={(val) => setLanguage(val)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select a language" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="hi">Hindi</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="temperature">Temperature ({temperature})</Label>
+          <Slider
+            defaultValue={[0.5]}
+            max={1}
+            step={0.01}
+            className="w-full"
+            onValueChange={(val) => setTemperature(val[0])}
+          />
+        </div>
+        <div>
           <Label htmlFor="numArticles">Number of Articles</Label>
           <Input
             id="numArticles"
@@ -131,6 +179,7 @@ export default function Home() {
             required
           />
         </div>
+
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "Generating..." : "Generate Articles"}
         </Button>
