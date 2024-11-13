@@ -42,7 +42,7 @@ function ArticleDisplay({ article }: { article: Article }) {
           <Badge variant="default">{article.primaryCategory}</Badge>
           <Badge variant="outline">{article.secondaryCategory}</Badge>
         </div>
-        <div className="flex space-x-4 mt-4 text-sm text-gray-600">
+        <div className="flex-col mt-4 text-sm text-gray-600">
           <div className="flex items-center space-x-1">
             <span className="font-semibold">Prompt Tokens:</span>
             <span>{article.prompt_tokens}</span>
