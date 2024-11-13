@@ -149,8 +149,8 @@ export default function Home() {
         </div>
         <div className="flex gap-4">
           {Array.from({ length: numArticles }).map((_, index) => (
-            <div key={index}>
-              <Label htmlFor={`language-${index}`}>
+            <div key={index} className="grid w-full">
+              <Label htmlFor={`language-${index}`} className="mb-1">
                 Language {index + 1}
               </Label>
               <Select
@@ -183,7 +183,7 @@ export default function Home() {
           />
         </div> */}
 
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading} className="w-full">
           {isLoading ? "Generating..." : "Generate Articles"}
         </Button>
       </form>
