@@ -27,6 +27,9 @@ interface Article {
   summary: string;
   primaryCategory: string;
   secondaryCategory: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
 }
 
 function ArticleDisplay({ article }: { article: Article }) {
@@ -38,6 +41,20 @@ function ArticleDisplay({ article }: { article: Article }) {
         <div className="flex space-x-2 mt-2">
           <Badge variant="default">{article.primaryCategory}</Badge>
           <Badge variant="outline">{article.secondaryCategory}</Badge>
+        </div>
+        <div className="flex space-x-4 mt-4 text-sm text-gray-600">
+          <div className="flex items-center space-x-1">
+            <span className="font-semibold">Prompt Tokens:</span>
+            <span>{article.prompt_tokens}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <span className="font-semibold">Completion Tokens:</span>
+            <span>{article.completion_tokens}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <span className="font-semibold">Total Tokens:</span>
+            <span>{article.total_tokens}</span>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -80,7 +97,7 @@ function ArticleDisplay({ article }: { article: Article }) {
 export default function Home() {
   const [feedUrl, setFeedUrl] = useState("https://chopaltv.com/feed.xml");
   const [numArticles, setNumArticles] = useState(1);
-  const [language, setLanguage] = useState(["en"]);
+  const [language, setLanguage] = useState(["English"]);
   const [temperature, setTemperature] = useState(0.5);
   const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -165,8 +182,8 @@ export default function Home() {
                   <SelectValue placeholder="Select a language" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="hi">Hindi</SelectItem>
+                  <SelectItem value="English">English</SelectItem>
+                  <SelectItem value="Hindi">Hindi</SelectItem>
                 </SelectContent>
               </Select>
             </div>

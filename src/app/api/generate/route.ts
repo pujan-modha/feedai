@@ -50,10 +50,16 @@ async function completion(prompt: string, content: string, api_key: string) {
         { role: "system", content: prompt }, // System message for context
         { role: "user", content: content }, // User message with the input content
       ],
+      
+      // stream: true,
+      // stream_options: {
+      //   include_usage: true,
+      // },
     }),
   });
 
   const data = await response.json(); // Parse the JSON response
+  console.log(data);
   return data; // Return the response data from the API
 }
 
@@ -87,7 +93,7 @@ export async function POST(req: NextRequest) {
     const feedItems = await fetchFeed(feedUrl);
     const article = feedItems[0]; // Assuming there's only one article in the feed
 
-      let langCount = 0;
+    let langCount = 0;
 
     const generatedArticles = await Promise.all(
       Array.from({ length: numArticles }, async () => {
@@ -97,7 +103,9 @@ export async function POST(req: NextRequest) {
           extractText(article.description);
 
         const prompt = `
-You are tasked with processing and rewriting a news article to make it SEO-friendly, plagiarism-free, and compliant with Google News standards. The input news article must be in ${language[langCount++]}. Follow these steps to generate the output:
+You are tasked with processing and rewriting a news article to make it SEO-friendly, plagiarism-free, and compliant with Google News standards. The input news article must be in ${
+          language[langCount++]
+        }. Follow these steps to generate the output:
 
 Content Transformation:
 
@@ -206,6 +214,7 @@ Output Format(Do not use backticks anywhere in the json and do not give response
           //   system_fingerprint: "fp_0ba0d124f1",
           // };
           const aiContent = aiResponse.choices[0].message.content;
+          const usage = aiResponse.usage;
           console.log(aiContent);
           const seo_data =
             JSON.parse(aiResponse.choices[0].message.content) || {};
@@ -228,6 +237,9 @@ Output Format(Do not use backticks anywhere in the json and do not give response
             summary: seo_data.summary,
             primaryCategory: seo_data.categories.primary_category,
             secondaryCategory: seo_data.categories.secondary_category,
+            prompt_tokens: usage.prompt_tokens,
+            completion_tokens: usage.completion_tokens,
+            total_tokens: usage.total_tokens,
           };
 
           console.log("Generated Article Content:", parsedContent); // Log to verify content structure
