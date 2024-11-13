@@ -171,7 +171,7 @@ export default function Home() {
                 Language {index + 1}
               </Label>
               <Select
-                defaultValue={language[index] || "en"}
+                defaultValue={language[index] || "English"}
                 onValueChange={(val) => {
                   const newLanguages = [...language];
                   newLanguages[index] = val;
