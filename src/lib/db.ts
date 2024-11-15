@@ -1,6 +1,6 @@
 import mysql from "mysql2";
 
-const uri = process.env.DB_URI;
+const uri = process.env.DATABASE_URL;
 
 if (!uri) {
   throw new Error("Database URI is not defined in environment variables");
