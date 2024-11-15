@@ -31,7 +31,7 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     const publishedAt = article_req.published_at
-      ? article_req.published_at
+      ? new Date(article_req.published_at)
       : new Date();
     const now = new Date();
 

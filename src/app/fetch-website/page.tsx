@@ -11,8 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
+import { Card, CardTitle, CardHeader, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { AlertTitle } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Article {
   title: string;
@@ -44,14 +47,76 @@ interface XMLAttributes {
   content: string;
 }
 
+function ArticleDisplay({ article }: { article: Article }) {
+  // Split the content into article body and metadata
+  return (
+    <Card className="w-full max-w-4xl mx-auto my-8">
+      <CardHeader>
+        <CardTitle>{article.title}</CardTitle>
+        <div className="flex space-x-2 mt-2">
+          <Badge variant="default">{article.primaryCategory}</Badge>
+          <Badge variant="outline">{article.secondaryCategory}</Badge>
+        </div>
+        <div className="flex-col mt-4 text-sm text-gray-600">
+          <div className="flex items-center space-x-1">
+            <span className="font-semibold">Prompt Tokens:</span>
+            <span>{article.prompt_tokens}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <span className="font-semibold">Completion Tokens:</span>
+            <span>{article.completion_tokens}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <span className="font-semibold">Total Tokens:</span>
+            <span>{article.total_tokens}</span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div
+          className="prose max-w-none mb-8 bg-gray-200 p-4 rounded-lg"
+          dangerouslySetInnerHTML={{ __html: article.content }}
+        />
+
+        <div className="mt-8 space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold">SEO-Friendly Title</h3>
+            <p>{article.seoTitle}</p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold">Meta Information</h3>
+            <ul className="list-disc pl-5">
+              <li>
+                <strong>Title:</strong> {article.metaTitle}
+              </li>
+              <li>
+                <strong>Description:</strong> {article.metaDescription}
+              </li>
+              <li>
+                <strong>Keywords:</strong> {article.metaKeywords.join(", ")}
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold">Summary</h3>
+            <p>{article.summary}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function FetchArticle() {
   const [feedUrl, setFeedUrl] = useState("https://chopaltv.com/feed.xml");
   const [latestArticle, setLatestArticle] = useState<Article | null>(null);
   const [xmlAttributes, setXmlAttributes] = useState<XMLAttributes>({
-    "title": "",
-    "guid": "",
-    "link": "",
-    "thumbnailimage": "",
+    title: "",
+    guid: "",
+    link: "",
+    thumbnailimage: "",
     description: "",
     category: "",
     author: "",
@@ -67,6 +132,7 @@ export default function FetchArticle() {
   const [fieldMappings, setFieldMappings] = useState<Record<string, string>>(
     {}
   );
+  const [hasSaved, setHasSaved] = useState(false);
 
   const fields = [
     "Article Title",
@@ -212,6 +278,7 @@ export default function FetchArticle() {
       }
 
       setSaveSuccess(true);
+      setHasSaved(true);
     } catch (error) {
       console.error("Error saving article:", error);
       setError(
@@ -233,7 +300,7 @@ export default function FetchArticle() {
       )}
 
       {saveSuccess && (
-        <Alert className="mb-4">
+        <Alert className="mb-4" variant={"success"}>
           <AlertDescription>Article saved successfully!</AlertDescription>
         </Alert>
       )}
@@ -306,6 +373,167 @@ export default function FetchArticle() {
       >
         {isSaving ? "Saving..." : "Save Article"}
       </Button>
+      <Home feed_url={feedUrl} hasSaved={hasSaved} />
+    </div>
+  );
+}
+
+function Home({ feed_url, hasSaved }: { feed_url: string; hasSaved: boolean }) {
+  const [numArticles, setNumArticles] = useState(1);
+  const [language, setLanguage] = useState(["English"]);
+  const [temperature] = useState(0.5);
+  const [userprompt, setUserPrompt] = useState("");
+  const [cron_timing, setCronTiming] = useState("1");
+  const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log(feed_url);
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          feedUrl: feed_url,
+          numArticles: numArticles,
+          language: language,
+          userPrompt: userprompt,
+          temperature: temperature,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate articles");
+      }
+
+      setGeneratedArticles(data.articles);
+    } catch (error) {
+      console.error("Error:", error);
+      setError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto px-0 p-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Label htmlFor="numArticles">Number of Articles</Label>
+          <Select
+            defaultValue={numArticles.toString()}
+            onValueChange={(val) => setNumArticles(parseInt(val))}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select number of articles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="3">3</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex gap-4">
+          {Array.from({ length: numArticles }).map((_, index) => (
+            <div key={index} className="grid w-full">
+              <Label htmlFor={`language-${index}`} className="mb-1">
+                Language {index + 1}
+              </Label>
+              <Select
+                defaultValue={language[index] || "English"}
+                onValueChange={(val) => {
+                  const newLanguages = [...language];
+                  newLanguages[index] = val;
+                  setLanguage(newLanguages);
+                }}
+              >
+                <SelectTrigger className="w-auto">
+                  <SelectValue placeholder="Select a language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="English">English</SelectItem>
+                  <SelectItem value="Hindi">Hindi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+        </div>
+        {/* <div className="space-y-1">
+          <Label htmlFor="temperature">Temperature ({temperature})</Label>
+          <Slider
+            defaultValue={[0.5]}
+            max={1}
+            step={0.01}
+            className="w-full"
+            onValueChange={(val) => setTemperature(val[0])}
+          />
+        </div> */}
+        <div>
+          <Label htmlFor="prompt">Input prompt</Label>
+          <Textarea
+            id="prompt"
+            placeholder="Enter your prompt here"
+            value={userprompt || ""}
+            onChange={(e) => setUserPrompt(e.target.value)}
+            className="w-full"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="cron">Cron Timing</Label>
+          <Select
+            onValueChange={(val) => setCronTiming(val)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select Cron timing" /> 
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="3">3</SelectItem>
+              <SelectItem value="4">4</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Button
+          type="submit"
+          disabled={isLoading || !hasSaved}
+          className="w-full"
+        >
+          {isLoading ? "Generating..." : "Generate Articles"}
+        </Button>
+      </form>
+
+      {error && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {generatedArticles.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-xl font-bold mb-4">Generated Articles</h2>
+          <div className="lg:flex gap-4">
+            {generatedArticles.map((article, index) => (
+              <ArticleDisplay key={index} article={article} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

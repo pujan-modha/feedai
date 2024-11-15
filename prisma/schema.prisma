@@ -10,7 +10,7 @@ datasource db {
 model articles {
   id                   Int                    @id @default(autoincrement())
   rss_feed_id          Int?                   
-  guid                 String?                 @unique(map: "guid") @db.VarChar(255)
+  guid                 String?                @db.VarChar(255)
   title                String?                @db.VarChar(255)
   description          String?                @db.Text
   url                  String?                @db.VarChar(255)

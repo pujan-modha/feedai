@@ -65,7 +65,7 @@ async function completion(prompt: string, content: string, api_key: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { feedUrl, numArticles, language, temperature } = await req.json();
+    const { feedUrl, numArticles, language, userPrompt, temperature } = await req.json();
     if (!feedUrl)
       return NextResponse.json(
         { error: "Feed URL is required" },
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     const article = feedItems[0]; // Assuming there's only one article in the feed
 
     let langCount = 0;
-
+    console.log(userPrompt)
     const generatedArticles = await Promise.all(
       Array.from({ length: numArticles }, async () => {
         // const title = extractText(article.title);
@@ -140,7 +140,10 @@ The news article (text) in English or Hindi.
 The number of versions to generate (e.g., 1, 2, 3).
 The website where the article will be published.
 A list of pre-defined categories for the website.
-Output Format(Do not use backticks anywhere in the json and do not give response in markdown just give plain text):
+Also you MUST follow these guidelines mentioned below: 
+  -  ${userPrompt}
+
+Output Format (Do not use backticks anywhere in the json and do not give response in markdown just give plain text):
 {
   "rewritten_article": {
     "title": "SEO-Friendly Article Title Here",
