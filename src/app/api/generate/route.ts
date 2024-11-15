@@ -50,7 +50,7 @@ async function completion(prompt: string, content: string, api_key: string) {
         { role: "system", content: prompt }, // System message for context
         { role: "user", content: content }, // User message with the input content
       ],
-      
+
       // stream: true,
       // stream_options: {
       //   include_usage: true,
@@ -175,44 +175,8 @@ Output Format(Do not use backticks anywhere in the json and do not give response
 `;
 
         try {
-          // Await the completion to get the AI-generated content
           console.log(content);
           const aiResponse = await completion(prompt, content, openai_key);
-          // const aiResponse = {
-          //   id: "chatcmpl-ASodyVo9OuiidSYtGF5jbzCOQAKgi",
-          //   object: "chat.completion",
-          //   created: 1731431222,
-          //   model: "gpt-4o-mini-2024-07-18",
-          //   choices: [
-          //     {
-          //       index: 0,
-          //       message: {
-          //         role: "assistant",
-          //         content:
-          //           '{\n  "rewritten_article": {\n    "title": "Bihar Land Registry Faces Challenges Amid New Rules",\n    "content": [\n      {\n        "heading": "New Land Registration Rules in Bihar",\n        "paragraphs": [\n          "In Bihar, the implementation of new land registration rules has led to significant challenges for ordinary citizens attempting to register their land. Many individuals are finding themselves grappling with numerous obstacles in navigating the registration process.",\n          "Consequently, government revenue from land registration has drastically diminished, with daily registrations dropping from approximately 100 to a mere 5 to 10 per day across various registration offices."\n        ]\n      },\n      {\n        "heading": "Government\'s Efforts to Raise Awareness",\n        "paragraphs": [\n          "In response to this decline in registrations, the revenue department has initiated awareness campaigns to educate the public. Employees have been tasked with traveling to villages to ensure that land records are accurately updated online, and that the land ownership records are transferred to the rightful claimants.",\n          "Despite these efforts, the revenue from land registration continues to fall, resulting in substantial losses for the prohibition and registration department."\n        ]\n      },\n      {\n        "heading": "Speculations on Possible Changes to Registration Rules",\n        "paragraphs": [\n          "There have been ongoing speculations about potential amendments to the new land registration rules by the government. However, no official announcements have been made regarding this issue. It is anticipated that any adjustments might be considered after the upcoming Lok Sabha elections."\n        ]\n      }\n    ]\n  },\n  "seo_title": "Challenges in Land Registration in Bihar: Revenue Decline and New Rules",\n  "meta_title": "Bihar Land Registration: New Rules and Challenges",\n  "meta_description": "Explore the difficulties faced by citizens in Bihar due to new land registration rules and the resulting decline in government revenue.",\n  "meta_keywords": ["Bihar land registration", "new rules", "government revenue", "land ownership", "Lok Sabha elections"],\n  "summary": "The introduction of new land registration rules in Bihar has triggered challenges for citizens, leading to a sharp decline in daily registrations—from about 100 to just 5-10. In response, the revenue department is raising awareness and updating records, yet the downward trend continues, causing significant revenue losses. Amid speculations of potential rule changes after the upcoming Lok Sabha elections, the government has not yet indicated any official adjustments. Read on to understand the implications of these changes on citizens and the administration.",\n  "categories": {\n    "primary_category": "Government",\n    "secondary_category": "Legal Affairs"\n  }\n}',
-          //         refusal: null,
-          //       },
-          //       logprobs: null,
-          //       finish_reason: "stop",
-          //     },
-          //   ],
-          //   usage: {
-          //     prompt_tokens: 1128,
-          //     completion_tokens: 534,
-          //     total_tokens: 1662,
-          //     prompt_tokens_details: {
-          //       cached_tokens: 0,
-          //       audio_tokens: 0,
-          //     },
-          //     completion_tokens_details: {
-          //       reasoning_tokens: 0,
-          //       audio_tokens: 0,
-          //       accepted_prediction_tokens: 0,
-          //       rejected_prediction_tokens: 0,
-          //     },
-          //   },
-          //   system_fingerprint: "fp_0ba0d124f1",
-          // };
           const aiContent = aiResponse.choices[0].message.content;
           const usage = aiResponse.usage;
           console.log(aiContent);

@@ -98,7 +98,7 @@ export default function Home() {
   const [feedUrl, setFeedUrl] = useState("https://chopaltv.com/feed.xml");
   const [numArticles, setNumArticles] = useState(1);
   const [language, setLanguage] = useState(["English"]);
-  const [temperature, setTemperature] = useState(0.5);
+  const [temperature, ] = useState(0.5);
   const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
