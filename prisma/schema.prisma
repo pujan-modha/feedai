@@ -136,3 +136,18 @@ model websites {
   output_feeds output_feeds[]
   rss_feeds    rss_feeds[]
 }
+
+model generated_articles {
+  id           Int            @id @default(autoincrement())
+  title        String         @db.VarChar(255)
+  content      String         @db.Text
+  created_at   DateTime?      @db.DateTime(0)
+  modified_at  DateTime?      @db.DateTime(0)
+  seo_title    String?        @db.VarChar(255)
+  meta_title   String?        @db.VarChar(255)
+  meta_description String?    @db.Text
+  meta_keywords String?       @db.Text
+  summary      String?        @db.Text
+  primary_category String?    @db.VarChar(255)
+  secondary_category String?  @db.VarChar(255)
+}
