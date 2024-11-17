@@ -9,7 +9,7 @@ datasource db {
 
 model articles {
   id                   Int                    @id @default(autoincrement())
-  rss_feed_id          Int?                   
+  rss_feed_id          Int?
   guid                 String?                @db.VarChar(255)
   title                String?                @db.VarChar(255)
   description          String?                @db.Text
@@ -35,19 +35,22 @@ model articles {
 }
 
 model categories {
-  id               Int            @id @default(autoincrement())
-  name             String         @db.VarChar(255)
-  slug             String         @unique(map: "slug") @db.VarChar(255)
-  website_id       Int?
-  parent_id        Int?
-  websites         websites?      @relation(fields: [website_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "categories_ibfk_1")
-  categories       categories?    @relation("categoriesTocategories", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "categories_ibfk_2")
-  other_categories categories[]   @relation("categoriesTocategories")
-  output_feeds     output_feeds[]
-  created_at           DateTime?              @db.DateTime(0)
-  modified_at          DateTime?              @db.DateTime(0)
+  id           Int            @id @default(autoincrement())
+  name         String         @db.VarChar(255)
+  slug         String         @unique(map: "slug") @db.VarChar(255)
+  parent_id    Int?
+  created_at   DateTime?      @db.DateTime(0)
+  modified_at  DateTime?      @db.DateTime(0)
+  output_feeds output_feeds[]
+
   @@index([parent_id], map: "parent_id")
-  @@index([website_id], map: "website_id")
+}
+
+model languages {
+  id           Int            @id @default(autoincrement())
+  name         String         @db.VarChar(255)
+  created_at   DateTime?      @db.DateTime(0)
+  modified_at  DateTime?      @db.DateTime(0)
 }
 
 model cron_jobs {
@@ -55,8 +58,8 @@ model cron_jobs {
   output_feed_id Int?
   cron_timing    String?       @db.VarChar(50)
   output_feeds   output_feeds? @relation(fields: [output_feed_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "cron_jobs_ibfk_1")
-  created_at           DateTime?              @db.DateTime(0)
-  modified_at          DateTime?              @db.DateTime(0)
+  created_at     DateTime?     @db.DateTime(0)
+  modified_at    DateTime?     @db.DateTime(0)
 
   @@index([output_feed_id], map: "output_feed_id")
 }
@@ -72,8 +75,8 @@ model output_feed_articles {
   is_published_youtube Boolean?      @default(false)
   output_feeds         output_feeds? @relation(fields: [output_feed_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "output_feed_articles_ibfk_1")
   articles             articles?     @relation(fields: [article_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "output_feed_articles_ibfk_2")
-  created_at           DateTime?              @db.DateTime(0)
-  modified_at          DateTime?              @db.DateTime(0)
+  created_at           DateTime?     @db.DateTime(0)
+  modified_at          DateTime?     @db.DateTime(0)
 
   @@index([article_id], map: "article_id")
   @@index([output_feed_id], map: "output_feed_id")
@@ -97,20 +100,20 @@ model output_feeds {
 }
 
 model prompts {
-  id         Int       @id @default(autoincrement())
-  content    String    @db.Text
-  created_at DateTime? @default(now()) @db.Timestamp(0)
-  modified_at          DateTime               @default(now()) @db.DateTime(0)
+  id          Int       @id @default(autoincrement())
+  content     String    @db.Text
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+  modified_at DateTime  @default(now()) @db.DateTime(0)
 }
 
 model rss_feeds {
-  id         Int        @id @default(autoincrement())
-  url        String     @db.VarChar(255)
-  website_id Int?
-  created_at DateTime?  @default(now()) @db.Timestamp(0)
-  modified_at          DateTime               @default(now()) @db.DateTime(0)
-  articles   articles[]
-  websites   websites?  @relation(fields: [website_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rss_feeds_ibfk_1")
+  id          Int        @id @default(autoincrement())
+  url         String     @db.VarChar(255)
+  website_id  Int?
+  created_at  DateTime?  @default(now()) @db.Timestamp(0)
+  modified_at DateTime   @default(now()) @db.DateTime(0)
+  articles    articles[]
+  websites    websites?  @relation(fields: [website_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rss_feeds_ibfk_1")
 
   @@index([website_id], map: "website_id")
 }
@@ -119,11 +122,11 @@ model websites {
   id           Int            @id @default(autoincrement())
   name         String         @db.VarChar(255)
   url          String         @db.VarChar(255)
-  languages    String         @default("English") @db.VarChar(200)
+  languages    String?        @default("English") @db.VarChar(200)
   created_at   DateTime       @default(now()) @db.DateTime(0)
   modified_at  DateTime       @default(now()) @db.DateTime(0)
+  categories   String?        @db.VarChar(255)
   articles     articles[]
-  categories   categories[]
   output_feeds output_feeds[]
   rss_feeds    rss_feeds[]
 }

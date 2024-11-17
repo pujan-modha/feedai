@@ -33,7 +33,6 @@ interface Article {
 }
 
 function ArticleDisplay({ article }: { article: Article }) {
-  // Split the content into article body and metadata
   return (
     <Card className="w-full max-w-4xl mx-auto my-8">
       <CardHeader>

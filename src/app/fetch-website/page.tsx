@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +12,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardTitle, CardHeader, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { AlertTitle } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
+import Link from "next/link";
 
 interface Article {
   title: string;
@@ -47,8 +63,13 @@ interface XMLAttributes {
   content: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 function ArticleDisplay({ article }: { article: Article }) {
-  // Split the content into article body and metadata
   return (
     <Card className="w-full max-w-4xl mx-auto my-8">
       <CardHeader>
@@ -77,13 +98,11 @@ function ArticleDisplay({ article }: { article: Article }) {
           className="prose max-w-none mb-8 bg-gray-200 p-4 rounded-lg"
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
-
         <div className="mt-8 space-y-4">
           <div>
             <h3 className="text-lg font-semibold">SEO-Friendly Title</h3>
             <p>{article.seoTitle}</p>
           </div>
-
           <div>
             <h3 className="text-lg font-semibold">Meta Information</h3>
             <ul className="list-disc pl-5">
@@ -98,7 +117,6 @@ function ArticleDisplay({ article }: { article: Article }) {
               </li>
             </ul>
           </div>
-
           <div>
             <h3 className="text-lg font-semibold">Summary</h3>
             <p>{article.summary}</p>
@@ -109,7 +127,7 @@ function ArticleDisplay({ article }: { article: Article }) {
   );
 }
 
-export default function FetchArticle() {
+export default function FeedAI() {
   const [feedUrl, setFeedUrl] = useState("https://chopaltv.com/feed.xml");
   const [latestArticle, setLatestArticle] = useState<Article | null>(null);
   const [xmlAttributes, setXmlAttributes] = useState<XMLAttributes>({
@@ -129,10 +147,15 @@ export default function FetchArticle() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [fieldMappings, setFieldMappings] = useState<Record<string, string>>(
-    {}
-  );
   const [hasSaved, setHasSaved] = useState(false);
+  const [numArticles, setNumArticles] = useState(1);
+  const [language, setLanguage] = useState(["English"]);
+  const [userprompt, setUserPrompt] = useState("");
+  const [cronTiming, setCronTiming] = useState("1");
+  const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [openCategories, setOpenCategories] = useState(false);
 
   const fields = [
     "Article Title",
@@ -162,8 +185,26 @@ export default function FetchArticle() {
     "Content Encoded": "content",
   };
 
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/add-category");
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories");
+      }
+      const data = await response.json();
+      console.log(data);
+      setCategories(data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setError("Failed to fetch categories");
+    }
+  };
+
   const sanitizeHtml = (html: string): string => {
-    // Basic HTML sanitization
     return html
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
       .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
@@ -181,7 +222,7 @@ export default function FetchArticle() {
 
   const getFieldValues = (): string[] => {
     if (latestArticle) {
-      const values = Object.values(latestArticle).filter(
+      const values = Object.keys(latestArticle).filter(
         (value): value is string =>
           typeof value === "string" && value.trim() !== ""
       );
@@ -199,15 +240,10 @@ export default function FetchArticle() {
         ...prev,
         [attributeKey]: sanitizedValue,
       }));
-
-      setFieldMappings((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFetchFeed = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -289,6 +325,44 @@ export default function FetchArticle() {
     }
   };
 
+  const handleGenerateArticles = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          feedUrl: feedUrl,
+          numArticles: numArticles,
+          language: language,
+          userPrompt: userprompt,
+          temperature: 0.5,
+          categories: selectedCategories,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate articles");
+      }
+
+      setGeneratedArticles(data.articles);
+    } catch (error) {
+      console.error("Error:", error);
+      setError(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">FeedAI</h1>
@@ -300,12 +374,12 @@ export default function FetchArticle() {
       )}
 
       {saveSuccess && (
-        <Alert className="mb-4" variant={"success"}>
+        <Alert className="mb-4">
           <AlertDescription>Article saved successfully!</AlertDescription>
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleFetchFeed} className="space-y-4">
         <div>
           <Label htmlFor="feedUrl">RSS Feed URL</Label>
           <Input
@@ -337,7 +411,16 @@ export default function FetchArticle() {
                     {field}
                   </label>
                   <Select
-                    onValueChange={(value) => handleFieldMapping(field, value)}
+                    onValueChange={(value) => {
+                      if (latestArticle && value in latestArticle) {
+                        handleFieldMapping(
+                          field,
+                          (latestArticle as Article)[
+                            value as keyof Article
+                          ] as string
+                        );
+                      }
+                    }}
                   >
                     <SelectTrigger className="max-w-[40vw]">
                       <SelectValue placeholder="Select a field" />
@@ -373,156 +456,110 @@ export default function FetchArticle() {
       >
         {isSaving ? "Saving..." : "Save Article"}
       </Button>
-      <Home feed_url={feedUrl} hasSaved={hasSaved} />
-    </div>
-  );
-}
 
-function Home({ feed_url, hasSaved }: { feed_url: string; hasSaved: boolean }) {
-  const [numArticles, setNumArticles] = useState(1);
-  const [language, setLanguage] = useState(["English"]);
-  const [temperature] = useState(0.5);
-  const [userprompt, setUserPrompt] = useState("");
-  const [cron_timing, setCronTiming] = useState("1");
-  const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      console.log(feed_url);
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          feedUrl: feed_url,
-          numArticles: numArticles,
-          language: language,
-          userPrompt: userprompt,
-          temperature: temperature,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to generate articles");
-      }
-
-      setGeneratedArticles(data.articles);
-    } catch (error) {
-      console.error("Error:", error);
-      setError(
-        error instanceof Error ? error.message : "An unknown error occurred"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="container mx-auto px-0 p-4">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Label htmlFor="numArticles">Number of Articles</Label>
-          <Select
-            defaultValue={numArticles.toString()}
-            onValueChange={(val) => setNumArticles(parseInt(val))}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select number of articles" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">1</SelectItem>
-              <SelectItem value="2">2</SelectItem>
-              <SelectItem value="3">3</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex gap-4">
-          {Array.from({ length: numArticles }).map((_, index) => (
-            <div key={index} className="grid w-full">
-              <Label htmlFor={`language-${index}`} className="mb-1">
-                Language {index + 1}
-              </Label>
-              <Select
-                defaultValue={language[index] || "English"}
-                onValueChange={(val) => {
-                  const newLanguages = [...language];
-                  newLanguages[index] = val;
-                  setLanguage(newLanguages);
-                }}
-              >
-                <SelectTrigger className="w-auto">
-                  <SelectValue placeholder="Select a language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="English">English</SelectItem>
-                  <SelectItem value="Hindi">Hindi</SelectItem>
-                </SelectContent>
-              </Select>
+      <div className="mt-8">
+        <h2 className="text-xl font-bold mb-4">Generate Articles</h2>
+        <form onSubmit={handleGenerateArticles} className="space-y-4">
+          <div>
+            <Label htmlFor="numArticles">Number of Articles</Label>
+            <Select
+              defaultValue={numArticles.toString()}
+              onValueChange={(val) => setNumArticles(parseInt(val))}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select number of articles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1</SelectItem>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex gap-4">
+            {Array.from({ length: numArticles }).map((_, index) => (
+              <div key={index} className="grid w-full">
+                <Label htmlFor={`language-${index}`} className="mb-1">
+                  Language {index + 1}
+                </Label>
+                <Select
+                  defaultValue={language[index] || "English"}
+                  onValueChange={(val) => {
+                    const newLanguages = [...language];
+                    newLanguages[index] = val;
+                    setLanguage(newLanguages);
+                  }}
+                >
+                  <SelectTrigger className="w-auto">
+                    <SelectValue placeholder="Select a language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Hindi">Hindi</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
+          </div>
+          <div>
+            <Label htmlFor="prompt">Input prompt</Label>
+            <Textarea
+              id="prompt"
+              placeholder="Enter your prompt here"
+              value={userprompt}
+              onChange={(e) => setUserPrompt(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <div>
+            <Label htmlFor="cron">Cron Timing</Label>
+            <Select onValueChange={(val) => setCronTiming(val)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Cron timing" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1</SelectItem>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3</SelectItem>
+                <SelectItem value="4">4</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Categories</Label>
+            <div>
+              {categories.map((category) => (
+                <div key={category.id}>
+                  <Checkbox
+                    checked={selectedCategories.includes(category.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedCategories((prev) =>
+                          prev.includes(category.id)
+                            ? prev
+                            : [...prev, category.id]
+                        );
+                      } else {
+                        setSelectedCategories((prev) =>
+                          prev.filter((id) => id !== category.id)
+                        );
+                      }
+                    }}
+                  />
+                    {category.name}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        {/* <div className="space-y-1">
-          <Label htmlFor="temperature">Temperature ({temperature})</Label>
-          <Slider
-            defaultValue={[0.5]}
-            max={1}
-            step={0.01}
+          </div>
+          <Button
+            type="submit"
+            disabled={isLoading || !hasSaved}
             className="w-full"
-            onValueChange={(val) => setTemperature(val[0])}
-          />
-        </div> */}
-        <div>
-          <Label htmlFor="prompt">Input prompt</Label>
-          <Textarea
-            id="prompt"
-            placeholder="Enter your prompt here"
-            value={userprompt || ""}
-            onChange={(e) => setUserPrompt(e.target.value)}
-            className="w-full"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="cron">Cron Timing</Label>
-          <Select
-            onValueChange={(val) => setCronTiming(val)}
           >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select Cron timing" /> 
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">1</SelectItem>
-              <SelectItem value="2">2</SelectItem>
-              <SelectItem value="3">3</SelectItem>
-              <SelectItem value="4">4</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Button
-          type="submit"
-          disabled={isLoading || !hasSaved}
-          className="w-full"
-        >
-          {isLoading ? "Generating..." : "Generate Articles"}
-        </Button>
-      </form>
-
-      {error && (
-        <Alert variant="destructive" className="mt-4">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+            {isLoading ? "Generating..." : "Generate Articles"}
+          </Button>
+        </form>
+      </div>
 
       {generatedArticles.length > 0 && (
         <div className="mt-8">
