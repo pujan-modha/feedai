@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
           website_categories[`website_${langCount + 1}`].join(", ")
         );
         const prompt = `
-You are tasked with processing and rewriting a news article to make it SEO-friendly, plagiarism-free, and compliant with Google News standards. The input news article must be in ${
+You are tasked with processing and rewriting a news article to make it SEO-friendly, plagiarism-free, and compliant with Google News standards. The output must be in ${
           language[`website_${langCount + 1}`]
         }. Follow these steps to generate the output:
 
