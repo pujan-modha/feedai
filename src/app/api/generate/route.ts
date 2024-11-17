@@ -63,6 +63,40 @@ async function completion(prompt: string, content: string, api_key: string) {
   return data; // Return the response data from the API
 }
 
+interface RssCronSettings {
+  url: string;
+  article_count: number;
+  cron_timing: string;
+  language: string;
+  categories: string;
+  user_prompt: string;
+}
+
+async function saveRssCronSettings(
+  url: string,
+  article_count: number,
+  cron_timing: string,
+  language: string,
+  categories: string,
+  user_prompt: string
+): Promise<void> {
+  try {
+    await prisma.rss_feeds.create({
+      data: {
+        url,
+        article_count,
+        cron_timing,
+        language,
+        categories,
+        user_prompt,
+      },
+    });
+  } catch (error) {
+    console.error("Error saving RSS feed:", error);
+    throw new Error("Failed to save the RSS feed");
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const {
@@ -72,6 +106,7 @@ export async function POST(req: NextRequest) {
       userPrompt,
       temperature,
       website_categories,
+      cron_timing,
     } = await req.json();
     console.log(feedUrl);
     if (!feedUrl)
@@ -214,7 +249,14 @@ Output Format (Do not use backticks anywhere in the json and do not give respons
         }
       })
     );
-    console.log(generatedArticles);
+    saveRssCronSettings(
+      feedUrl,
+      numArticles,
+      cron_timing,
+      language,
+      website_categories,
+      userPrompt
+    );
     return NextResponse.json({ articles: generatedArticles });
   } catch (error) {
     console.error("Error:", error);

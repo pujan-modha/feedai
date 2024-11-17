@@ -86,6 +86,7 @@ export default function FeedAI() {
   const [selectedCategories, setSelectedCategories] = useState<
     Record<string, string[]>
   >({});
+  const [cronTiming, setCronTiming] = useState<string>("1");
   const [userprompt, setUserPrompt] =
     useState(`Rewrite the input article while retaining all factual information. Do not alter any facts.
 The output article should appear as if written by a human, not a machine.
@@ -282,6 +283,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
           website_categories: selectedCategories,
           userPrompt: userprompt,
           temperature: 0.5,
+          cron_timing: cronTiming,
         }),
       });
 
@@ -338,11 +340,11 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     handleFetchWebsites();
   }, []);
 
-  useEffect(() => {
-    console.log("Selected Websites:", selectedWebsites);
-    console.log("Selected Languages:", selectedLanguages);
-    console.log("Selected Categories:", selectedCategories);
-  }, [selectedWebsites, selectedLanguages, selectedCategories]);
+  // useEffect(() => {
+  //   console.log("Selected Websites:", selectedWebsites);
+  //   console.log("Selected Languages:", selectedLanguages);
+  //   console.log("Selected Categories:", selectedCategories);
+  // }, [selectedWebsites, selectedLanguages, selectedCategories]);
 
   const handleWebsiteChange = (websiteKey: string, selectedUrl: string) => {
     const selectedSite = website.find((site) => site.url === selectedUrl);
@@ -540,7 +542,11 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
                 <div className="flex flex-wrap gap-2">
                   {selectedCategories[`website_${index + 1}`]?.map(
                     (category) => (
-                      <Badge key={category} variant="secondary" className="capitalize">
+                      <Badge
+                        key={category}
+                        variant="secondary"
+                        className="capitalize"
+                      >
                         {category}
                       </Badge>
                     )
@@ -560,11 +566,26 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
               className="w-full"
             />
           </div>
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="w-full"
-          >
+          <div>
+            <Label htmlFor="cron">Cron Timing</Label>
+            <Select
+              defaultValue={cronTiming}
+              onValueChange={(val) => setCronTiming(val)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Cron timing" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1</SelectItem>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3</SelectItem>
+                <SelectItem value="4">4</SelectItem>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="6">6</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button type="submit" disabled={isLoading} className="w-full">
             {isLoading ? "Generating..." : "Generate Articles"}
           </Button>
         </form>

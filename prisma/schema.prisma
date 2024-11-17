@@ -14,7 +14,7 @@ model articles {
   title                String?                @db.VarChar(255)
   description          String?                @db.Text
   url                  String?                @db.VarChar(255)
-  thumbnail_image      String?                @db.VarChar(255)
+  thumbnail_image      String?                @db.Text
   category             String?                @db.VarChar(255)
   author               String?                @db.VarChar(255)
   published_at         DateTime?              @db.DateTime(0)
@@ -47,10 +47,10 @@ model categories {
 }
 
 model languages {
-  id           Int            @id @default(autoincrement())
-  name         String         @db.VarChar(255)
-  created_at   DateTime?      @db.DateTime(0)
-  modified_at  DateTime?      @db.DateTime(0)
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  created_at  DateTime? @db.DateTime(0)
+  modified_at DateTime? @db.DateTime(0)
 }
 
 model cron_jobs {
@@ -107,13 +107,19 @@ model prompts {
 }
 
 model rss_feeds {
-  id          Int        @id @default(autoincrement())
-  url         String     @db.VarChar(255)
-  website_id  Int?
-  created_at  DateTime?  @default(now()) @db.Timestamp(0)
-  modified_at DateTime   @default(now()) @db.DateTime(0)
-  articles    articles[]
-  websites    websites?  @relation(fields: [website_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rss_feeds_ibfk_1")
+  id            Int        @id @default(autoincrement())
+  url           String     @db.VarChar(255)
+  website_id    Int?
+  created_at    DateTime?  @default(now()) @db.Timestamp(0)
+  modified_at   DateTime   @default(now()) @db.DateTime(0)
+  article_count Int?       @default(1)
+  cron_timing   Int?       @default(1)
+  language      String?    @db.VarChar(255)
+  categories    String?    @db.VarChar(255)
+  user_prompt   String?    @db.Text
+  articles      articles[]
+  websites      websites?  @relation(fields: [websitesId], references: [id])
+  websitesId    Int?
 
   @@index([website_id], map: "website_id")
 }

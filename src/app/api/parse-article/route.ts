@@ -14,6 +14,8 @@ export async function POST(req: Request) {
     const response = await fetch(rss_article_link);
     const feed = await response.text();
     const parsedFeed = parser.parse(feed);
+    parsedFeed.rss.channel.item[0].guid = parsedFeed.rss.channel.item[0].guid.split("/").pop().split(".")[0];
+    console.log(parsedFeed.rss.channel.item[0]);
     return NextResponse.json(parsedFeed.rss.channel.item[0]);
   } catch (err) {
     console.error("Error creating article:", err);
