@@ -27,3 +27,19 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    const languages = await prisma.languages.findMany();
+    return NextResponse.json(languages);
+  } catch (error) {
+    console.error("Error:", error);
+    return NextResponse.json(
+      {
+        error:
+          "An error occurred while processing your request. Please check the URL and try again.",
+      },
+      { status: 500 }
+    );
+  }
+}

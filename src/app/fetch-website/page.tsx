@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,23 +15,6 @@ import { Card, CardTitle, CardHeader, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import Image from "next/image";
-import Link from "next/link";
 
 interface Article {
   title: string;
@@ -63,68 +46,12 @@ interface XMLAttributes {
   content: string;
 }
 
-interface Category {
+interface Website {
   id: string;
   name: string;
-  slug: string;
-}
-
-function ArticleDisplay({ article }: { article: Article }) {
-  return (
-    <Card className="w-full max-w-4xl mx-auto my-8">
-      <CardHeader>
-        <CardTitle>{article.title}</CardTitle>
-        <div className="flex space-x-2 mt-2">
-          <Badge variant="default">{article.primaryCategory}</Badge>
-          <Badge variant="outline">{article.secondaryCategory}</Badge>
-        </div>
-        <div className="flex-col mt-4 text-sm text-gray-600">
-          <div className="flex items-center space-x-1">
-            <span className="font-semibold">Prompt Tokens:</span>
-            <span>{article.prompt_tokens}</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <span className="font-semibold">Completion Tokens:</span>
-            <span>{article.completion_tokens}</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <span className="font-semibold">Total Tokens:</span>
-            <span>{article.total_tokens}</span>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div
-          className="prose max-w-none mb-8 bg-gray-200 p-4 rounded-lg"
-          dangerouslySetInnerHTML={{ __html: article.content }}
-        />
-        <div className="mt-8 space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold">SEO-Friendly Title</h3>
-            <p>{article.seoTitle}</p>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">Meta Information</h3>
-            <ul className="list-disc pl-5">
-              <li>
-                <strong>Title:</strong> {article.metaTitle}
-              </li>
-              <li>
-                <strong>Description:</strong> {article.metaDescription}
-              </li>
-              <li>
-                <strong>Keywords:</strong> {article.metaKeywords.join(", ")}
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">Summary</h3>
-            <p>{article.summary}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  url: string;
+  languages: string;
+  categories: string;
 }
 
 export default function FeedAI() {
@@ -149,14 +76,45 @@ export default function FeedAI() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
   const [numArticles, setNumArticles] = useState(1);
-  const [language, setLanguage] = useState(["English"]);
-  const [userprompt, setUserPrompt] = useState("");
-  const [cronTiming, setCronTiming] = useState("1");
-  const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [openCategories, setOpenCategories] = useState(false);
+  const [website, setWebsite] = useState<Website[]>([]);
+  const [selectedWebsites, setSelectedWebsites] = useState<
+    Record<string, Website | null>
+  >({});
 
+  const [selected_categories, setSelectedCategories] = useState({});
+  const [selectedLanguages, setSelectedLanguages] = useState<
+    Record<string, string>
+  >({});
+  const [language, setLanguage] = useState<Record<string, string[]>>({});
+  const [userprompt, setUserPrompt] =
+    useState(`Rewrite the input article while retaining all factual information. Do not alter any facts.
+The output article should appear as if written by a human, not a machine.
+The length of the rewritten article should be between 400 and 1500 words.
+Add proper headings and subheadings with H1, H2, and H3 tags according to Google News standards.
+SEO Optimization:
+
+Create an SEO-friendly title for the article that is catchy and includes appropriate keywords. For Hindi articles, you can incorporate English keywords into the title.
+Remove any mentions of media houses or agencies (e.g., IANS, ANI, PTI, Hindusthan Samachar). Replace any specific agency or news website names inside the content with a generic term.
+Generate an SEO-optimized meta title, meta description, and meta keywords.
+Summary Creation:
+
+Write a 160-word summary that provides a general overview and generates curiosity to encourage readers to view the full article.
+Output Variations:
+
+If an input parameter specifies multiple versions (e.g., 3 versions), generate that many unique, plagiarism-free versions of the rewritten article. Each version should differ from the others in terms of wording, while still meeting all other requirements.
+Category Assignment:
+
+Assign categories to the article based on the specified website where it will be published. A list of pre-defined categories will be provided as input.
+Highlight the primary and secondary categories according to the content.
+Content Clean-up:
+
+Remove any scripts, duplicate media, or irrelevant content from the input article.
+Additional Guidelines:
+
+Ensure all output articles are SEO-friendly and adhere to Google News and search guidelines.
+    `);
+  const [, setCronTiming] = useState("1");
+  const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
   const fields = [
     "Article Title",
     "Article GUID",
@@ -170,7 +128,6 @@ export default function FeedAI() {
     "Article Summary",
     "Content Encoded",
   ];
-
   const fieldToAttributeMap: Record<string, keyof XMLAttributes> = {
     "Article Title": "title",
     "Article GUID": "guid",
@@ -184,26 +141,6 @@ export default function FeedAI() {
     "Article Summary": "summary",
     "Content Encoded": "content",
   };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch("/api/add-category");
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-      }
-      const data = await response.json();
-      console.log(data);
-      setCategories(data);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      setError("Failed to fetch categories");
-    }
-  };
-
   const sanitizeHtml = (html: string): string => {
     return html
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
@@ -341,8 +278,8 @@ export default function FeedAI() {
           numArticles: numArticles,
           language: language,
           userPrompt: userprompt,
+          website_categories: selected_categories,
           temperature: 0.5,
-          categories: selectedCategories,
         }),
       });
 
@@ -362,6 +299,58 @@ export default function FeedAI() {
       setIsLoading(false);
     }
   };
+
+  const handleFetchWebsites = async () => {
+    try {
+      const response = await fetch("/api/add-website");
+      if (!response.ok) {
+        throw new Error("Failed to fetch websites");
+      }
+      const data: Website[] = await response.json();
+      console.log(data);
+      setWebsite(data);
+
+      const initialSelectedWebsites: Record<string, Website> = {};
+      const initialSelectedLanguages: Record<string, string> = {};
+
+      Array.from({ length: 3 }).forEach((_, index) => {
+        const key = `website_${index + 1}`;
+        initialSelectedWebsites[key] = data[0];
+        initialSelectedLanguages[key] = data[0].languages.split(",")[0].trim();
+      });
+
+      setSelectedWebsites(initialSelectedWebsites);
+      setSelectedLanguages(initialSelectedLanguages);
+    } catch (error) {
+      console.error("Error fetching websites:", error);
+      setError("Failed to fetch websites");
+    }
+  };
+
+  const handleWebsiteChange = (websiteKey: string, selectedUrl: string) => {
+    const selectedSite = website.find((site) => site.url === selectedUrl);
+    if (selectedSite) {
+      setSelectedWebsites((prev) => ({
+        ...prev,
+        [websiteKey]: selectedSite,
+      }));
+
+      // Reset the language when website changes
+      setSelectedLanguages((prev) => ({
+        ...prev,
+        [websiteKey]: selectedSite.languages.split(",")[0].trim(),
+      }));
+    }
+  };
+
+  useEffect(() => {
+    handleFetchWebsites();
+  }, []);
+
+  useEffect(() => {
+    console.log("Selected Websites:", selectedWebsites);
+    console.log("Selected Languages:", selectedLanguages);
+  }, [selectedWebsites, selectedLanguages]);
 
   return (
     <div className="container mx-auto p-4">
@@ -478,26 +467,57 @@ export default function FeedAI() {
           </div>
           <div className="flex gap-4">
             {Array.from({ length: numArticles }).map((_, index) => (
-              <div key={index} className="grid w-full">
-                <Label htmlFor={`language-${index}`} className="mb-1">
-                  Language {index + 1}
-                </Label>
-                <Select
-                  defaultValue={language[index] || "English"}
-                  onValueChange={(val) => {
-                    const newLanguages = [...language];
-                    newLanguages[index] = val;
-                    setLanguage(newLanguages);
-                  }}
-                >
-                  <SelectTrigger className="w-auto">
-                    <SelectValue placeholder="Select a language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="English">English</SelectItem>
-                    <SelectItem value="Hindi">Hindi</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div key={index} className="space-y-2">
+                <div className="grid w-full">
+                  <Label htmlFor={`website-${index}`} className="mb-1">
+                    Website {index + 1}
+                  </Label>
+                  <Select
+                    value={selectedWebsites[`website_${index + 1}`]?.url}
+                    onValueChange={(val) =>
+                      handleWebsiteChange(`website_${index + 1}`, val)
+                    }
+                  >
+                    <SelectTrigger className="w-auto">
+                      <SelectValue placeholder="Select a website" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {website.map((site) => (
+                        <SelectItem key={site.id} value={site.url}>
+                          {site.url}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid w-full">
+                  <Label htmlFor={`language-${index}`} className="mb-1">
+                    Language {index + 1}
+                  </Label>
+                  <Select
+                    value={selectedLanguages[`website_${index + 1}`]}
+                    onValueChange={(val) => {
+                      setSelectedLanguages((prev) => ({
+                        ...prev,
+                        [`website_${index + 1}`]: val,
+                      }));
+                    }}
+                  >
+                    <SelectTrigger className="w-auto">
+                      <SelectValue placeholder="Select a language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedWebsites[`website_${index + 1}`]?.languages
+                        .split(",")
+                        .map((lang: string) => (
+                          <SelectItem key={lang.trim()} value={lang.trim()}>
+                            {lang.trim()}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             ))}
           </div>
@@ -525,32 +545,6 @@ export default function FeedAI() {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label>Categories</Label>
-            <div>
-              {categories.map((category) => (
-                <div key={category.id}>
-                  <Checkbox
-                    checked={selectedCategories.includes(category.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedCategories((prev) =>
-                          prev.includes(category.id)
-                            ? prev
-                            : [...prev, category.id]
-                        );
-                      } else {
-                        setSelectedCategories((prev) =>
-                          prev.filter((id) => id !== category.id)
-                        );
-                      }
-                    }}
-                  />
-                    {category.name}
-                </div>
-              ))}
-            </div>
-          </div>
           <Button
             type="submit"
             disabled={isLoading || !hasSaved}
@@ -572,5 +566,63 @@ export default function FeedAI() {
         </div>
       )}
     </div>
+  );
+}
+
+function ArticleDisplay({ article }: { article: Article }) {
+  return (
+    <Card className="w-full max-w-4xl mx-auto my-8">
+      <CardHeader>
+        <CardTitle>{article.title}</CardTitle>
+        <div className="flex space-x-2 mt-2">
+          <Badge variant="default">{article.primaryCategory}</Badge>
+          <Badge variant="outline">{article.secondaryCategory}</Badge>
+        </div>
+        <div className="flex-col mt-4 text-sm text-gray-600">
+          <div className="flex items-center space-x-1">
+            <span className="font-semibold">Prompt Tokens:</span>
+            <span>{article.prompt_tokens}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <span className="font-semibold">Completion Tokens:</span>
+            <span>{article.completion_tokens}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <span className="font-semibold">Total Tokens:</span>
+            <span>{article.total_tokens}</span>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div
+          className="prose max-w-none mb-8 bg-gray-200 p-4 rounded-lg"
+          dangerouslySetInnerHTML={{ __html: article.content }}
+        />
+        <div className="mt-8 space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold">SEO-Friendly Title</h3>
+            <p>{article.seoTitle}</p>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">Meta Information</h3>
+            <ul className="list-disc pl-5">
+              <li>
+                <strong>Title:</strong> {article.metaTitle}
+              </li>
+              <li>
+                <strong>Description:</strong> {article.metaDescription}
+              </li>
+              <li>
+                <strong>Keywords:</strong> {article.metaKeywords.join(", ")}
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">Summary</h3>
+            <p>{article.summary}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

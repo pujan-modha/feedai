@@ -1,40 +1,88 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Language {
+  id: string;
+  name: string;
+}
 
 export default function AddWebsite() {
   const [name, setName] = useState("chatgpt");
   const [url, setUrl] = useState("http://localhost:3000/add-website");
-  const [languages, setLanguages] = useState<string>("English, Hindi");
-  const [categories, setCategories] = useState<string>("Politics, Sports");
-  // Add state for success message
+  const [languages, setLanguages] = useState<Language[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchCategories();
+    fetchLanguages();
+  }, []);
+
+  const fetchLanguages = async () => {
+    try {
+      const response = await fetch("/api/add-language");
+      if (!response.ok) {
+        throw new Error("Failed to fetch languages");
+      }
+      const data = await response.json();
+      setLanguages(data);
+    } catch (error) {
+      console.error("Error fetching languages:", error);
+      setError("Failed to fetch languages");
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/add-category");
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories");
+      }
+      const data = await response.json();
+      console.log(data);
+      setCategories(data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setError("Failed to fetch categories");
+    }
+  };
+
+  useEffect(() => {
+    console.log(selectedCategories);
+  }, [selectedCategories]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     try {
       e.preventDefault();
-      console.log({
-        name,
-        url,
-        languages,
-        categories,
-      });
+      const joined_categories = selectedCategories.join(",");
+      const joined_languages = selectedLanguages.join(",");
+      console.log(joined_categories, joined_languages);
       const res = await fetch("/api/add-website", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name,
-          url,
-          languages,
-          categories,
+          name: name,
+          url: url,
+          languages: joined_languages,
+          categories: joined_categories,
         }),
       });
-      console.log(res);
       if (!res.ok) {
         const error = await res.json();
         console.error("Error adding website:", error);
@@ -42,27 +90,12 @@ export default function AddWebsite() {
       }
       setName("");
       setUrl("");
-      setLanguages("");
-      setCategories("");
+      setSelectedLanguages([]);
+      setSelectedCategories([]);
       setSuccessMessage("Website added successfully");
     } catch (error) {
       console.error("Error adding website:", error);
     }
-  };
-
-  const handleLanguage = (comma_languages: string) => {
-    // const languages_arr = comma_languages
-    //   .split(",")
-    //   .map((language) => language.trim());
-
-    setLanguages(comma_languages);
-  };
-
-  const handleCategories = (comma_categories: string) => {
-    // const categories_arr = comma_categories
-    //   .split(",")
-    //   .map((category) => category.trim());
-    setCategories(comma_categories);
   };
 
   return (
@@ -95,26 +128,57 @@ export default function AddWebsite() {
             required
           />
         </div>
-        <div>
-          <Label htmlFor="categories">Categories</Label>
-          <Input
-            id="categories"
-            value={categories}
-            onChange={(e) => handleCategories(e.target.value)}
-            placeholder="Politics, Sports, Entertainment"
-            required
-          />
-        </div>
 
         <div>
           <Label htmlFor="languages">Languages</Label>
-          <Input
-            id="languages"
-            value={languages}
-            onChange={(e) => handleLanguage(e.target.value)}
-            placeholder="English, Gujurati, Marathi"
-            required
-          />
+          <div className="flex flex-wrap gap-4">
+            {languages.map((lang) => (
+              <div key={lang.id} className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedLanguages.includes(lang.name)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedLanguages((prev) =>
+                        prev.includes(lang.name) ? prev : [...prev, lang.name]
+                      );
+                    } else {
+                      setSelectedLanguages((prev) =>
+                        prev.filter((lng) => lng !== lang.name)
+                      );
+                    }
+                  }}
+                />
+
+                {lang.name}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label>Categories</Label>
+          <div className="flex flex-wrap gap-4">
+            {categories.map((category) => (
+              <div key={category.id} className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedCategories.includes(category.slug)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedCategories((prev) =>
+                        prev.includes(category.slug)
+                          ? prev
+                          : [...prev, category.slug]
+                      );
+                    } else {
+                      setSelectedCategories((prev) =>
+                        prev.filter((slg) => slg !== category.slug)
+                      );
+                    }
+                  }}
+                />
+                {category.name}
+              </div>
+            ))}
+          </div>
         </div>
         <Button type="submit">Add Website</Button>
       </form>

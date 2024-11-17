@@ -109,39 +109,15 @@ You are tasked with processing and rewriting a news article to make it SEO-frien
 
 Content Transformation:
 
-Rewrite the input article while retaining all factual information. Do not alter any facts.
-The output article should appear as if written by a human, not a machine.
-The length of the rewritten article should be between 400 and 1500 words.
-Add proper headings and subheadings with H1, H2, and H3 tags according to Google News standards.
-SEO Optimization:
+${userPrompt}
 
-Create an SEO-friendly title for the article that is catchy and includes appropriate keywords. For Hindi articles, you can incorporate English keywords into the title.
-Remove any mentions of media houses or agencies (e.g., IANS, ANI, PTI, Hindusthan Samachar). Replace any specific agency or news website names inside the content with a generic term.
-Generate an SEO-optimized meta title, meta description, and meta keywords.
-Summary Creation:
-
-Write a 160-word summary that provides a general overview and generates curiosity to encourage readers to view the full article.
-Output Variations:
-
-If an input parameter specifies multiple versions (e.g., 3 versions), generate that many unique, plagiarism-free versions of the rewritten article. Each version should differ from the others in terms of wording, while still meeting all other requirements.
-Category Assignment:
-
-Assign categories to the article based on the specified website where it will be published. A list of pre-defined categories will be provided as input.
-Highlight the primary and secondary categories according to the content.
-Content Clean-up:
-
-Remove any scripts, duplicate media, or irrelevant content from the input article.
-Additional Guidelines:
-
-Ensure all output articles are SEO-friendly and adhere to Google News and search guidelines.
 Input Parameters:
 
 The news article (text) in English or Hindi.
 The number of versions to generate (e.g., 1, 2, 3).
 The website where the article will be published.
 A list of pre-defined categories for the website.
-Also you MUST follow these guidelines mentioned below: 
-  -  ${userPrompt}
+${website_categories}  
 
 Output Format (Do not use backticks anywhere in the json and do not give response in markdown just give plain text):
 {

@@ -33,3 +33,19 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    const websites = await prisma.websites.findMany();
+    return NextResponse.json(websites);
+  } catch (error) {
+    console.error("Error:", error);
+    return NextResponse.json(
+      {
+        error:
+          "An error occurred while processing your request. Please check the URL and try again.",
+      },
+      { status: 500 }
+    );
+  }
+}
