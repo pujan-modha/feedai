@@ -12,9 +12,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardTitle, CardHeader, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+
+interface Website {
+  id: string;
+  name: string;
+  url: string;
+  languages: string;
+  categories: string;
+}
 
 interface Article {
   title: string;
@@ -46,14 +54,6 @@ interface XMLAttributes {
   content: string;
 }
 
-interface Website {
-  id: string;
-  name: string;
-  url: string;
-  languages: string;
-  categories: string;
-}
-
 export default function FeedAI() {
   const [feedUrl, setFeedUrl] = useState("https://chopaltv.com/feed.xml");
   const [latestArticle, setLatestArticle] = useState<Article | null>(null);
@@ -80,12 +80,12 @@ export default function FeedAI() {
   const [selectedWebsites, setSelectedWebsites] = useState<
     Record<string, Website | null>
   >({});
-
-  const [selected_categories, setSelectedCategories] = useState({});
   const [selectedLanguages, setSelectedLanguages] = useState<
     Record<string, string>
   >({});
-  const [language, setLanguage] = useState<Record<string, string[]>>({});
+  const [selectedCategories, setSelectedCategories] = useState<
+    Record<string, string[]>
+  >({});
   const [userprompt, setUserPrompt] =
     useState(`Rewrite the input article while retaining all factual information. Do not alter any facts.
 The output article should appear as if written by a human, not a machine.
@@ -112,9 +112,9 @@ Remove any scripts, duplicate media, or irrelevant content from the input articl
 Additional Guidelines:
 
 Ensure all output articles are SEO-friendly and adhere to Google News and search guidelines.
-    `);
-  const [, setCronTiming] = useState("1");
+  `);
   const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
+
   const fields = [
     "Article Title",
     "Article GUID",
@@ -128,6 +128,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     "Article Summary",
     "Content Encoded",
   ];
+
   const fieldToAttributeMap: Record<string, keyof XMLAttributes> = {
     "Article Title": "title",
     "Article GUID": "guid",
@@ -141,6 +142,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     "Article Summary": "summary",
     "Content Encoded": "content",
   };
+
   const sanitizeHtml = (html: string): string => {
     return html
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
@@ -276,9 +278,9 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
         body: JSON.stringify({
           feedUrl: feedUrl,
           numArticles: numArticles,
-          language: language,
+          language: selectedLanguages,
+          website_categories: selectedCategories,
           userPrompt: userprompt,
-          website_categories: selected_categories,
           temperature: 0.5,
         }),
       });
@@ -312,34 +314,23 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
 
       const initialSelectedWebsites: Record<string, Website> = {};
       const initialSelectedLanguages: Record<string, string> = {};
+      const initialSelectedCategories: Record<string, string[]> = {};
 
       Array.from({ length: 3 }).forEach((_, index) => {
         const key = `website_${index + 1}`;
         initialSelectedWebsites[key] = data[0];
         initialSelectedLanguages[key] = data[0].languages.split(",")[0].trim();
+        initialSelectedCategories[key] = data[0].categories
+          .split(",")
+          .map((cat) => cat.trim());
       });
 
       setSelectedWebsites(initialSelectedWebsites);
       setSelectedLanguages(initialSelectedLanguages);
+      setSelectedCategories(initialSelectedCategories);
     } catch (error) {
       console.error("Error fetching websites:", error);
       setError("Failed to fetch websites");
-    }
-  };
-
-  const handleWebsiteChange = (websiteKey: string, selectedUrl: string) => {
-    const selectedSite = website.find((site) => site.url === selectedUrl);
-    if (selectedSite) {
-      setSelectedWebsites((prev) => ({
-        ...prev,
-        [websiteKey]: selectedSite,
-      }));
-
-      // Reset the language when website changes
-      setSelectedLanguages((prev) => ({
-        ...prev,
-        [websiteKey]: selectedSite.languages.split(",")[0].trim(),
-      }));
     }
   };
 
@@ -350,7 +341,30 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
   useEffect(() => {
     console.log("Selected Websites:", selectedWebsites);
     console.log("Selected Languages:", selectedLanguages);
-  }, [selectedWebsites, selectedLanguages]);
+    console.log("Selected Categories:", selectedCategories);
+  }, [selectedWebsites, selectedLanguages, selectedCategories]);
+
+  const handleWebsiteChange = (websiteKey: string, selectedUrl: string) => {
+    const selectedSite = website.find((site) => site.url === selectedUrl);
+    if (selectedSite) {
+      setSelectedWebsites((prev) => ({
+        ...prev,
+        [websiteKey]: selectedSite,
+      }));
+
+      setSelectedLanguages((prev) => ({
+        ...prev,
+        [websiteKey]: selectedSite.languages.split(",")[0].trim(),
+      }));
+
+      setSelectedCategories((prev) => ({
+        ...prev,
+        [websiteKey]: selectedSite.categories
+          .split(",")
+          .map((cat) => cat.trim()),
+      }));
+    }
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -465,62 +479,77 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
               </SelectContent>
             </Select>
           </div>
-          <div className="flex gap-4">
-            {Array.from({ length: numArticles }).map((_, index) => (
-              <div key={index} className="space-y-2">
-                <div className="grid w-full">
-                  <Label htmlFor={`website-${index}`} className="mb-1">
-                    Website {index + 1}
-                  </Label>
-                  <Select
-                    value={selectedWebsites[`website_${index + 1}`]?.url}
-                    onValueChange={(val) =>
-                      handleWebsiteChange(`website_${index + 1}`, val)
-                    }
-                  >
-                    <SelectTrigger className="w-auto">
-                      <SelectValue placeholder="Select a website" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {website.map((site) => (
-                        <SelectItem key={site.id} value={site.url}>
-                          {site.url}
+
+          {Array.from({ length: numArticles }).map((_, index) => (
+            <div key={index} className="flex items-center gap-2 justify-center">
+              <div className="grid w-full">
+                <Label htmlFor={`website-${index}`} className="mb-1">
+                  Website {index + 1}
+                </Label>
+                <Select
+                  value={selectedWebsites[`website_${index + 1}`]?.url}
+                  onValueChange={(val) =>
+                    handleWebsiteChange(`website_${index + 1}`, val)
+                  }
+                >
+                  <SelectTrigger className="w-auto">
+                    <SelectValue placeholder="Select a website" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {website.map((site) => (
+                      <SelectItem key={site.id} value={site.url}>
+                        {site.url}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid w-full">
+                <Label htmlFor={`language-${index}`} className="mb-1">
+                  Language {index + 1}
+                </Label>
+                <Select
+                  value={selectedLanguages[`website_${index + 1}`]}
+                  onValueChange={(val) => {
+                    setSelectedLanguages((prev) => ({
+                      ...prev,
+                      [`website_${index + 1}`]: val,
+                    }));
+                  }}
+                >
+                  <SelectTrigger className="w-auto">
+                    <SelectValue placeholder="Select a language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedWebsites[`website_${index + 1}`]?.languages
+                      .split(",")
+                      .map((lang: string) => (
+                        <SelectItem key={lang.trim()} value={lang.trim()}>
+                          {lang.trim()}
                         </SelectItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <div className="grid w-full">
-                  <Label htmlFor={`language-${index}`} className="mb-1">
-                    Language {index + 1}
-                  </Label>
-                  <Select
-                    value={selectedLanguages[`website_${index + 1}`]}
-                    onValueChange={(val) => {
-                      setSelectedLanguages((prev) => ({
-                        ...prev,
-                        [`website_${index + 1}`]: val,
-                      }));
-                    }}
-                  >
-                    <SelectTrigger className="w-auto">
-                      <SelectValue placeholder="Select a language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedWebsites[`website_${index + 1}`]?.languages
-                        .split(",")
-                        .map((lang: string) => (
-                          <SelectItem key={lang.trim()} value={lang.trim()}>
-                            {lang.trim()}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+              <div className="grid w-full">
+                <Label htmlFor={`categories-${index}`} className="mb-1">
+                  Categories {index + 1}
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {selectedCategories[`website_${index + 1}`]?.map(
+                    (category) => (
+                      <Badge key={category} variant="secondary" className="capitalize">
+                        {category}
+                      </Badge>
+                    )
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+
           <div>
             <Label htmlFor="prompt">Input prompt</Label>
             <Textarea
@@ -531,23 +560,9 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
               className="w-full"
             />
           </div>
-          <div>
-            <Label htmlFor="cron">Cron Timing</Label>
-            <Select onValueChange={(val) => setCronTiming(val)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Cron timing" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1</SelectItem>
-                <SelectItem value="2">2</SelectItem>
-                <SelectItem value="3">3</SelectItem>
-                <SelectItem value="4">4</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <Button
             type="submit"
-            disabled={isLoading || !hasSaved}
+            disabled={isLoading}
             className="w-full"
           >
             {isLoading ? "Generating..." : "Generate Articles"}

@@ -65,7 +65,15 @@ async function completion(prompt: string, content: string, api_key: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { feedUrl, numArticles, language, userPrompt, temperature } = await req.json();
+    const {
+      feedUrl,
+      numArticles,
+      language,
+      userPrompt,
+      temperature,
+      website_categories,
+    } = await req.json();
+    console.log(feedUrl);
     if (!feedUrl)
       return NextResponse.json(
         { error: "Feed URL is required" },
@@ -94,17 +102,20 @@ export async function POST(req: NextRequest) {
     const article = feedItems[0]; // Assuming there's only one article in the feed
 
     let langCount = 0;
-    console.log(userPrompt)
+    console.log(userPrompt);
     const generatedArticles = await Promise.all(
       Array.from({ length: numArticles }, async () => {
         // const title = extractText(article.title);
         const content =
           extractText(article["content:encoded"]) ||
           extractText(article.description);
-
+        console.log(
+          language[`website_${langCount + 1}`],
+          website_categories[`website_${langCount + 1}`].join(", ")
+        );
         const prompt = `
 You are tasked with processing and rewriting a news article to make it SEO-friendly, plagiarism-free, and compliant with Google News standards. The input news article must be in ${
-          language[langCount++]
+          language[`website_${langCount + 1}`]
         }. Follow these steps to generate the output:
 
 Content Transformation:
@@ -113,11 +124,10 @@ ${userPrompt}
 
 Input Parameters:
 
-The news article (text) in English or Hindi.
 The number of versions to generate (e.g., 1, 2, 3).
 The website where the article will be published.
-A list of pre-defined categories for the website.
-${website_categories}  
+A list of pre-defined categories for the website. Make sure that categories must be taken from the list below:
+${website_categories[`website_${langCount + 1}`].join(", ")}
 
 Output Format (Do not use backticks anywhere in the json and do not give response in markdown just give plain text):
 {
@@ -155,6 +165,7 @@ Output Format (Do not use backticks anywhere in the json and do not give respons
 
         try {
           console.log(content);
+          langCount++;
           const aiResponse = await completion(prompt, content, openai_key);
           const aiContent = aiResponse.choices[0].message.content;
           const usage = aiResponse.usage;
