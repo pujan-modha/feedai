@@ -57,6 +57,7 @@ interface XMLAttributes {
 export default function FeedAI() {
   const [feedUrl, setFeedUrl] = useState("https://chopaltv.com/feed.xml");
   const [latestArticle, setLatestArticle] = useState<Article | null>(null);
+  const [articleCount, setArticleCount] = useState(0);
   const [xmlAttributes, setXmlAttributes] = useState<XMLAttributes>({
     title: "",
     guid: "",
@@ -115,6 +116,7 @@ Additional Guidelines:
 Ensure all output articles are SEO-friendly and adhere to Google News and search guidelines.
   `);
   const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
+  const [task_config, setTaskConfig] = useState({});
 
   const fields = [
     "Article Title",
@@ -203,7 +205,8 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
         throw new Error(data.error || "Failed to fetch articles");
       }
 
-      setLatestArticle(data);
+      setLatestArticle(data.article_feed);
+      setArticleCount(data.feed_length);
       console.log("Parsed Data:", data);
     } catch (error) {
       console.error("Error:", error);
@@ -213,6 +216,37 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSaveFeed = async (e: React.FormEvent) => {
+    try {
+      e.preventDefault();
+      setIsSaving(true);
+      setError(null);
+      setSaveSuccess(false);
+      const task_obj = {
+        article_count: articleCount,
+        feed_url: feedUrl,
+        feed_items: xmlAttributes,
+        feed_config: task_config,
+      };
+      console.log(task_obj)
+      const res = await fetch("/api/save-task", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({task_obj}),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+      setSaveSuccess(true);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -238,21 +272,6 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
         summary: xmlAttributes.summary,
         content_encoded: sanitizeHtml(xmlAttributes.content),
       };
-
-      const response = await fetch("/api/save-rss", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(sanitizedData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to save article");
-      }
-
       setSaveSuccess(true);
       setHasSaved(true);
     } catch (error) {
@@ -340,11 +359,18 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     handleFetchWebsites();
   }, []);
 
-  // useEffect(() => {
-  //   console.log("Selected Websites:", selectedWebsites);
-  //   console.log("Selected Languages:", selectedLanguages);
-  //   console.log("Selected Categories:", selectedCategories);
-  // }, [selectedWebsites, selectedLanguages, selectedCategories]);
+  useEffect(() => {
+    setTaskConfig({
+      num_articles: numArticles,
+      selected_websites: Object.values(selectedWebsites).slice(0, numArticles),
+      selected_languages: Object.values(selectedLanguages).slice(
+        0,
+        numArticles
+      ),
+      userprompt: userprompt,
+    });
+  }, [numArticles, selectedWebsites, selectedLanguages, userprompt]);
+
 
   const handleWebsiteChange = (websiteKey: string, selectedUrl: string) => {
     const selectedSite = website.find((site) => site.url === selectedUrl);
@@ -601,6 +627,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
           </div>
         </div>
       )}
+      <Button onClick={handleSaveFeed}>Submit </Button>
     </div>
   );
 }

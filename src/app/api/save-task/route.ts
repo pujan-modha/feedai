@@ -1,0 +1,53 @@
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+
+export async function POST(req: Request) {
+  try {
+    const { task_obj } = await req.json();
+
+    // Validate the payload
+    if (
+      !task_obj ||
+      !task_obj.feed_url ||
+      !task_obj.feed_items ||
+      !task_obj.feed_config ||
+      typeof task_obj.article_count !== "number"
+    ) {
+      return NextResponse.json(
+        { error: "Invalid input: Missing or incorrect task fields" },
+        { status: 400 }
+      );
+    }
+    console.log(task_obj)
+    // Prepare data for insertion, assigning default values where necessary
+    const newTaskData = {
+      feed_url: task_obj.feed_url,
+      feed_items: JSON.stringify(task_obj.feed_items),
+      feed_config: JSON.stringify(task_obj.feed_config),
+      articles_count: task_obj.article_count,
+      status: "incomplete",
+    };
+
+    // Insert the new task into the database
+    const createdTask = await prisma.tasks.create({
+      data: newTaskData,
+    });
+
+    return NextResponse.json({ task: createdTask }, { status: 201 });
+  } catch (error) {
+    console.error("Error creating task:", error);
+
+    if (error instanceof prisma.PrismaClientKnownRequestError) {
+      // Handle specific Prisma errors if necessary
+      return NextResponse.json(
+        { error: "Database error occurred while creating task" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "An error occurred while processing your request" },
+      { status: 500 }
+    );
+  }
+}
