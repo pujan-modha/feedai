@@ -7,33 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model articles {
-  id                   Int                    @id @default(autoincrement())
-  rss_feed_id          Int?
-  guid                 String?                @db.VarChar(255)
-  title                String?                @db.VarChar(255)
-  description          String?                @db.Text
-  url                  String?                @db.VarChar(255)
-  thumbnail_image      String?                @db.Text
-  category             String?                @db.VarChar(255)
-  author               String?                @db.VarChar(255)
-  published_at         DateTime?              @db.DateTime(0)
-  created_at           DateTime?              @db.DateTime(0)
-  modified_at          DateTime?              @db.DateTime(0)
-  summary              String?                @db.Text
-  content_encoded      String?                @db.Text
-  meta_title           String?                @db.VarChar(255)
-  meta_description     String?                @db.Text
-  meta_keywords        String?                @db.Text
-  website_id           Int?
-  rss_feeds            rss_feeds?             @relation(fields: [rss_feed_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "articles_ibfk_1")
-  websites             websites?              @relation(fields: [website_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "articles_ibfk_2")
-  output_feed_articles output_feed_articles[]
-
-  @@index([rss_feed_id], map: "rss_feed_id")
-  @@index([website_id], map: "website_id")
-}
-
 model categories {
   id           Int            @id @default(autoincrement())
   name         String         @db.VarChar(255)
@@ -41,9 +14,6 @@ model categories {
   parent_id    Int?
   created_at   DateTime?      @db.DateTime(0)
   modified_at  DateTime?      @db.DateTime(0)
-  output_feeds output_feeds[]
-
-  @@index([parent_id], map: "parent_id")
 }
 
 model languages {
@@ -51,77 +21,6 @@ model languages {
   name        String    @db.VarChar(255)
   created_at  DateTime? @db.DateTime(0)
   modified_at DateTime? @db.DateTime(0)
-}
-
-model cron_jobs {
-  id             Int           @id @default(autoincrement())
-  output_feed_id Int?
-  cron_timing    String?       @db.VarChar(50)
-  output_feeds   output_feeds? @relation(fields: [output_feed_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "cron_jobs_ibfk_1")
-  created_at     DateTime?     @db.DateTime(0)
-  modified_at    DateTime?     @db.DateTime(0)
-
-  @@index([output_feed_id], map: "output_feed_id")
-}
-
-model output_feed_articles {
-  id                   Int           @id @default(autoincrement())
-  output_feed_id       Int?
-  article_id           Int?
-  published_at         DateTime?     @db.DateTime(0)
-  is_published_twitter Boolean?      @default(false)
-  is_published_fb      Boolean?      @default(false)
-  is_published_insta   Boolean?      @default(false)
-  is_published_youtube Boolean?      @default(false)
-  output_feeds         output_feeds? @relation(fields: [output_feed_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "output_feed_articles_ibfk_1")
-  articles             articles?     @relation(fields: [article_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "output_feed_articles_ibfk_2")
-  created_at           DateTime?     @db.DateTime(0)
-  modified_at          DateTime?     @db.DateTime(0)
-
-  @@index([article_id], map: "article_id")
-  @@index([output_feed_id], map: "output_feed_id")
-}
-
-model output_feeds {
-  id                   Int                    @id @default(autoincrement())
-  feed_name            String                 @db.VarChar(255)
-  feed_url             String                 @db.VarChar(255)
-  category_id          Int?
-  website_id           Int?
-  created_at           DateTime               @default(now()) @db.DateTime(0)
-  modified_at          DateTime               @default(now()) @db.DateTime(0)
-  cron_jobs            cron_jobs[]
-  output_feed_articles output_feed_articles[]
-  categories           categories?            @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "output_feeds_ibfk_1")
-  websites             websites?              @relation(fields: [website_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "output_feeds_ibfk_2")
-
-  @@index([category_id], map: "category_id")
-  @@index([website_id], map: "website_id")
-}
-
-model prompts {
-  id          Int       @id @default(autoincrement())
-  content     String    @db.Text
-  created_at  DateTime? @default(now()) @db.Timestamp(0)
-  modified_at DateTime  @default(now()) @db.DateTime(0)
-}
-
-model rss_feeds {
-  id            Int        @id @default(autoincrement())
-  url           String     @db.VarChar(255)
-  website_id    Int?
-  created_at    DateTime?  @default(now()) @db.Timestamp(0)
-  modified_at   DateTime   @default(now()) @db.DateTime(0)
-  article_count Int?       @default(1)
-  cron_timing   Int?       @default(1)
-  language      String?    @db.VarChar(255)
-  categories    String?    @db.VarChar(255)
-  user_prompt   String?    @db.Text
-  articles      articles[]
-  websites      websites?  @relation(fields: [websitesId], references: [id])
-  websitesId    Int?
-
-  @@index([website_id], map: "website_id")
 }
 
 model websites {
@@ -132,13 +31,26 @@ model websites {
   created_at   DateTime       @default(now()) @db.DateTime(0)
   modified_at  DateTime       @default(now()) @db.DateTime(0)
   categories   String?        @db.VarChar(255)
-  articles     articles[]
-  output_feeds output_feeds[]
-  rss_feeds    rss_feeds[]
+}
+
+model tasks {
+  id            Int            @id @default(autoincrement())
+  feed_url      String         @db.VarChar(255)
+  feed_items    String         @db.Text
+  created_at    DateTime?      @db.DateTime(0)
+  modified_at   DateTime?      @db.DateTime(0)
+  feed_config   String         @db.Text
+  articles_count Int?          @default(0)
+  start_time    DateTime?      @db.DateTime(0)
+  end_time      DateTime?      @db.DateTime(0)
+  status        String         @db.VarChar(255)
+  error_count   Int?           @default(0)
+  sucess_count  Int?           @default(0)
 }
 
 model generated_articles {
   id           Int            @id @default(autoincrement())
+  task_id      Int            @db.Int
   title        String         @db.VarChar(255)
   content      String         @db.Text
   created_at   DateTime?      @db.DateTime(0)
