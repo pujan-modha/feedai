@@ -10,13 +10,23 @@ export async function GET() {
   const start_task_config = {
     task_id: start_task.id,
     feed_url: start_task.feed_url,
-    feed_content: start_task.feed_items ? JSON.parse(start_task.feed_items).content : null,
     feed_config: start_task.feed_config
       ? JSON.parse(start_task.feed_config)
       : null,
     articles_count: start_task.articles_count,
   };
-
-  console.log(start_task_config);
-  return NextResponse.json(start_task_config, { status: 200 });
+  
+  const generated_articles = await fetch(
+    `http://localhost:3000/api/generate`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(start_task_config),
+    }
+  );
+  const data = await generated_articles.json();
+  console.log(data.total_generated_articles_list);
+  return NextResponse.json(data.total_generated_articles_list, { status: 200 });
 }

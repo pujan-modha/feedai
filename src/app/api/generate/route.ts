@@ -1,5 +1,14 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { XMLParser } from "fast-xml-parser";
+
+const parser = new XMLParser({ ignoreAttributes: false });
+
+interface Website {
+  name: string;
+  url: string;
+  categories: Array<string>;
+}
 
 export async function POST(req: Request) {
   const start_task_config = await req.json();
@@ -10,21 +19,32 @@ export async function POST(req: Request) {
     );
   }
 
-  const { feed_config, feed_content, task_id } = JSON.parse(start_task_config);
-  const generated_articles_arr = await generate_articles(
-    feed_config.num_articles,
-    feed_config.selected_languages,
-    feed_config.selected_websites,
-    feed_config.userprompt,
-    feed_content,
-    task_id
-  );
+  const { feed_config, task_id, feed_url } = start_task_config;
 
-  await prisma.generated_articles.createMany({
-    data: generated_articles_arr,
-  });
+  const feed = await fetch(feed_url);
+  const feedContent = await feed.text();
+  const parsedFeed = parser.parse(feedContent);
+  const total_generated_articles_list = [];
 
-  return NextResponse.json({ articles: generated_articles_arr });
+  for (let i = 0; i < 1; i++) {
+    // we haveto replace hard coded number with article count
+    const generated_articles_arr = await generate_articles(
+      feed_config.num_articles,
+      feed_config.selected_languages,
+      feed_config.selected_websites,
+      feed_config.userprompt,
+      parsedFeed.rss.channel.item[i]["content:encoded"],
+      task_id
+    );
+    // console.log([parsedFeed.rss.channel.item[i]["content:encoded"]]);
+    await prisma.generated_articles.createMany({
+      data: generated_articles_arr,
+    });
+
+    total_generated_articles_list.push(...generated_articles_arr);
+  }
+
+  return NextResponse.json({ success: true, total_generated_articles_list });
 }
 
 async function completion(prompt: string, content: string) {
@@ -49,7 +69,7 @@ async function completion(prompt: string, content: string) {
 async function generate_articles(
   aritcle_count: number,
   selected_language: Array<string>,
-  selected_website,
+  selected_website: Array<Website>,
   prompt: string,
   content: string,
   task_id: number
@@ -103,12 +123,10 @@ ${user_prompt}
 
 Input Parameters:
 
-The number of versions to generate (e.g., 1, 2, 3).
-The website where the article will be published.
 A list of pre-defined categories for the website. Make sure that categories must be taken from the list below:
 ${curr_categories}
 
-Output Format (Do not use backticks anywhere in the json and do not give response in markdown just give plain text):
+Output Format (Do not use backticks anywhere in the json and do not give response in markdown just give plain text, keep any embeds like images, social media liks, etc. as it is and include it appropriately in the response):
 {
   "rewritten_article": {
     "title": "SEO-Friendly Article Title Here",
