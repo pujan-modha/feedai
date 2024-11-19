@@ -35,15 +35,15 @@ model websites {
 
 model tasks {
   id             Int       @id @default(autoincrement())
-  feed_url       String?    @db.VarChar(255)
+  feed_url       String?   @db.VarChar(255)
   feed_items     String?   @db.Text
   created_at     DateTime? @db.DateTime(0)
   modified_at    DateTime? @db.DateTime(0)
-  feed_config    String?    @db.Text
+  feed_config    String?   @db.Text
   articles_count Int?      @default(0)
   start_time     DateTime? @db.DateTime(0)
   end_time       DateTime? @db.DateTime(0)
-  status         String?    @db.VarChar(255)
+  status         String?   @db.VarChar(255)
   error_count    Int?      @default(0)
   sucess_count   Int?      @default(0)
 }

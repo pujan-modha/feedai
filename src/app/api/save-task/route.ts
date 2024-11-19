@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 export async function POST(req: Request) {
   try {
     const { task_obj } = await req.json();
 
-    // Validate the payload
     if (
       !task_obj ||
       !task_obj.feed_url ||
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    console.log(task_obj)
+    console.log(task_obj);
     // Prepare data for insertion, assigning default values where necessary
     const newTaskData = {
       feed_url: task_obj.feed_url,
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Error creating task:", error);
 
-    if (error instanceof prisma.PrismaClientKnownRequestError) {
+    if (error instanceof PrismaClientKnownRequestError) {
       // Handle specific Prisma errors if necessary
       return NextResponse.json(
         { error: "Database error occurred while creating task" },
