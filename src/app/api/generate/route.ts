@@ -180,7 +180,7 @@ Instruction for Handling Images and Embeds:
 
     The input contains placeholders for images and embeds such as [IMAGE], [IFRAME] and [BLOCKQUOTE]. Ensure that:
 
-    You must replace placeholders like [IMAGE] and [IFRAME] with html tags with src ${images_arr.join(
+    You must replace placeholders like [IMAGE] and [IFRAME], and [BLOCKQUOTE] with html tags with src ${images_arr.join(
       " ,"
     )}, ${links_arr.join(" ,")} and ${blockquote_arr.join(" ,")} respectively.
     The count of Images and Embeds in the output matches exactly the count of [IMAGE], [IFRAME] and [BLOCKQUOTE] in the input.
