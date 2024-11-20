@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const websites = await prisma.websites.findMany();
     return NextResponse.json(websites);

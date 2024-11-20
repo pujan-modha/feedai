@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   const parsedFeed = parser.parse(feedContent);
   const total_generated_articles_list = [];
 
-  for (let i = 0; i < 1; i++) {
+  for (let i = 0; i < 5; i++) {
     // we haveto replace hard coded number with article count
     const generated_articles_arr = await generate_articles(
       feed_config.num_articles,
@@ -36,7 +36,6 @@ export async function POST(req: Request) {
       parsedFeed.rss.channel.item[i]["content:encoded"],
       task_id
     );
-    // console.log([parsedFeed.rss.channel.item[i]["content:encoded"]]);
     await prisma.generated_articles.createMany({
       data: generated_articles_arr,
     });
