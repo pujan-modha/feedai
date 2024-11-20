@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { feed_config, task_id, feed_url } = start_task_config;
+  const { feed_config, task_id, feed_url, feed_items } = start_task_config;
 
   const feed = await fetch(feed_url);
   const feedContent = await feed.text();
@@ -34,10 +34,11 @@ export async function POST(req: Request) {
 
   // console.log(images_arr);
   // console.log(links_arr);
-
+  console.log(feed_items)
   for (let i = 0; i < 1; i++) {
     // we haveto replace hard coded number with article count
-    let curr_content = parsedFeed.rss.channel.item[i]["content:encoded"];
+    let curr_content = parsedFeed.rss.channel.item[i][feed_items.content];
+    console.log(curr_content);
     $ = cheerio.load(curr_content);
     $("img").each((_, img) => {
       const src = $(img).attr("src");
@@ -182,7 +183,9 @@ Instruction for Handling Images and Embeds:
 
     You must replace placeholders like [IMAGE] and [IFRAME], and [BLOCKQUOTE] with html tags with src ${images_arr.join(
       " ,"
-    )}, ${links_arr.join(" ,")} and ${blockquote_arr.join(" ,")} respectively, do not keep placeholders in the output.
+    )}, ${links_arr.join(" ,")} and ${blockquote_arr.join(
+    " ,"
+  )} respectively, do not keep placeholders in the output.
     The count of Images and Embeds in the output matches exactly the count of [IMAGE], [IFRAME] and [BLOCKQUOTE] in the input.
     No extra images or embeds are added or removed.
     Images and Embeds are placed in appropriate paragraphs to maintain logical flow, but the overall count remains consistent with the input.
@@ -197,7 +200,9 @@ Output Format (Do not use backticks anywhere in the json and do not give respons
         "paragraphs": [
           "Paragraph 1 of this section goes here including if any image tags and/or embed tags (${images_arr.join(
             " ,"
-          )}, ${links_arr.join(" ,")} and ${blockquote_arr.join(" ,")}) without placeholders.",
+          )}, ${links_arr.join(" ,")} and ${blockquote_arr.join(
+    " ,"
+  )}) without placeholders.",
         ]
       }
     ]

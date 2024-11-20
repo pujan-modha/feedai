@@ -22,6 +22,9 @@ export async function GET() {
       feed_config: start_task.feed_config
         ? JSON.parse(start_task.feed_config)
         : null,
+      feed_items: start_task.feed_items
+        ? JSON.parse(start_task.feed_items)
+        : null,
       articles_count: start_task.articles_count,
     };
 
@@ -31,6 +34,7 @@ export async function GET() {
       },
       data: {
         status: "in-progress",
+        start_time: new Date(),
       },
     });
 
@@ -52,6 +56,7 @@ export async function GET() {
       },
       data: {
         status: "completed",
+        end_time: new Date(),
       },
     });
     return NextResponse.json(data.total_generated_articles_list, {
@@ -65,6 +70,7 @@ export async function GET() {
       },
       data: {
         status: `error: ${error}`,
+        end_time: new Date(),
       },
     });
     return NextResponse.json(
@@ -73,5 +79,3 @@ export async function GET() {
     );
   }
 }
-
-

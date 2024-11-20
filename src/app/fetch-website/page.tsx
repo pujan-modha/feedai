@@ -110,6 +110,7 @@ Assign categories to the article based on the specified website where it will be
 Highlight the primary and secondary categories according to the content.
 Content Clean-up:
 
+Remove any scripts, duplicate media, or irrelevant content from the input article.
 Additional Guidelines:
 
 Ensure all output articles are SEO-friendly and adhere to Google News and search guidelines.
@@ -189,7 +190,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     setIsLoading(true);
     setError(null);
     setSaveSuccess(false);
-
+    console.log(feedUrl);
     try {
       const response = await fetch("/api/parse-article", {
         method: "POST",
@@ -229,13 +230,13 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
         feed_items: xmlAttributes,
         feed_config: task_config,
       };
-      console.log(task_obj)
+      console.log(task_obj);
       const res = await fetch("/api/save-task", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({task_obj}),
+        body: JSON.stringify({ task_obj }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -245,7 +246,6 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     } catch (error) {
       console.error("Error:", error);
     }
-
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -370,7 +370,6 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     });
   }, [numArticles, selectedWebsites, selectedLanguages, userprompt]);
 
-
   const handleWebsiteChange = (websiteKey: string, selectedUrl: string) => {
     const selectedSite = website.find((site) => site.url === selectedUrl);
     if (selectedSite) {
@@ -443,12 +442,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
                   <Select
                     onValueChange={(value) => {
                       if (latestArticle && value in latestArticle) {
-                        handleFieldMapping(
-                          field,
-                          (latestArticle as Article)[
-                            value as keyof Article
-                          ] as string
-                        );
+                        handleFieldMapping(field, value);
                       }
                     }}
                   >
