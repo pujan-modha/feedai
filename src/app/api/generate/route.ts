@@ -21,7 +21,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const { feed_config, task_id, feed_url, feed_items } = start_task_config;
+  const { feed_config, task_id, feed_url, feed_items, article_count } =
+    start_task_config;
 
   const feed = await fetch(feed_url);
   const feedContent = await feed.text();
@@ -34,8 +35,8 @@ export async function POST(req: Request) {
 
   // console.log(images_arr);
   // console.log(links_arr);
-  console.log(feed_items)
-  for (let i = 0; i < 1; i++) {
+  console.log(feed_items);
+  for (let i = 0; i < article_count; i++) {
     // we haveto replace hard coded number with article count
     let curr_content = parsedFeed.rss.channel.item[i][feed_items.content];
     console.log(curr_content);
