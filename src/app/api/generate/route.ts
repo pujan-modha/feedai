@@ -87,7 +87,9 @@ export async function POST(req: Request) {
     //   },
     // });
 
-    images_arr.pop();
+    images_arr.length = 0;
+    links_arr.length = 0;
+    blockquote_arr.length = 0;
 
     total_generated_articles_list.push(...generated_articles_arr);
   }
