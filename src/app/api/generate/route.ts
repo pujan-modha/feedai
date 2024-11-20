@@ -151,7 +151,6 @@ async function generate_articles(
       );
 
       console.log(completed_content_obj);
-      images_arr.pop();
       const parsed_content = {
         task_id: task_id,
         title: completed_content_obj.rewritten_article.title,
@@ -223,6 +222,8 @@ Instruction for Handling Images and Embeds:
     The count of Images and Embeds in the output matches exactly the count of [IMAGE], [IFRAME] and [BLOCKQUOTE] in the input.
     No extra images or embeds are added or removed.
     Images and Embeds are placed in appropriate paragraphs to maintain logical flow, but the overall count remains consistent with the input.
+    Do not inculde any placeholders in the output.
+    Must include all images and embeds in the output in the same order as they appeared in the input.
 
 Output Format (Do not use backticks anywhere in the json and do not give response in markdown just give plain text):
 {
