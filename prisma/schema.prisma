@@ -37,7 +37,7 @@ model tasks {
   id             Int       @id @default(autoincrement())
   feed_url       String?   @db.VarChar(255)
   feed_items     String?   @db.Text
-  created_at     DateTime? @db.DateTime(0)
+  created_at     DateTime? @default(now()) @db.DateTime(0)
   modified_at    DateTime? @db.DateTime(0)
   feed_config    String?   @db.Text
   articles_count Int?      @default(0)
@@ -53,7 +53,7 @@ model generated_articles {
   task_id            Int
   title              String    @db.VarChar(255)
   content            String    @db.Text
-  created_at         DateTime? @db.DateTime(0)
+  created_at         DateTime? @default(now()) @db.DateTime(0)
   modified_at        DateTime? @db.DateTime(0)
   seo_title          String?   @db.VarChar(255)
   meta_title         String?   @db.VarChar(255)
