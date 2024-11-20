@@ -111,6 +111,7 @@ async function completion(prompt: string, content: string) {
         { role: "system", content: prompt },
         { role: "user", content: content },
       ],
+      temperature: 0.1,
     }),
   });
   return response.json();
