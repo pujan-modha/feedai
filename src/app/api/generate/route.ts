@@ -78,6 +78,17 @@ export async function POST(req: Request) {
       data: generated_articles_arr,
     });
 
+    // await prisma.tasks.update({
+    //   where: { id: task_id },
+    //   data: {
+    //     sucess_count: {
+    //       increment: 1,
+    //     },
+    //   },
+    // });
+
+    images_arr.pop();
+
     total_generated_articles_list.push(...generated_articles_arr);
   }
 
@@ -124,43 +135,58 @@ async function generate_articles(
     images_arr = images_arr.map((img_link) => {
       return selected_website[i].url + "/uploads/" + img_link.split("/").pop();
     });
-    const current_prompt = currentPrompt(
-      selected_language[i],
-      categories_arr[i],
-      prompt,
-      images_arr,
-      links_arr,
-      blockquote_arr
-    );
-    console.log(images_arr);
-    const completion_response = await completion(current_prompt, content);
-    const completed_content_obj = JSON.parse(
-      completion_response.choices[0].message.content
-    );
+    try {
+      const current_prompt = currentPrompt(
+        selected_language[i],
+        categories_arr[i],
+        prompt,
+        images_arr,
+        links_arr,
+        blockquote_arr
+      );
+      console.log(images_arr);
+      const completion_response = await completion(current_prompt, content);
+      const completed_content_obj = JSON.parse(
+        completion_response.choices[0].message.content
+      );
 
-    console.log(completed_content_obj);
-    const parsed_content = {
-      task_id: task_id,
-      title: completed_content_obj.rewritten_article.title,
-      content: JSON.stringify(completed_content_obj.rewritten_article.content),
-      seo_title: completed_content_obj.seo_title,
-      meta_title: completed_content_obj.meta_title,
-      meta_description: completed_content_obj.meta_description,
-      meta_keywords: JSON.stringify(completed_content_obj.meta_keywords),
-      summary: completed_content_obj.summary,
-      primary_category: completed_content_obj.categories.primary_category,
-      secondary_category: completed_content_obj.categories.secondary_category,
-    };
-    articles_arr.push(parsed_content);
-  }
-  await prisma.tasks.update({
-    where: { id: task_id },
-    data: {
-      sucess_count: {
-        increment: 1,
+      console.log(completed_content_obj);
+      images_arr.pop();
+      const parsed_content = {
+        task_id: task_id,
+        title: completed_content_obj.rewritten_article.title,
+        content: JSON.stringify(
+          completed_content_obj.rewritten_article.content
+        ),
+        seo_title: completed_content_obj.seo_title,
+        meta_title: completed_content_obj.meta_title,
+        meta_description: completed_content_obj.meta_description,
+        meta_keywords: JSON.stringify(completed_content_obj.meta_keywords),
+        summary: completed_content_obj.summary,
+        primary_category: completed_content_obj.categories.primary_category,
+        secondary_category: completed_content_obj.categories.secondary_category,
+      };
+      articles_arr.push(parsed_content);
+    } catch {
+      await prisma.tasks.update({
+        where: { id: task_id },
+        data: {
+          error_count: {
+            increment: 1,
+          },
+        },
+      });
+      continue;
+    }
+    await prisma.tasks.update({
+      where: { id: task_id },
+      data: {
+        sucess_count: {
+          increment: 1,
+        },
       },
-    },
-  });
+    });
+  }
   return articles_arr;
 }
 
