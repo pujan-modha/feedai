@@ -110,7 +110,6 @@ Assign categories to the article based on the specified website where it will be
 Highlight the primary and secondary categories according to the content.
 Content Clean-up:
 
-Remove any scripts, duplicate media, or irrelevant content from the input article.
 Additional Guidelines:
 
 Ensure all output articles are SEO-friendly and adhere to Google News and search guidelines.

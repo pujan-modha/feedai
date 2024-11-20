@@ -1,6 +1,8 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { XMLParser } from "fast-xml-parser";
+import * as cheerio from "cheerio";
+import { CheerioAPI } from "cheerio";
 
 const parser = new XMLParser({ ignoreAttributes: false });
 
@@ -24,18 +26,52 @@ export async function POST(req: Request) {
   const feed = await fetch(feed_url);
   const feedContent = await feed.text();
   const parsedFeed = parser.parse(feedContent);
+  let $: CheerioAPI;
   const total_generated_articles_list = [];
+  const images_arr: Array<string> = [];
+  const links_arr: Array<string> = [];
+  const blockquote_arr: Array<string> = [];
+
+  // console.log(images_arr);
+  // console.log(links_arr);
 
   for (let i = 0; i < 1; i++) {
     // we haveto replace hard coded number with article count
+    let curr_content = parsedFeed.rss.channel.item[i]["content:encoded"];
+    $ = cheerio.load(curr_content);
+    $("img").each((_, img) => {
+      const src = $(img).attr("src");
+      if (src) {
+        images_arr.push(src);
+      }
+    });
+
+    $("iframe").each((_, iframe) => {
+      const src = $(iframe).attr("src");
+      if (src) links_arr.push(src);
+    });
+
+    $("blockquote").each((_, blockquote) => {
+      const blockquoteString = $.html(blockquote);
+      blockquote_arr.push(blockquoteString);
+    });
+    curr_content = curr_content
+      .replace(/<img[^>]*>/gi, "[IMAGE]")
+      .replace(/<iframe[^>]*>.*?<\/iframe>/gi, "[IFRAME]")
+      .replace(/<blockquote[^>]*>.*?<\/blockquote>/gi, "[BLOCKQUOTE]");
+    console.log(curr_content);
     const generated_articles_arr = await generate_articles(
       feed_config.num_articles,
       feed_config.selected_languages,
       feed_config.selected_websites,
       feed_config.userprompt,
-      parsedFeed.rss.channel.item[i]["content:encoded"],
-      task_id
+      curr_content,
+      task_id,
+      images_arr,
+      links_arr,
+      blockquote_arr
     );
+
     await prisma.generated_articles.createMany({
       data: generated_articles_arr,
     });
@@ -71,7 +107,10 @@ async function generate_articles(
   selected_website: Array<Website>,
   prompt: string,
   content: string,
-  task_id: number
+  task_id: number,
+  images_arr: Array<string>,
+  links_arr: Array<string>,
+  blockquote_arr: Array<string>
 ) {
   const articles_arr = [];
   const categories_arr = selected_website.map((website) => {
@@ -80,15 +119,24 @@ async function generate_articles(
   console.log(categories_arr);
 
   for (let i = 0; i < aritcle_count; i++) {
+    images_arr = images_arr.map((img_link) => {
+      return selected_website[i].url + "/uploads/" + img_link.split("/").pop();
+    });
     const current_prompt = currentPrompt(
       selected_language[i],
       categories_arr[i],
-      prompt
+      prompt,
+      images_arr,
+      links_arr,
+      blockquote_arr
     );
+    console.log(images_arr);
     const completion_response = await completion(current_prompt, content);
     const completed_content_obj = JSON.parse(
       completion_response.choices[0].message.content
     );
+
+    console.log(completed_content_obj);
     const parsed_content = {
       task_id: task_id,
       title: completed_content_obj.rewritten_article.title,
@@ -110,7 +158,10 @@ async function generate_articles(
 const currentPrompt = (
   curr_lang: string,
   curr_categories: Array<string>,
-  user_prompt: string
+  user_prompt: string,
+  images_arr: Array<string>,
+  links_arr: Array<string>,
+  blockquote_arr: Array<string>
 ) => {
   return `
     
@@ -125,7 +176,18 @@ Input Parameters:
 A list of pre-defined categories for the website. Make sure that categories must be taken from the list below:
 ${curr_categories}
 
-Output Format (Do not use backticks anywhere in the json and do not give response in markdown just give plain text, keep any embeds like images, social media liks, etc. as it is and include it appropriately in the response):
+Instruction for Handling Images and Embeds:
+
+    The input contains placeholders for images and embeds such as [IMAGE], [IFRAME] and [BLOCKQUOTE]. Ensure that:
+
+    You must replace placeholders like [IMAGE] and [IFRAME] with html tags with src ${images_arr.join(
+      " ,"
+    )}, ${links_arr.join(" ,")} and ${blockquote_arr.join(" ,")} respectively.
+    The count of Images and Embeds in the output matches exactly the count of [IMAGE], [IFRAME] and [BLOCKQUOTE] in the input.
+    No extra images or embeds are added or removed.
+    Images and Embeds are placed in appropriate paragraphs to maintain logical flow, but the overall count remains consistent with the input.
+
+Output Format (Do not use backticks anywhere in the json and do not give response in markdown just give plain text):
 {
   "rewritten_article": {
     "title": "SEO-Friendly Article Title Here",
@@ -133,15 +195,9 @@ Output Format (Do not use backticks anywhere in the json and do not give respons
       {
         "heading": "Main Heading for Section",
         "paragraphs": [
-          "Paragraph 1 of this section goes here.",
-          "Paragraph 2 of this section goes here."
-        ]
-      },
-      {
-        "heading": "Another Section Heading",
-        "paragraphs": [
-          "Paragraph 1 of this section goes here.",
-          "Paragraph 2 of this section goes here."
+          "Paragraph 1 of this section goes here including if any image tags and/or embed tags (${images_arr.join(
+            " ,"
+          )}, ${links_arr.join(" ,")} and ${blockquote_arr.join(" ,")})",
         ]
       }
     ]
