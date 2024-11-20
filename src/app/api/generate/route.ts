@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { feed_config, task_id, feed_url, feed_items, article_count } =
+  const { feed_config, task_id, feed_url, feed_items, articles_count } =
     start_task_config;
 
   const feed = await fetch(feed_url);
@@ -34,9 +34,9 @@ export async function POST(req: Request) {
   const blockquote_arr: Array<string> = [];
 
   // console.log(images_arr);
-  // console.log(links_arr);
-  console.log(feed_items);
-  for (let i = 0; i < article_count; i++) {
+  console.log(articles_count);
+  console.log(feed_items.content);
+  for (let i = 0; i < articles_count; i++) {
     // we haveto replace hard coded number with article count
     let curr_content = parsedFeed.rss.channel.item[i][feed_items.content];
     console.log(curr_content);
@@ -153,7 +153,14 @@ async function generate_articles(
     };
     articles_arr.push(parsed_content);
   }
-
+  await prisma.tasks.update({
+    where: { id: task_id },
+    data: {
+      sucess_count: {
+        increment: 1,
+      },
+    },
+  });
   return articles_arr;
 }
 

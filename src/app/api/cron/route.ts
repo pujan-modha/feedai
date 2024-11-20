@@ -27,6 +27,7 @@ export async function GET() {
         : null,
       articles_count: start_task.articles_count,
     };
+    console.log(start_task_config.articles_count);
 
     await prisma.tasks.update({
       where: {
