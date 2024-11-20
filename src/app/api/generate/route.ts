@@ -1,7 +1,6 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { XMLParser } from "fast-xml-parser";
-import { CronJob } from "cron";
 
 const parser = new XMLParser({ ignoreAttributes: false });
 
@@ -22,66 +21,29 @@ export async function POST(req: Request) {
 
   const { feed_config, task_id, feed_url } = start_task_config;
 
-  //   const feed = await fetch(feed_url);
-  //   const feedContent = await feed.text();
-  //   const parsedFeed = parser.parse(feedContent);
-  //   const total_generated_articles_list = [];
+  const feed = await fetch(feed_url);
+  const feedContent = await feed.text();
+  const parsedFeed = parser.parse(feedContent);
+  const total_generated_articles_list = [];
 
-  // Initialize cron job
-  const job = new CronJob(
-    "*/1 * * * *", // Runs every 1 minutes
-    async () => {
-      try {
-        const feed = await fetch(feed_url);
-        const feedContent = await feed.text();
-        const parsedFeed = parser.parse(feedContent);
-        const total_generated_articles_list = [];
+  for (let i = 0; i < 1; i++) {
+    // we haveto replace hard coded number with article count
+    const generated_articles_arr = await generate_articles(
+      feed_config.num_articles,
+      feed_config.selected_languages,
+      feed_config.selected_websites,
+      feed_config.userprompt,
+      parsedFeed.rss.channel.item[i]["content:encoded"],
+      task_id
+    );
+    await prisma.generated_articles.createMany({
+      data: generated_articles_arr,
+    });
 
-        for (let i = 0; i < 1; i++) {
-          const generated_articles_arr = await generate_articles(
-            feed_config.num_articles,
-            feed_config.selected_languages,
-            feed_config.selected_websites,
-            feed_config.userprompt,
-            parsedFeed.rss.channel.item[i]["content:encoded"],
-            task_id
-          );
-          await prisma.generated_articles.createMany({
-            data: generated_articles_arr,
-          });
+    total_generated_articles_list.push(...generated_articles_arr);
+  }
 
-          total_generated_articles_list.push(...generated_articles_arr);
-        }
-        console.log("Cron job completed successfully");
-      } catch (error) {
-        console.error("Cron job error:", error);
-      }
-    },
-    null,
-    true,
-    "UTC"
-  );
-
-  job.start();
-
-  //   for (let i = 0; i < 5; i++) {
-  //     // we haveto replace hard coded number with article count
-  //     const generated_articles_arr = await generate_articles(
-  //       feed_config.num_articles,
-  //       feed_config.selected_languages,
-  //       feed_config.selected_websites,
-  //       feed_config.userprompt,
-  //       parsedFeed.rss.channel.item[i]["content:encoded"],
-  //       task_id
-  //     );
-  //     await prisma.generated_articles.createMany({
-  //       data: generated_articles_arr,
-  //     });
-
-  //     total_generated_articles_list.push(...generated_articles_arr);
-  //   }
-
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, total_generated_articles_list });
 }
 
 async function completion(prompt: string, content: string) {
