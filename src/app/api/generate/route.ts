@@ -182,7 +182,7 @@ Instruction for Handling Images and Embeds:
 
     You must replace placeholders like [IMAGE] and [IFRAME], and [BLOCKQUOTE] with html tags with src ${images_arr.join(
       " ,"
-    )}, ${links_arr.join(" ,")} and ${blockquote_arr.join(" ,")} respectively.
+    )}, ${links_arr.join(" ,")} and ${blockquote_arr.join(" ,")} respectively, do not keep placeholders in the output.
     The count of Images and Embeds in the output matches exactly the count of [IMAGE], [IFRAME] and [BLOCKQUOTE] in the input.
     No extra images or embeds are added or removed.
     Images and Embeds are placed in appropriate paragraphs to maintain logical flow, but the overall count remains consistent with the input.
@@ -197,7 +197,7 @@ Output Format (Do not use backticks anywhere in the json and do not give respons
         "paragraphs": [
           "Paragraph 1 of this section goes here including if any image tags and/or embed tags (${images_arr.join(
             " ,"
-          )}, ${links_arr.join(" ,")} and ${blockquote_arr.join(" ,")})",
+          )}, ${links_arr.join(" ,")} and ${blockquote_arr.join(" ,")}) without placeholders.",
         ]
       }
     ]
