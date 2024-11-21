@@ -28,13 +28,13 @@ interface Article {
   title: string;
   content: string;
   heading: string;
-  seoTitle: string;
-  metaTitle: string;
-  metaDescription: string;
-  metaKeywords: string[];
+  seo_title: string;
+  meta_title: string;
+  meta_description: string;
+  meta_keywords: string[];
   summary: string;
-  primaryCategory: string;
-  secondaryCategory: string;
+  primary_category: string;
+  secondary_category: string;
   prompt_tokens: number;
   completion_tokens: number;
   total_tokens: number;
@@ -55,7 +55,7 @@ interface XMLAttributes {
 }
 
 export default function FeedAI() {
-  const [feedUrl, setFeedUrl] = useState("");
+  const [feedUrl, setFeedUrl] = useState("https://chopaltv.com/feed.xml");
   const [latestArticle, setLatestArticle] = useState<Article | null>(null);
   const [articleCount, setArticleCount] = useState(0);
   const [xmlAttributes, setXmlAttributes] = useState<XMLAttributes>({
@@ -89,28 +89,30 @@ export default function FeedAI() {
   >({});
   const [cronTiming, setCronTiming] = useState<string>("1");
   const [userprompt, setUserPrompt] =
-    useState(`Rewrite the input article while retaining all factual information. Do not alter any facts.
+    useState(
+`Rewrite the input article while retaining all factual information without altering any facts.
+The output must be in language specified by the user.
 The output article should appear as if written by a human, not a machine.
 The length of the rewritten article should be between 400 and 1500 words.
 Add proper headings and subheadings with H1, H2, and H3 tags according to Google News standards.
+
 SEO Optimization:
-
-Create an SEO-friendly title for the article that is catchy and includes appropriate keywords. For Hindi articles, you can incorporate English keywords into the title.
-Remove any mentions of media houses or agencies (e.g., IANS, ANI, PTI, Hindusthan Samachar). Replace any specific agency or news website names inside the content with a generic term.
+Create an SEO-friendly title for the article that is catchy and includes appropriate keywords.
+Remove any mentions of media houses or agencies (e.g., IANS, ANI, PTI, Hindusthan Samachar).
+Replace any specific agency or news website names inside the content with a generic term.
 Generate an SEO-optimized meta title, meta description, and meta keywords.
-Summary Creation:
 
+Summary Creation:
 Write a 160-word summary that provides a general overview and generates curiosity to encourage readers to view the full article.
 
 Category Assignment:
-
-Assign categories to the article based on the specified website where it will be published. A list of pre-defined categories will be provided as input.
+Assign categories to the article based on the specified website where it will be published.
+A list of pre-defined categories will be provided as input.
 Highlight the primary and secondary categories according to the content.
 
 Additional Guidelines:
-
-Ensure all output articles are SEO-friendly and adhere to Google News and search guidelines.
-  `);
+Ensure all output articles are SEO-friendly and adhere to Google News and search guidelines.`
+);
   const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
   const [task_config, setTaskConfig] = useState({});
 
@@ -147,15 +149,6 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
       .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
       .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
-  };
-
-  const formatDate = (dateStr: string): string => {
-    try {
-      const date = new Date(dateStr);
-      return date.toISOString();
-    } catch {
-      return dateStr;
-    }
   };
 
   const getFieldValues = (): string[] => {
@@ -244,40 +237,40 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    setError(null);
-    setSaveSuccess(false);
+  // const handleSave = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setIsSaving(true);
+  //   setError(null);
+  //   setSaveSuccess(false);
 
-    try {
-      if (!xmlAttributes.guid || !xmlAttributes.title) {
-        throw new Error("Title and GUID are required fields");
-      }
+  //   try {
+  //     if (!xmlAttributes.guid || !xmlAttributes.title) {
+  //       throw new Error("Title and GUID are required fields");
+  //     }
 
-      const sanitizedData = {
-        guid: xmlAttributes.guid,
-        title: xmlAttributes.title,
-        description: xmlAttributes.description,
-        link: xmlAttributes.link,
-        thumbnail_image: xmlAttributes.thumbnailimage,
-        // category: xmlAttributes.category,
-        author: xmlAttributes.author,
-        published_at: formatDate(xmlAttributes.pubDate),
-        summary: xmlAttributes.summary,
-        content_encoded: sanitizeHtml(xmlAttributes.content),
-      };
-      setSaveSuccess(true);
-      setHasSaved(true);
-    } catch (error) {
-      console.error("Error saving article:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to save article"
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  //     const sanitizedData = {
+  //       guid: xmlAttributes.guid,
+  //       title: xmlAttributes.title,
+  //       description: xmlAttributes.description,
+  //       link: xmlAttributes.link,
+  //       thumbnail_image: xmlAttributes.thumbnailimage,
+  //       // category: xmlAttributes.category,
+  //       author: xmlAttributes.author,
+  //       published_at: formatDate(xmlAttributes.pubDate),
+  //       summary: xmlAttributes.summary,
+  //       content_encoded: sanitizeHtml(xmlAttributes.content),
+  //     };
+  //     setSaveSuccess(true);
+  //     setHasSaved(true);
+  //   } catch (error) {
+  //     console.error("Error saving article:", error);
+  //     setError(
+  //       error instanceof Error ? error.message : "Failed to save article"
+  //     );
+  //   } finally {
+  //     setIsSaving(false);
+  //   }
+  // };
 
   const handleGenerateArticles = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -285,20 +278,18 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     setError(null);
 
     try {
+      const task_obj = {
+        feed_url: feedUrl,
+        feed_items: xmlAttributes,
+        feed_config: task_config,
+      };
+      console.log(task_obj);
       const response = await fetch("/api/generate-preview", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          feedUrl: feedUrl,
-          numArticles: numArticles,
-          language: selectedLanguages,
-          website_categories: selectedCategories,
-          userPrompt: userprompt,
-          temperature: 0.1,
-          cron_timing: cronTiming,
-        }),
+        body: JSON.stringify(task_obj),
       });
 
       const data = await response.json();
@@ -306,8 +297,8 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
       if (!response.ok) {
         throw new Error(data.error || "Failed to generate articles");
       }
-
-      setGeneratedArticles(data.articles);
+      console.log(data.preview_result_articles_arr);
+      setGeneratedArticles(data.preview_result_articles_arr);
     } catch (error) {
       console.error("Error:", error);
       setError(
@@ -400,7 +391,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
 
       {saveSuccess && (
         <Alert className="mb-4">
-          <AlertDescription>Operation Successful!!</AlertDescription>
+          <AlertDescription>Article saved successfully!</AlertDescription>
         </Alert>
       )}
 
@@ -593,8 +584,8 @@ function ArticleDisplay({ article }: { article: Article }) {
       <CardHeader>
         <CardTitle>{article.title}</CardTitle>
         <div className="flex space-x-2 mt-2">
-          <Badge variant="default">{article.primaryCategory}</Badge>
-          <Badge variant="outline">{article.secondaryCategory}</Badge>
+          <Badge variant="default">{article.primary_category}</Badge>
+          <Badge variant="outline">{article.secondary_category}</Badge>
         </div>
         <div className="flex-col mt-4 text-sm text-gray-600">
           <div className="flex items-center space-x-1">
@@ -619,19 +610,19 @@ function ArticleDisplay({ article }: { article: Article }) {
         <div className="mt-8 space-y-4">
           <div>
             <h3 className="text-lg font-semibold">SEO-Friendly Title</h3>
-            <p>{article.seoTitle}</p>
+            <p>{article.seo_title}</p>
           </div>
           <div>
             <h3 className="text-lg font-semibold">Meta Information</h3>
             <ul className="list-disc pl-5">
               <li>
-                <strong>Title:</strong> {article.metaTitle}
+                <strong>Title:</strong> {article.meta_title}
               </li>
               <li>
-                <strong>Description:</strong> {article.metaDescription}
+                <strong>Description:</strong> {article.meta_description}
               </li>
               <li>
-                <strong>Keywords:</strong> {article.metaKeywords.join(", ")}
+                <strong>Keywords:</strong> {article.meta_keywords.join(", ")}
               </li>
             </ul>
           </div>
