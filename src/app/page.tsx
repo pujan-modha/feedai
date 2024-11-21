@@ -49,7 +49,7 @@ interface XMLAttributes {
   // category: string;
   author: string;
   pubDate: string;
-  lastModified: string;
+  // lastModified: string;
   summary: string;
   content: string;
 }
@@ -125,7 +125,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     // "Article Category",
     "Article Author",
     "Article Creation Date",
-    "Article Last Modified Date",
+    // "Article Last Modified Date",
     "Article Summary",
     "Article Content",
   ];
@@ -139,7 +139,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     // "Article Category": "category",
     "Article Author": "author",
     "Article Creation Date": "pubDate",
-    "Article Last Modified Date": "lastModified",
+    // "Article Last Modified Date": "lastModified",
     "Article Summary": "summary",
     "Article Content": "content",
   };
