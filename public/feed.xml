@@ -7,33 +7,7 @@
     <language>en-us</language>
     <lastBuildDate>Thu, 21 Nov 2024 14:00:00 +0000</lastBuildDate>
 
-    <!-- First Item -->
-    <item>
-      <title>Post 1: NASA's Journey to Mars</title>
-      <link>https://example.com/nasa-mars</link>
-      <guid isPermaLink="true">https://example.com/nasa-mars</guid>
-      <pubDate>Thu, 21 Nov 2024 13:30:00 +0000</pubDate>
-      <description>NASA's latest developments in Mars exploration.</description>
-      <content:encoded>
-        <![CDATA[
-          <div>
-            <h1>NASA's Journey to Mars</h1>
-            
-            <!-- Embedded Image -->
-            <p>Take a look at the Red Planet:</p>
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/OSIRIS_Mars_true_color.jpg/220px-OSIRIS_Mars_true_color.jpg" alt="Mars Surface" style="max-width: 100%; height: auto;" />
-
-            <!-- Embedded Twitter Post -->
-            <p>Latest updates from NASA:</p>
-            <blockquote class="twitter-tweet"><p lang="en" dir="ltr">Wow, Germany carries a lot of the cost of the EU! <a href="https://t.co/DPHUz2nWX0">pic.twitter.com/DPHUz2nWX0</a></p>&mdash; Elon Musk (@elonmusk) <a href="https://twitter.com/elonmusk/status/1859477251831533763?ref_src=twsrc%5Etfw">November 21, 2024</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
-
-            <!-- Embedded Iframe -->
-            <p>Watch this incredible Mars rover video:</p>
-            <iframe width="560" height="315" src="https://www.youtube.com/embed/tt_zIzDWOEc?si=kUTI47uqAY4dmG1G" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-          </div>
-        ]]>
-      </content:encoded>
-    </item>
+    
 
     <!-- Second Item -->
     <item>
@@ -51,16 +25,48 @@
             <p>Solar farms are transforming landscapes:</p>
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Desert_Sunlight_Solar_Farm_2016.jpg/1280px-Desert_Sunlight_Solar_Farm_2016.jpg" alt="Solar Farm" style="max-width: 100%; height: auto;" />
 
-            <!-- Embedded Twitter Post -->
+            <!-- Embedded Twitter Post 1 -->
             <p>What the experts are saying:</p>
-            <blockquote class="twitter-tweet">
-              <p lang="en" dir="ltr">Renewable energy is now cheaper than fossil fuels. Here's how solar power is leading the charge: <a href="https://www.iea.org/reports/world-energy-outlook-2024">https://www.iea.org/reports/world-energy-outlook-2024</a></p>&mdash; IEA (@IEA) <a href="https://twitter.com/IEA/status/1450139986894243842">October 17, 2024</a>
-            </blockquote>
-            <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+            <blockquote class="twitter-tweet"><p lang="en" dir="ltr">just setting up my twttr</p>&mdash; jack (@jack) <a href="https://twitter.com/jack/status/20?ref_src=twsrc%5Etfw">March 21, 2006</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
+
+            <!-- Embedded Twitter Post 2 -->
+            <p>What the students are saying:</p>
+            <blockquote class="twitter-tweet"><p lang="en" dir="ltr">just setting up my university</p>&mdash; jack (@jack) <a href="https://twitter.com/jack/status/27?ref_src=twsrc%5Etfw">March 27, 2005</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
             <!-- Embedded Iframe -->
             <p>Learn more from this documentary:</p>
             <iframe width="560" height="315" src="https://www.youtube.com/embed/xKxrkht7CpY" frameborder="0" allowfullscreen></iframe>
+          </div>
+        ]]>
+      </content:encoded>
+    </item>
+
+    <!-- First Item -->
+    <item>
+      <title>Post 1: NASA's Journey to Mars</title>
+      <link>https://example.com/nasa-mars</link>
+      <guid isPermaLink="true">https://example.com/nasa-mars</guid>
+      <pubDate>Thu, 21 Nov 2024 13:30:00 +0000</pubDate>
+      <description>NASA's latest developments in Mars exploration.</description>
+      <content:encoded>
+        <![CDATA[
+          <div>
+            <h1>NASA's Journey to Mars</h1>
+            
+            <!-- Embedded Image -->
+            <p>Take a look at the Red Planet:</p>
+            <img src="https://mars.nasa.gov/system/news_items/main_images/9627_PIA25681-FigureA-web.jpg" alt="Mars Surface" style="max-width: 100%; height: auto;" />
+
+            <!-- Embedded Twitter Post -->
+            <p>Latest updates from NASA:</p>
+            <blockquote class="twitter-tweet">
+              <p lang="en" dir="ltr">Mars is calling! Explore NASA's plan for future human exploration of the Red Planet: <a href="https://mars.nasa.gov/">https://mars.nasa.gov/</a></p>&mdash; NASA (@NASA) <a href="https://twitter.com/NASA/status/1666863660164249601">June 7, 2023</a>
+            </blockquote>
+            <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+            <!-- Embedded Iframe -->
+            <p>Watch this incredible Mars rover video:</p>
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/M4tdMR5HLtg" frameborder="0" allowfullscreen></iframe>
           </div>
         ]]>
       </content:encoded>

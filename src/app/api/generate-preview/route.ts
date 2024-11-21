@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   const blockquote_arr: Array<string> = [];
 
   let curr_content = parsedFeed.rss.channel.item[0][feed_items.content];
-  console.log(curr_content);
+  // console.log(curr_content);
   const $ = cheerio.load(curr_content);
   $("img").each((_, img) => {
     const src = $(img).attr("src");
@@ -53,15 +53,22 @@ export async function POST(req: Request) {
     if (src) links_arr.push(src);
   });
 
-  $("blockquote").each((_, blockquote) => {
-    const blockquoteString = $.html(blockquote);
-    blockquote_arr.push(blockquoteString);
-  });
+  const blockquoteScriptRegex =
+    /<blockquote[^>]*>.*?<\/blockquote>\s*<script[^>]*>.*?<\/script>/gis;
+
+  const matches = curr_content.match(blockquoteScriptRegex);
+
+  if (matches) {
+    matches.forEach((match: string) => {
+      blockquote_arr.push(match);
+    });
+  }
+
   curr_content = curr_content
     .replace(/<img[^>]*>/gi, "[IMAGE]")
     .replace(/<iframe[^>]*>.*?<\/iframe>/gi, "[IFRAME]")
-    .replace(/<blockquote[^>]*>.*?<\/blockquote>/gi, "[BLOCKQUOTE]");
-  console.log(curr_content);
+    .replace(blockquoteScriptRegex, "[BLOCKQUOTE]");
+  // console.log(curr_content);
   const generated_articles_arr = await generate_articles(
     feed_config.num_articles,
     feed_config.selected_languages,
@@ -76,7 +83,7 @@ export async function POST(req: Request) {
   links_arr.length = 0;
   blockquote_arr.length = 0;
 
-  console.log(generated_articles_arr);
+  // console.log(generated_articles_arr);
 
   return NextResponse.json({
     success: true,
@@ -118,7 +125,7 @@ async function generate_articles(
   const categories_arr = selected_website.map((website) => {
     return website.categories;
   });
-  console.log(categories_arr);
+  // console.log(categories_arr);
 
   for (let i = 0; i < aritcle_count; i++) {
     try {
@@ -127,23 +134,43 @@ async function generate_articles(
         categories_arr[i],
         prompt,
         images_arr,
-        links_arr,
-        blockquote_arr
+        links_arr
       );
-      console.log(images_arr);
       const completion_response = await completion(curr_prompt, content);
-      const completed_content_obj = JSON.parse(
-        completion_response.choices[0].message.content
-      );
+
+      let content_str = completion_response.choices[0].message.content;
+      let completed_content_obj;
+
+      try {
+        completed_content_obj = JSON.parse(content_str);
+      } catch (parseError) {
+        console.error("Error parsing JSON:", parseError);
+        console.log("Raw content:", content_str);
+        continue; // Skip this iteration if JSON parsing fails
+      }
+
+      blockquote_arr.forEach((embed: string) => {
+        if (typeof completed_content_obj === "object") {
+          const stringified = JSON.stringify(completed_content_obj);
+          const replaced = stringified.replace(
+            "[BLOCKQUOTE]",
+            embed.replace(/"/g, '\\"')
+          );
+          completed_content_obj = JSON.parse(replaced);
+        }
+      });
+
+      console.log("Processed content object:", completed_content_obj);
+
       const usage = completion_response.usage;
 
-      console.log(completed_content_obj);
+      // console.log(completed_content_obj);
 
       const parsed_content = {
         title: completed_content_obj.rewritten_article.title,
         content: completed_content_obj.rewritten_article.content
           .flatMap((section: RewrittenArticle["content"][number]) => [
-            `<h2 class="text-lg font-semibold">${section.heading}</h2>`, // Add the heading as an <h2> tag
+            `<h2 class="text-lg font-semibold">${section.heading}</h2>`,
             ...section.paragraphs.map(
               (paragraph: string) => `<p>${paragraph}</p></br>`
             ),
@@ -161,8 +188,8 @@ async function generate_articles(
         total_tokens: usage.total_tokens,
       };
       articles_arr.push(parsed_content);
-    } catch {
-      continue;
+    } catch (error) {
+      console.error("Error:", error);
     }
   }
   return articles_arr;
