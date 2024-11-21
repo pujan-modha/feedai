@@ -236,7 +236,7 @@ Output Format (Do not use backticks anywhere in the json and do not give respons
       {
         "heading": "Main Heading for Section",
         "paragraphs": [
-          "Paragraph 1 of this section goes here including if any image tags and/or embed tags (${images_arr.join(
+          "Paragraph 1 of this section goes here must including if any image html tags and/or embed html tags (${images_arr.join(
             " ,"
           )}, ${links_arr.join(" ,")} and ${blockquote_arr.join(
     " ,"

@@ -46,7 +46,7 @@ interface XMLAttributes {
   link: string;
   thumbnailimage: string;
   description: string;
-  category: string;
+  // category: string;
   author: string;
   pubDate: string;
   lastModified: string;
@@ -64,7 +64,7 @@ export default function FeedAI() {
     link: "",
     thumbnailimage: "",
     description: "",
-    category: "",
+    // category: "",
     author: "",
     pubDate: "",
     lastModified: "",
@@ -124,12 +124,12 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     "Article URL",
     "Thumbnail Image",
     "Article Description",
-    "Article Category",
+    // "Article Category",
     "Article Author",
     "Article Creation Date",
     "Article Last Modified Date",
     "Article Summary",
-    "Content Encoded",
+    "Article Content",
   ];
 
   const fieldToAttributeMap: Record<string, keyof XMLAttributes> = {
@@ -138,12 +138,12 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     "Article URL": "link",
     "Thumbnail Image": "thumbnailimage",
     "Article Description": "description",
-    "Article Category": "category",
+    // "Article Category": "category",
     "Article Author": "author",
     "Article Creation Date": "pubDate",
     "Article Last Modified Date": "lastModified",
     "Article Summary": "summary",
-    "Content Encoded": "content",
+    "Article Content": "content",
   };
 
   const sanitizeHtml = (html: string): string => {
@@ -265,7 +265,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
         description: xmlAttributes.description,
         link: xmlAttributes.link,
         thumbnail_image: xmlAttributes.thumbnailimage,
-        category: xmlAttributes.category,
+        // category: xmlAttributes.category,
         author: xmlAttributes.author,
         published_at: formatDate(xmlAttributes.pubDate),
         summary: xmlAttributes.summary,
@@ -289,7 +289,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     setError(null);
 
     try {
-      const response = await fetch("/api/generate", {
+      const response = await fetch("/api/generate-preview", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -300,7 +300,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
           language: selectedLanguages,
           website_categories: selectedCategories,
           userPrompt: userprompt,
-          temperature: 0.5,
+          temperature: 0.1,
           cron_timing: cronTiming,
         }),
       });
@@ -473,19 +473,19 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
         </div>
       </div>
 
-      <Button
+      {/* <Button
         className="w-full mt-4"
         onClick={handleSave}
         disabled={isSaving || !xmlAttributes.guid || !xmlAttributes.title}
       >
         {isSaving ? "Saving..." : "Save Article"}
-      </Button>
+      </Button> */}
 
       <div className="mt-8">
         <h2 className="text-xl font-bold mb-4">Generate Articles</h2>
         <form onSubmit={handleGenerateArticles} className="space-y-4">
           <div>
-            <Label htmlFor="numArticles">Number of Articles</Label>
+            <Label htmlFor="numArticles">Number of Versions</Label>
             <Select
               defaultValue={numArticles.toString()}
               onValueChange={(val) => setNumArticles(parseInt(val))}
@@ -553,25 +553,6 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="grid w-full">
-                <Label htmlFor={`categories-${index}`} className="mb-1">
-                  Categories {index + 1}
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {selectedCategories[`website_${index + 1}`]?.map(
-                    (category) => (
-                      <Badge
-                        key={category}
-                        variant="secondary"
-                        className="capitalize"
-                      >
-                        {category}
-                      </Badge>
-                    )
-                  )}
-                </div>
-              </div>
             </div>
           ))}
 
@@ -582,37 +563,21 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
               placeholder="Enter your prompt here"
               value={userprompt}
               onChange={(e) => setUserPrompt(e.target.value)}
-              className="w-full"
+              className="w-full h-64"
             />
           </div>
-          <div>
-            <Label htmlFor="cron">Cron Timing</Label>
-            <Select
-              defaultValue={cronTiming}
-              onValueChange={(val) => setCronTiming(val)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Cron timing" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1</SelectItem>
-                <SelectItem value="2">2</SelectItem>
-                <SelectItem value="3">3</SelectItem>
-                <SelectItem value="4">4</SelectItem>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="6">6</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex gap-4">
+            <Button type="submit" disabled={isLoading} className="w-full">
+              {isLoading ? "Generating..." : "Generate Preview"}
+            </Button>
+            <Button onClick={handleSaveFeed} className="w-full">Save Task</Button>
           </div>
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? "Generating..." : "Generate Articles"}
-          </Button>
         </form>
       </div>
 
       {generatedArticles.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-xl font-bold mb-4">Generated Articles</h2>
+          <h2 className="text-xl font-bold mb-4">Generated Versions</h2>
           <div className="lg:flex gap-4">
             {generatedArticles.map((article, index) => (
               <ArticleDisplay key={index} article={article} />
@@ -620,7 +585,6 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
           </div>
         </div>
       )}
-      <Button onClick={handleSaveFeed}>Submit </Button>
     </div>
   );
 }

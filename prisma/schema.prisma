@@ -63,3 +63,9 @@ model generated_articles {
   primary_category   String?   @db.VarChar(255)
   secondary_category String?   @db.VarChar(255)
 }
+
+model cron_logs {
+  id         String    @id @default(cuid())
+  start_time DateTime? @db.DateTime(0)
+  message    String?   @db.Text
+}
