@@ -105,7 +105,7 @@ async function completion(prompt: string, content: string) {
         { role: "system", content: prompt },
         { role: "user", content: content },
       ],
-      temperature: 0.1,
+      temperature: 0,
     }),
   });
   return response.json();
@@ -149,18 +149,38 @@ async function generate_articles(
         continue; // Skip this iteration if JSON parsing fails
       }
 
-      blockquote_arr.forEach((embed: string) => {
-        if (typeof completed_content_obj === "object") {
-          const stringified = JSON.stringify(completed_content_obj);
-          const replaced = stringified.replace(
-            "[BLOCKQUOTE]",
-            embed.replace(/"/g, '\\"')
-          );
-          completed_content_obj = JSON.parse(replaced);
-        }
-      });
+      // New function to recursively replace [BLOCKQUOTE] in the object
+      const replaceBlockquotes = (obj: any): any => {
+        let blockquoteIndex = 0;
+        const replace = (item: any): any => {
+          if (typeof item === "string") {
+            return item.replace(/\[BLOCKQUOTE\]/g, () => {
+              const replacement =
+                blockquote_arr[blockquoteIndex] || "[BLOCKQUOTE]";
+              blockquoteIndex = (blockquoteIndex + 1) % blockquote_arr.length;
+              return replacement;
+            });
+          } else if (Array.isArray(item)) {
+            return item.map(replace);
+          } else if (typeof item === "object" && item !== null) {
+            const newObj: { [key: string]: any } = {};
+            for (const [key, value] of Object.entries(item)) {
+              newObj[key] = replace(value);
+            }
+            return newObj;
+          }
+          return item;
+        };
+        return replace(obj);
+      };
 
-      console.log("Processed content object:", completed_content_obj);
+      // Replace [BLOCKQUOTE] in the entire object
+      completed_content_obj = replaceBlockquotes(completed_content_obj);
+
+      console.log(
+        "Processed content object:",
+        JSON.stringify(completed_content_obj, null, 2)
+      );
 
       const usage = completion_response.usage;
 

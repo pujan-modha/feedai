@@ -107,12 +107,12 @@ async function completion(prompt: string, content: string) {
       "Authorization": `Bearer ${openai_key}`,
     },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: [
         { role: "system", content: prompt },
         { role: "user", content: content },
       ],
-      temperature: 0.1,
+      temperature: 0,
     }),
   });
   return response.json();
