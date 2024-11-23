@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
       data: {
         name,
         url,
+        slug: url.replace(/https?:\/\//, "").replace(/\//g, "-"),
         languages: languages,
         categories: categories,
       },

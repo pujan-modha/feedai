@@ -36,6 +36,7 @@ export async function GET() {
       data: {
         status: "in-progress",
         start_time: new Date(),
+        modified_at: new Date(),  
       },
     });
 

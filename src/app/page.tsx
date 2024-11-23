@@ -12,10 +12,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardTitle, CardHeader, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 interface Website {
   id: string;
   name: string;
@@ -55,6 +55,7 @@ interface XMLAttributes {
 }
 
 export default function FeedAI() {
+  const { toast } = useToast();
   const [feedUrl, setFeedUrl] = useState("https://chopaltv.com/feed.xml");
   const [latestArticle, setLatestArticle] = useState<Article | null>(null);
   const [articleCount, setArticleCount] = useState(0);
@@ -64,18 +65,20 @@ export default function FeedAI() {
     link: "",
     thumbnailimage: "",
     description: "",
-    // category: "",
     author: "",
     pubDate: "",
-    lastModified: "",
     summary: "",
     content: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState({
+    fetchFeed: false,
+    generatePreview: false,
+    saveFeed: false,
+  });
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [hasSaved, setHasSaved] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
+  const [haspreviewed, setHasPreviewed] = useState(false);
   const [numArticles, setNumArticles] = useState(1);
   const [website, setWebsite] = useState<Website[]>([]);
   const [selectedWebsites, setSelectedWebsites] = useState<
@@ -84,13 +87,9 @@ export default function FeedAI() {
   const [selectedLanguages, setSelectedLanguages] = useState<
     Record<string, string>
   >({});
-  const [selectedCategories, setSelectedCategories] = useState<
-    Record<string, string[]>
-  >({});
-  const [cronTiming, setCronTiming] = useState<string>("1");
-  const [userprompt, setUserPrompt] =
-    useState(
-`Rewrite the input article while retaining all factual information without altering any facts.
+
+  const [userprompt, setUserPrompt] = useState(
+    `Rewrite the input article while retaining all factual information without altering any facts.
 The output must be in language specified by the user.
 The output article should appear as if written by a human, not a machine.
 The length of the rewritten article should be between 400 and 1500 words.
@@ -112,7 +111,7 @@ Highlight the primary and secondary categories according to the content.
 
 Additional Guidelines:
 Ensure all output articles are SEO-friendly and adhere to Google News and search guidelines.`
-);
+  );
   const [generatedArticles, setGeneratedArticles] = useState<Article[]>([]);
   const [task_config, setTaskConfig] = useState({});
 
@@ -163,6 +162,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
   };
 
   const handleFieldMapping = (field: string, value: string) => {
+    // Check if all fields have been filled in xmlatteibutes
     const attributeKey = fieldToAttributeMap[field];
     if (attributeKey) {
       const sanitizedValue =
@@ -176,7 +176,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
 
   const handleFetchFeed = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsLoading({ ...isLoading, fetchFeed: true });
     setError(null);
     setSaveSuccess(false);
     console.log(feedUrl);
@@ -197,22 +197,28 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
       setLatestArticle(data.article_feed);
       setArticleCount(data.feed_length);
       console.log("Parsed Data:", data);
+      toast({
+        title: "Feed fetched sucessfuly!",
+        description: feedUrl,
+      });
     } catch (error) {
       console.error("Error:", error);
-      setError(
-        error instanceof Error ? error.message : "An unknown error occurred"
-      );
+      toast({
+        title: "Something went wrong!",
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      });
     } finally {
-      setIsLoading(false);
+      setIsLoading({ ...isLoading, fetchFeed: false });
     }
   };
 
   const handleSaveFeed = async (e: React.FormEvent) => {
     try {
       e.preventDefault();
-      setIsSaving(true);
       setError(null);
       setSaveSuccess(false);
+      setIsLoading({ ...isLoading, saveFeed: true });
       const task_obj = {
         article_count: articleCount,
         feed_url: feedUrl,
@@ -232,49 +238,28 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
         throw new Error(data.error);
       }
       setSaveSuccess(true);
+      toast({
+        title: "Feed imported successfully!",
+        description: "Feed articles have been imported and saved",
+      });
+      handleReset()
     } catch (error) {
       console.error("Error:", error);
+      toast({
+        title: "Something went wrong!",
+        variant: "destructive",
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      });
+    } finally {
+      setIsLoading({ ...isLoading, saveFeed: false });
     }
   };
 
-  // const handleSave = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setIsSaving(true);
-  //   setError(null);
-  //   setSaveSuccess(false);
-
-  //   try {
-  //     if (!xmlAttributes.guid || !xmlAttributes.title) {
-  //       throw new Error("Title and GUID are required fields");
-  //     }
-
-  //     const sanitizedData = {
-  //       guid: xmlAttributes.guid,
-  //       title: xmlAttributes.title,
-  //       description: xmlAttributes.description,
-  //       link: xmlAttributes.link,
-  //       thumbnail_image: xmlAttributes.thumbnailimage,
-  //       // category: xmlAttributes.category,
-  //       author: xmlAttributes.author,
-  //       published_at: formatDate(xmlAttributes.pubDate),
-  //       summary: xmlAttributes.summary,
-  //       content_encoded: sanitizeHtml(xmlAttributes.content),
-  //     };
-  //     setSaveSuccess(true);
-  //     setHasSaved(true);
-  //   } catch (error) {
-  //     console.error("Error saving article:", error);
-  //     setError(
-  //       error instanceof Error ? error.message : "Failed to save article"
-  //     );
-  //   } finally {
-  //     setIsSaving(false);
-  //   }
-  // };
-
   const handleGenerateArticles = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsLoading({ ...isLoading, generatePreview: true });
+    setHasPreviewed(false);
     setError(null);
 
     try {
@@ -299,13 +284,20 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
       }
       console.log(data.preview_result_articles_arr);
       setGeneratedArticles(data.preview_result_articles_arr);
+      setHasPreviewed(true);
+      toast({
+        title: "Preview generated successfully!",
+        description: "Preview articles are ready to be imported",
+      });
     } catch (error) {
       console.error("Error:", error);
-      setError(
-        error instanceof Error ? error.message : "An unknown error occurred"
-      );
+      toast({
+        title: "Something went wrong!",
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
+      });
     } finally {
-      setIsLoading(false);
+      setIsLoading({ ...isLoading, generatePreview: false });
     }
   };
 
@@ -334,16 +326,38 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
 
       setSelectedWebsites(initialSelectedWebsites);
       setSelectedLanguages(initialSelectedLanguages);
-      setSelectedCategories(initialSelectedCategories);
     } catch (error) {
       console.error("Error fetching websites:", error);
       setError("Failed to fetch websites");
     }
   };
 
+  const handleReset = () => {
+    setHasFetched(false);
+    setHasPreviewed(false);
+    setIsLoading({ fetchFeed: false, generatePreview: false, saveFeed: false });
+    setError(null);
+    setSaveSuccess(false);
+    setTaskConfig({});
+    setGeneratedArticles([]);
+    setSelectedWebsites({});
+    setSelectedLanguages({});
+    setArticleCount(1);
+    setFeedUrl("");
+  };
+
   useEffect(() => {
     handleFetchWebsites();
   }, []);
+
+  useEffect(() => {
+    if (
+      Object.values(xmlAttributes).filter((val) => val.trim() !== "").length ===
+      fields.length
+    ) {
+      setHasFetched(true);
+    }
+  }, [xmlAttributes]);
 
   useEffect(() => {
     setTaskConfig({
@@ -369,32 +383,12 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
         ...prev,
         [websiteKey]: selectedSite.languages.split(",")[0].trim(),
       }));
-
-      setSelectedCategories((prev) => ({
-        ...prev,
-        [websiteKey]: selectedSite.categories
-          .split(",")
-          .map((cat) => cat.trim()),
-      }));
     }
   };
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">FeedAI</h1>
-
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {saveSuccess && (
-        <Alert className="mb-4">
-          <AlertDescription>Article saved successfully!</AlertDescription>
-        </Alert>
-      )}
-
       <form onSubmit={handleFetchFeed} className="space-y-4">
         <div>
           <Label htmlFor="feedUrl">RSS Feed URL</Label>
@@ -405,8 +399,12 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
             onChange={(e) => setFeedUrl(e.target.value)}
             required
           />
-          <Button className="w-full mt-2" type="submit" disabled={isLoading}>
-            {isLoading ? "Fetching..." : "Fetch Feed"}
+          <Button
+            className="w-full mt-2"
+            type="submit"
+            disabled={isLoading["fetchFeed"]}
+          >
+            {isLoading["fetchFeed"] ? "Fetching..." : "Fetch Feed"}
           </Button>
         </div>
       </form>
@@ -518,6 +516,11 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
                   Language {index + 1}
                 </Label>
                 <Select
+                  defaultValue={selectedWebsites[
+                    `website_${index + 1}`
+                  ]?.languages
+                    .split(",")[0]
+                    .trim()}
                   value={selectedLanguages[`website_${index + 1}`]}
                   onValueChange={(val) => {
                     setSelectedLanguages((prev) => ({
@@ -554,11 +557,14 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
             />
           </div>
           <div className="flex gap-4">
-            <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? "Generating..." : "Generate Preview"}
-            </Button>
-            <Button onClick={handleSaveFeed} className="w-full">
-              Start Importing
+            <Button
+              type="submit"
+              disabled={!hasFetched || isLoading["generatePreview"]}
+              className="w-full"
+            >
+              {isLoading["generatePreview"]
+                ? "Generating..."
+                : "Generate Preview"}
             </Button>
           </div>
         </form>
@@ -574,6 +580,15 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
           </div>
         </div>
       )}
+      <Button
+        onClick={handleSaveFeed}
+        className={cn("w-full mt-8", {
+          hidden: !haspreviewed,
+        })}
+        disabled={!haspreviewed || isLoading["saveFeed"]}
+      >
+        {isLoading["saveFeed"] ? "Importing..." : "Start Importing"}
+      </Button>
     </div>
   );
 }

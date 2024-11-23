@@ -19,6 +19,23 @@ export async function POST(req: Request) {
       );
     }
     console.log(task_obj);
+
+    const existingTask = await prisma.tasks.findFirst({
+      where: {
+        feed_url: task_obj.feed_url,
+        status: {
+          not: "completed",
+        },
+      },
+    });
+
+    if (existingTask) {
+      return NextResponse.json(
+        { error: "Task already exists for this feed URL" },
+        { status: 400 }
+      );
+    }
+
     // Prepare data for insertion, assigning default values where necessary
     const newTaskData = {
       feed_url: task_obj.feed_url,
@@ -26,6 +43,8 @@ export async function POST(req: Request) {
       feed_config: JSON.stringify(task_obj.feed_config),
       articles_count: task_obj.article_count,
       status: "incomplete",
+      created_at: new Date(),
+      modified_at: new Date(),
     };
 
     // Insert the new task into the database
