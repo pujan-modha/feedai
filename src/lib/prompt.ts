@@ -23,11 +23,10 @@ Instruction for Handling Images and Embeds:
     Do not inculde [IMAGE] and [IFRAME] placeholders in the output.
     Must include all images and embeds in the output in the same order as they appeared in the input.
     The input also contains placeholders for blockquotes such as [BLOCKQUOTE]. Ensure that:
-    Keep [BLOCKQUOTE] placeholders in the output.
+    Keep [BLOCKQUOTE] placeholders in the output only if they appear in the input.
     The count of Blockquotes in the output matches exactly the count of [BLOCKQUOTE] in the input.
     No extra blockquotes are added or removed.
     Blockquotes are placed in appropriate paragraphs to maintain logical flow, but the overall count remains consistent with the input.
-    You must inculde [BLOCKQUOTE] placeholders in the output.
     Must include all blockquotes in the output in the same order as they appeared in the input.
 Output Format (Do not use backticks anywhere in the json and do not give response in markdown just give plain text):
 {

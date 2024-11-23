@@ -3,6 +3,7 @@ import { XMLParser } from "fast-xml-parser";
 import * as cheerio from "cheerio";
 import { current_prompt } from "@/lib/prompt";
 
+
 const parser = new XMLParser({ ignoreAttributes: false });
 
 interface Website {
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
   });
 
   const blockquoteScriptRegex =
-    /<blockquote[^>]*>.*?<\/blockquote>\s*<script[^>]*>.*?<\/script>/gis;
+    /<blockquote[^>]*>[\s\S]*?<\/blockquote>(?:\s*<script[^>]*?><\/script>)?/g;
 
   const matches = curr_content.match(blockquoteScriptRegex);
 
@@ -63,12 +64,18 @@ export async function POST(req: Request) {
       blockquote_arr.push(match);
     });
   }
-
+  
   curr_content = curr_content
     .replace(/<img[^>]*>/gi, "[IMAGE]")
     .replace(/<iframe[^>]*>.*?<\/iframe>/gi, "[IFRAME]")
     .replace(blockquoteScriptRegex, "[BLOCKQUOTE]");
   // console.log(curr_content);
+
+    if(images_arr.length === 0){
+      images_arr.push("/placeholder.svg")
+      curr_content = "[IMAGE]" + curr_content
+    }
+
   const generated_articles_arr = await generate_articles(
     feed_config.num_articles,
     feed_config.selected_languages,
@@ -136,9 +143,13 @@ async function generate_articles(
         images_arr,
         links_arr
       );
+      if(images_arr.length === 0){
+        images_arr.push("/placeholder.svg")
+      }
+      console.log(content)
       const completion_response = await completion(curr_prompt, content);
-
-      let content_str = completion_response.choices[0].message.content;
+      console.log("Blockquote array",blockquote_arr);
+      const content_str = completion_response.choices[0].message.content;
       let completed_content_obj;
 
       try {
@@ -146,10 +157,9 @@ async function generate_articles(
       } catch (parseError) {
         console.error("Error parsing JSON:", parseError);
         console.log("Raw content:", content_str);
-        continue; // Skip this iteration if JSON parsing fails
+        continue;
       }
 
-      // New function to recursively replace [BLOCKQUOTE] in the object
       const replaceBlockquotes = (obj: any): any => {
         let blockquoteIndex = 0;
         const replace = (item: any): any => {
@@ -177,14 +187,15 @@ async function generate_articles(
       // Replace [BLOCKQUOTE] in the entire object
       completed_content_obj = replaceBlockquotes(completed_content_obj);
 
-      console.log(
-        "Processed content object:",
-        JSON.stringify(completed_content_obj, null, 2)
-      );
+      // console.log(
+      //   "Processed content object:",
+      //   JSON.stringify(completed_content_obj, null, 2)
+      // );
 
       const usage = completion_response.usage;
 
-      // console.log(completed_content_obj);
+      console.log(completed_content_obj);
+      
 
       const parsed_content = {
         title: completed_content_obj.rewritten_article.title,

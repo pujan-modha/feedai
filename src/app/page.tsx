@@ -558,7 +558,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
               {isLoading ? "Generating..." : "Generate Preview"}
             </Button>
             <Button onClick={handleSaveFeed} className="w-full">
-              Save Task
+              Start Importing
             </Button>
           </div>
         </form>
