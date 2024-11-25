@@ -16,20 +16,13 @@ export async function POST(req: Request) {
     const response = await fetch(rss_article_link);
     const feed = await response.text();
     const parsedFeed = parser.parse(feed);
-    
+
     console.log(typeof parsedFeed.rss.channel.item[0].guid);
     if (typeof parsedFeed.rss.channel.item[0].guid === "string") {
-      parsedFeed.rss.channel.item[0].guid = parsedFeed.rss.channel.item[0].guid
-        .split("/")
-        .pop()
-        .split(".")[0];
+      parsedFeed.rss.channel.item[0].guid = parsedFeed.rss.channel.item[0].guid;
     } else {
-      parsedFeed.rss.channel.item[0].guid = parsedFeed.rss.channel.item[0].guid[
-        "#text"
-      ]
-        .split("/")
-        .pop()
-        .split(".")[0];
+      parsedFeed.rss.channel.item[0].guid =
+        parsedFeed.rss.channel.item[0].guid["#text"];
     }
     return NextResponse.json(
       {

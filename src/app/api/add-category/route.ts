@@ -3,10 +3,10 @@ import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, slug } = await req.json();
-    if (!name || !slug)
+    const { name, slug, value } = await req.json();
+    if (!name || !slug || !value)
       return NextResponse.json(
-        { error: "Name and Slug are required" },
+        { error: "Name, Value and Slug are required" },
         { status: 400 }
       );
     console.log(name, slug);
@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
       data: {
         name,
         slug,
+        value,
       },
     });
     return NextResponse.json({

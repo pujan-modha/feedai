@@ -132,12 +132,20 @@ async function generate_articles(
   const categories_arr = selected_website.map((website) => {
     return website.categories;
   });
-  // console.log(categories_arr);
+  console.log(selected_website);
+  // const lang = selected_website.map((website) => {
+  //   return website.languages.split(",")[0].trim();
+  // })
+  // Take all the selected websites, extract their first element from the languages array
+  const lang = selected_website.map((website) => {
+    return website.languages.split(",")[0].trim();
+  });
+  console.log(categories_arr);
 
   for (let i = 0; i < aritcle_count; i++) {
     try {
       const curr_prompt = current_prompt(
-        selected_language[i],
+        lang[i],
         categories_arr[i],
         prompt,
         images_arr,

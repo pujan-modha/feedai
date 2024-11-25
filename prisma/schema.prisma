@@ -10,6 +10,7 @@ datasource db {
 model categories {
   id          Int       @id @default(autoincrement())
   name        String    @db.VarChar(255)
+  value       String?    @db.Text
   slug        String    @unique(map: "slug") @db.VarChar(255)
   parent_id   Int?
   created_at  DateTime? @db.DateTime(0)
@@ -26,12 +27,15 @@ model languages {
 model websites {
   id          Int      @id @default(autoincrement())
   name        String   @db.VarChar(255)
-  slug        String?   @unique(map: "slug") @db.VarChar(255)
   url         String   @db.VarChar(255)
   languages   String?  @default("English") @db.VarChar(200)
   created_at  DateTime @default(now()) @db.DateTime(0)
   modified_at DateTime @default(now()) @db.DateTime(0)
   categories  String?  @db.VarChar(255)
+  slug        String?  @unique(map: "slug") @db.VarChar(255)
+  description String?  @db.Text
+  author      String?  @db.VarChar(255)
+  thumb       String?  @db.Text
 }
 
 model tasks {
@@ -52,7 +56,6 @@ model tasks {
 model generated_articles {
   id                 Int       @id @default(autoincrement())
   task_id            Int
-  parent_guid        String?   @db.VarChar(255)
   title              String    @db.VarChar(255)
   content            String    @db.Text
   created_at         DateTime? @default(now()) @db.DateTime(0)
@@ -64,6 +67,7 @@ model generated_articles {
   summary            String?   @db.Text
   primary_category   String?   @db.VarChar(255)
   secondary_category String?   @db.VarChar(255)
+  parent_guid        String?   @db.VarChar(255)
 }
 
 model cron_logs {

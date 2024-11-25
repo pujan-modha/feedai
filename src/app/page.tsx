@@ -44,13 +44,13 @@ interface XMLAttributes {
   title: string;
   guid: string;
   link: string;
-  thumbnailimage: string;
+  // thumbnailimage: string;
   description: string;
   // category: string;
-  author: string;
+  // author: string;
   pubDate: string;
   // lastModified: string;
-  summary: string;
+  // summary: string;
   content: string;
 }
 
@@ -63,11 +63,11 @@ export default function FeedAI() {
     title: "",
     guid: "",
     link: "",
-    thumbnailimage: "",
+    // thumbnailimage: "",
     description: "",
-    author: "",
+    // author: "",
     pubDate: "",
-    summary: "",
+    // summary: "",
     content: "",
   });
   const [isLoading, setIsLoading] = useState({
@@ -119,13 +119,13 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     "Article Title",
     "Article GUID",
     "Article URL",
-    "Thumbnail Image",
+    // "Thumbnail Image",
     "Article Description",
     // "Article Category",
-    "Article Author",
+    // "Article Author",
     "Article Creation Date",
     // "Article Last Modified Date",
-    "Article Summary",
+    // "Article Summary",
     "Article Content",
   ];
 
@@ -133,13 +133,13 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     "Article Title": "title",
     "Article GUID": "guid",
     "Article URL": "link",
-    "Thumbnail Image": "thumbnailimage",
+    // "Thumbnail Image": "thumbnailimage",
     "Article Description": "description",
     // "Article Category": "category",
-    "Article Author": "author",
+    // "Article Author": "author",
     "Article Creation Date": "pubDate",
     // "Article Last Modified Date": "lastModified",
-    "Article Summary": "summary",
+    // "Article Summary": "summary",
     "Article Content": "content",
   };
 
@@ -315,7 +315,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
       const initialSelectedLanguages: Record<string, string> = {};
       const initialSelectedCategories: Record<string, string[]> = {};
 
-      Array.from({ length: 3 }).forEach((_, index) => {
+      Array.from({ length: 4 }).forEach((_, index) => {
         const key = `website_${index + 1}`;
         initialSelectedWebsites[key] = data[0];
         initialSelectedLanguages[key] = data[0].languages.split(",")[0].trim();
@@ -388,7 +388,6 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">FeedAI</h1>
       <form onSubmit={handleFetchFeed} className="space-y-4">
         <div>
           <Label htmlFor="feedUrl">RSS Feed URL</Label>
@@ -449,7 +448,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
 
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">RSS FEED Preview</h2>
-            <Card className="p-4 h-[400px] overflow-auto">
+            <Card className="p-4 h-auto overflow-auto">
               <pre className="text-sm">
                 {JSON.stringify(xmlAttributes, null, 2)}
               </pre>
@@ -482,6 +481,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
                 <SelectItem value="1">1</SelectItem>
                 <SelectItem value="2">2</SelectItem>
                 <SelectItem value="3">3</SelectItem>
+                <SelectItem value="4">4</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -511,7 +511,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
                 </Select>
               </div>
 
-              <div className="grid w-full">
+              {/* <div className="grid w-full">
                 <Label htmlFor={`language-${index}`} className="mb-1">
                   Language {index + 1}
                 </Label>
@@ -542,7 +542,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
                       ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
             </div>
           ))}
 
@@ -573,7 +573,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
       {generatedArticles.length > 0 && (
         <div className="mt-8">
           <h2 className="text-xl font-bold mb-4">Generated Versions</h2>
-          <div className="lg:flex gap-4">
+          <div className="grid grid-cols-2 gap-8">
             {generatedArticles.map((article, index) => (
               <ArticleDisplay key={index} article={article} />
             ))}
@@ -595,7 +595,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
 
 function ArticleDisplay({ article }: { article: Article }) {
   return (
-    <Card className="w-full max-w-4xl mx-auto my-8">
+    <Card className="w-full max-w-full mx-auto">
       <CardHeader>
         <CardTitle>{article.title}</CardTitle>
         <div className="flex space-x-2 mt-2">

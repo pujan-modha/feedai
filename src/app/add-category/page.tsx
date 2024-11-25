@@ -1,17 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState , useEffect} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function AddCategory() {
-  const [category, setCategory] = useState<string>("Politics");
-  const [categorySlug, setCategorySlug] = useState<string>("politics");
+  const [category, setCategory] = useState<string>("");
+  const [categorySlug, setCategorySlug] = useState<string>("");
+  const [subCategories, setSubCategories] = useState<string[]>([]);
   const [successCategoryMessage, setSuccessCategoryMessage] = useState("");
   const [successBulkCategoryMessage, setSuccessBulkCategoryMessage] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+   const fetchCategories = async () => {
+     try {
+       const response = await fetch("/api/fetch-categories");
+       if (!response.ok) {
+         throw new Error("Failed to fetch categories");
+       }
+       const data = await response.json();
+       console.log(data);
+       setCategories(data);
+     } catch (error) {
+       console.error("Error fetching categories:", error);
+     }
+   };
 
   const handleSubmitCategory = async (e: React.FormEvent<HTMLFormElement>) => {
+    console.log(category, categorySlug, subCategories.join(","));
     try {
       e.preventDefault();
       const res = await fetch("/api/add-category", {
@@ -22,19 +43,22 @@ export default function AddCategory() {
         body: JSON.stringify({
           name: category,
           slug: categorySlug,
+          value: subCategories.join(","),
         }),
       });
       if (!res.ok) {
+        console.log(await res.json());
         throw new Error("Failed to add category");
       }
       setSuccessCategoryMessage("Category added successfully");
     } catch (error) {
-      console.error("Error adding website:", error);
+      console.error("Error adding category:", error);
     }
   };
 
   const handleCategory = (category: string) => {
     setCategory(category);
+    setSubCategories(subCategories)
     const slugged_category = category.trim().toLowerCase().replaceAll(" ", "-");
     setCategorySlug(slugged_category);
   };
@@ -55,24 +79,54 @@ export default function AddCategory() {
               id="name"
               value={category}
               onChange={(e) => handleCategory(e.target.value)}
-              placeholder=""
+              placeholder="Cricket"
               required
             />
           </div>
+          {/* <div>
+            <Label htmlFor="name">Subcategories (Comma separated)</Label>
+            <Input
+              id="sub-categories"
+              value={subCategories}
+              onChange={(e) => setSubCategories(e.target.value.split(","))}
+              placeholder="local,national,international"
+              required
+            />
+          </div> */}
           <div>
             <Label htmlFor="category-slug">Category Slug</Label>
             <Input
               id="category-slug"
               value={categorySlug}
               onChange={(e) => setCategorySlug(e.target.value)}
-              placeholder=""
+              placeholder="cricket"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="website">Website</Label>
+            <Input
+              id="website"
+              value={category}
+              onChange={(e) => handleCategory(e.target.value)}
+              placeholder="https://chopaltv.in/feed.xml"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="p-category">Parent Category</Label>
+            <Input
+              id="p-category"
+              value={category}
+              onChange={(e) => handleCategory(e.target.value)}
+              placeholder="Sports"
               required
             />
           </div>
           <Button type="submit">Add Website</Button>
         </form>
       </div>
-      <div className="container mx-auto p-4">
+      {/* <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4">Add Bulk Category</h1>
         {successBulkCategoryMessage && (
           <div className="bg-green-50 p-4 rounded-md mb-4">
@@ -90,6 +144,120 @@ export default function AddCategory() {
           </div>
           <Button type="submit">Add Website</Button>
         </form>
+      </div> */}
+      <div className="flex flex-col mt-12">
+        <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+          <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+            <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr className="">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Name
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      slug
+                    </th>
+                    {/* <th
+                      scope="col"
+                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Categories
+                    </th> */}
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Subcategories
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Created At
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {categories.map((category) => (
+                    <tr key={category.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {category.name}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {category.slug}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      {/* <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {website.categories
+                                .split(",")
+                                .map(
+                                  (cat) =>
+                                    cat
+                                      .replace(/-/g, " ")
+                                      .charAt(0)
+                                      .toUpperCase() +
+                                    cat.replace(/-/g, " ").slice(1)
+                                )
+                                .join(", ")}
+                            </div>
+                          </div>
+                        </div>
+                      </td> */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {category.value}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {category.created_at}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <Button
+                          className="w-full"
+                          variant={"destructive"}
+                          // onClick={() => handleDelete(category.id)}
+                        >
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );

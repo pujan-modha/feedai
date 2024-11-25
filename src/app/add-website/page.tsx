@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Languages } from "@/lib/constants";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-}
+// interface Category {
+//   id: string;
+//   name: string;
+//   slug: string;
+// }
 
 interface Language {
   id: string;
@@ -22,31 +24,56 @@ interface Website {
   name: string;
   url: string;
   slug: string;
-  categories: string;
+  // categories: string;
   languages: string;
   created_at: string;
   modified_at: string;
 }
 
 export default function AddWebsite() {
-  const [name, setName] = useState("chatgpt");
-  const [url, setUrl] = useState("http://localhost:3000/add-website");
+  const [name, setName] = useState("Example");
+  const [url, setUrl] = useState("https://example.com/feed.xml");
   const [languages, setLanguages] = useState<Language[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [slug, setSlug] = useState("example-hindi");
+  const [desc, setDesc] = useState("Discription goes here...");
+  const [author, setAuthor] = useState("John Doe");
+  const [thumb, setThumb] = useState("https://example.com/placeholder.svg");
+  // const [categories, setCategories] = useState<Category[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  // const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [websites, setWebsites] = useState<Website[]>([]);
 
   useEffect(() => {
-    fetchCategories();
+    // fetchCategories();
     fetchLanguages();
   }, []);
 
   useEffect(() => {
     fetchWebsites();
   }, []);
+
+  const handleDelete = async (id: number) => {
+    try {
+      const response = await fetch(`/api/delete-website`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete website");
+      }
+      const data = await response.json();
+      console.log(data);
+      fetchWebsites();
+      window.location.reload();
+    } catch (error) {
+      console.error("Error deleting website:", error);
+    }
+  };
 
   const fetchWebsites = async () => {
     try {
@@ -75,31 +102,32 @@ export default function AddWebsite() {
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch("/api/add-category");
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-      }
-      const data = await response.json();
-      console.log(data);
-      setCategories(data);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      setError("Failed to fetch categories");
-    }
-  };
+  // const fetchCategories = async () => {
+  //   try {
+  //     const response = await fetch("/api/add-category");
+  //     if (!response.ok) {
+  //       throw new Error("Failed to fetch categories");
+  //     }
+  //     const data = await response.json();
+  //     console.log(data);
+  //     // setCategories(data);
+  //   } catch (error) {
+  //     console.error("Error fetching categories:", error);
+  //     setError("Failed to fetch categories");
+  //   }
+  // };
 
-  useEffect(() => {
-    console.log(selectedCategories);
-  }, [selectedCategories]);
+  // useEffect(() => {
+  //   console.log(selectedCategories);
+  // }, [selectedCategories]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    console.log("Hello" + name, url, languages, slug);
     try {
       e.preventDefault();
-      const joined_categories = selectedCategories.join(",");
+      // const joined_categories = selectedCategories.join(",");
       const joined_languages = selectedLanguages.join(",");
-      console.log(joined_categories, joined_languages);
+      console.log(name, url, joined_languages, slug, desc, author, thumb);
       const res = await fetch("/api/add-website", {
         method: "POST",
         headers: {
@@ -109,7 +137,11 @@ export default function AddWebsite() {
           name: name,
           url: url,
           languages: joined_languages,
-          categories: joined_categories,
+          slug: slug,
+          description: desc,
+          author: author,
+          thumb: thumb,
+          // categories: joined_categories,
         }),
       });
       if (!res.ok) {
@@ -120,7 +152,7 @@ export default function AddWebsite() {
       setName("");
       setUrl("");
       setSelectedLanguages([]);
-      setSelectedCategories([]);
+      // setSelectedCategories([]);
       setSuccessMessage("Website added successfully");
     } catch (error) {
       console.error("Error adding website:", error);
@@ -147,9 +179,9 @@ export default function AddWebsite() {
           />
         </div>
         <div>
-          <Label htmlFor="url">Website URL</Label>
+          <Label htmlFor="url">Website Feed URL</Label>
           <Input
-            id="url"
+            id="feed-url"
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -157,33 +189,90 @@ export default function AddWebsite() {
             required
           />
         </div>
-
+        <div>
+          <Label htmlFor="url">Website Slug</Label>
+          <Input
+            id="slug"
+            type="text"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            placeholder="example-hindi"
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="url">Website Description</Label>
+          <Input
+            id="desc"
+            type="text"
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            placeholder="Description goes here..."
+          />
+        </div>
+        <div>
+          <Label htmlFor="url">Website Author</Label>
+          <Input
+            id="author"
+            type="text"
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+            placeholder="John Doe"
+          />
+        </div>
+        <div>
+          <Label htmlFor="url">Default Thumbnail</Label>
+          <Input
+            id="thumb"
+            type="url"
+            value={thumb}
+            onChange={(e) => setThumb(e.target.value)}
+            placeholder="/placeholder.svg"
+          />
+        </div>
         <div>
           <Label htmlFor="languages">Languages</Label>
-          <div className="flex flex-wrap gap-4">
-            {languages.map((lang) => (
-              <div key={lang.id} className="flex items-center gap-2">
-                <Checkbox
-                  checked={selectedLanguages.includes(lang.name)}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedLanguages((prev) =>
-                        prev.includes(lang.name) ? prev : [...prev, lang.name]
-                      );
-                    } else {
-                      setSelectedLanguages((prev) =>
-                        prev.filter((lng) => lng !== lang.name)
-                      );
-                    }
-                  }}
+          <RadioGroup
+            className="flex flex-wrap gap-4"
+            onValueChange={(value) =>
+              setSelectedLanguages([value])
+            }
+            // onChange={(checked) => {
+            //   if (checked) {
+            //     setSelectedLanguages((prev) =>
+            //       prev.includes(lang) ? prev : [...prev, lang]
+            //     );
+            //   } else {
+            //     setSelectedLanguages((prev) =>
+            //       prev.filter((lng) => lng !== lang)
+            //     );
+            //   }
+            // }}
+          >
+            {Languages.map((lang, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <RadioGroupItem
+                  value={lang}
+                  // checked={selectedLanguages.includes(lang)}
+                  // onChange={(checked) => {
+                  //   if (checked) {
+                  //     setSelectedLanguages((prev) =>
+                  //       prev.includes(lang) ? prev : [...prev, lang]
+                  //     );
+                  //   } else {
+                  //     setSelectedLanguages((prev) =>
+                  //       prev.filter((lng) => lng !== lang)
+                  //     );
+                  //   }
+                  // }}
                 />
 
-                {lang.name}
+                {lang}
               </div>
             ))}
-          </div>
+          </RadioGroup>
         </div>
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <Label>Categories</Label>
           <div className="flex flex-wrap gap-4">
             {categories.map((category) => (
@@ -208,7 +297,7 @@ export default function AddWebsite() {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
         <Button type="submit">Add Website</Button>
       </form>
       <div className="flex flex-col mt-12">
@@ -230,12 +319,12 @@ export default function AddWebsite() {
                     >
                       URL
                     </th>
-                    <th
+                    {/* <th
                       scope="col"
                       className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
                       Categories
-                    </th>
+                    </th> */}
                     <th
                       scope="col"
                       className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -252,7 +341,7 @@ export default function AddWebsite() {
                       scope="col"
                       className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Modified At
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -277,7 +366,7 @@ export default function AddWebsite() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      {/* <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
@@ -295,7 +384,7 @@ export default function AddWebsite() {
                             </div>
                           </div>
                         </div>
-                      </td>
+                      </td> */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="ml-4">
@@ -309,7 +398,9 @@ export default function AddWebsite() {
                         {website.created_at}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {website.modified_at}
+                        <Button className="w-full" variant={"destructive"} onClick={() => handleDelete(website.id)}>
+                          Delete
+                        </Button>
                       </td>
                     </tr>
                   ))}
