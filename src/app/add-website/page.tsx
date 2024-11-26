@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Languages } from "@/lib/constants";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 
 // interface Category {
 //   id: string;
@@ -28,6 +29,9 @@ interface Website {
   languages: string;
   created_at: string;
   modified_at: string;
+  author: string;
+  description: string;
+  thumb: string;
 }
 
 export default function AddWebsite() {
@@ -35,7 +39,7 @@ export default function AddWebsite() {
   const [url, setUrl] = useState("https://example.com/feed.xml");
   const [languages, setLanguages] = useState<Language[]>([]);
   const [slug, setSlug] = useState("example-hindi");
-  const [desc, setDesc] = useState("Discription goes here...");
+  const [desc, setDesc] = useState("Description goes here...");
   const [author, setAuthor] = useState("John Doe");
   const [thumb, setThumb] = useState("https://example.com/placeholder.svg");
   // const [categories, setCategories] = useState<Category[]>([]);
@@ -179,7 +183,7 @@ export default function AddWebsite() {
           />
         </div>
         <div>
-          <Label htmlFor="url">Website Feed URL</Label>
+          <Label htmlFor="feed-url">Website Feed URL</Label>
           <Input
             id="feed-url"
             type="url"
@@ -190,7 +194,7 @@ export default function AddWebsite() {
           />
         </div>
         <div>
-          <Label htmlFor="url">Website Slug</Label>
+          <Label htmlFor="slug">Website Slug</Label>
           <Input
             id="slug"
             type="text"
@@ -201,17 +205,17 @@ export default function AddWebsite() {
           />
         </div>
         <div>
-          <Label htmlFor="url">Website Description</Label>
-          <Input
+          <Label htmlFor="desc">Website Description</Label>
+          <Textarea
             id="desc"
-            type="text"
             value={desc}
+            className="h-48"
             onChange={(e) => setDesc(e.target.value)}
             placeholder="Description goes here..."
           />
         </div>
         <div>
-          <Label htmlFor="url">Website Author</Label>
+          <Label htmlFor="author">Website Author</Label>
           <Input
             id="author"
             type="text"
@@ -221,7 +225,7 @@ export default function AddWebsite() {
           />
         </div>
         <div>
-          <Label htmlFor="url">Default Thumbnail</Label>
+          <Label htmlFor="thumb">Default Thumbnail</Label>
           <Input
             id="thumb"
             type="url"
@@ -233,40 +237,13 @@ export default function AddWebsite() {
         <div>
           <Label htmlFor="languages">Languages</Label>
           <RadioGroup
+            id="languages"
             className="flex flex-wrap gap-4"
-            onValueChange={(value) =>
-              setSelectedLanguages([value])
-            }
-            // onChange={(checked) => {
-            //   if (checked) {
-            //     setSelectedLanguages((prev) =>
-            //       prev.includes(lang) ? prev : [...prev, lang]
-            //     );
-            //   } else {
-            //     setSelectedLanguages((prev) =>
-            //       prev.filter((lng) => lng !== lang)
-            //     );
-            //   }
-            // }}
+            onValueChange={(value) => setSelectedLanguages([value])}
           >
             {Languages.map((lang, index) => (
               <div key={index} className="flex items-center gap-2">
-                <RadioGroupItem
-                  value={lang}
-                  // checked={selectedLanguages.includes(lang)}
-                  // onChange={(checked) => {
-                  //   if (checked) {
-                  //     setSelectedLanguages((prev) =>
-                  //       prev.includes(lang) ? prev : [...prev, lang]
-                  //     );
-                  //   } else {
-                  //     setSelectedLanguages((prev) =>
-                  //       prev.filter((lng) => lng !== lang)
-                  //     );
-                  //   }
-                  // }}
-                />
-
+                <RadioGroupItem value={lang} />
                 {lang}
               </div>
             ))}
@@ -303,7 +280,7 @@ export default function AddWebsite() {
       <div className="flex flex-col mt-12">
         <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-            <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+            <div className="shadow border-b border-gray-200 sm:rounded-lg overflow-x-scroll">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr className="">
@@ -330,6 +307,18 @@ export default function AddWebsite() {
                       className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
                       Languages
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Slug
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Author
                     </th>
                     <th
                       scope="col"
@@ -394,13 +383,36 @@ export default function AddWebsite() {
                           </div>
                         </div>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {website.slug}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {website.author}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {website.created_at}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <Button className="w-full" variant={"destructive"} onClick={() => handleDelete(website.id)}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2">
+                        <Button
+                          className=""
+                          variant={"destructive"}
+                          onClick={() => handleDelete(website.id)}
+                        >
                           Delete
                         </Button>
+                        <Button className="">Edit</Button>
                       </td>
                     </tr>
                   ))}

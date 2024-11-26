@@ -4,17 +4,20 @@ import { useState , useEffect} from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function AddCategory() {
   const [category, setCategory] = useState<string>("");
   const [categorySlug, setCategorySlug] = useState<string>("");
   const [subCategories, setSubCategories] = useState<string[]>([]);
   const [successCategoryMessage, setSuccessCategoryMessage] = useState("");
+  const [websites, setWebsites] = useState<Website[]>([]);
   const [successBulkCategoryMessage, setSuccessBulkCategoryMessage] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     fetchCategories();
+    fetchWebsites();
   }, []);
 
    const fetchCategories = async () => {
@@ -28,6 +31,20 @@ export default function AddCategory() {
        setCategories(data);
      } catch (error) {
        console.error("Error fetching categories:", error);
+     }
+   };
+
+   const fetchWebsites = async () => {
+     try {
+       const response = await fetch("/api/fetch-websites");
+       if (!response.ok) {
+         throw new Error("Failed to fetch websites");
+       }
+       const data = await response.json();
+       console.log(data);
+       setWebsites(data);
+     } catch (error) {
+       console.error("Error fetching websites:", error);
      }
    };
 
@@ -105,25 +122,35 @@ export default function AddCategory() {
           </div>
           <div>
             <Label htmlFor="website">Website</Label>
-            <Input
-              id="website"
-              value={category}
-              onChange={(e) => handleCategory(e.target.value)}
-              placeholder="https://chopaltv.in/feed.xml"
-              required
-            />
+            <Select onValueChange={(value) => handleCategory(value)}>
+              <SelectTrigger id="website" className="w-full">
+                <SelectValue placeholder="Select a website" />
+              </SelectTrigger>
+              <SelectContent>
+                {websites.map((website) => (
+                  <SelectItem key={website.id} value={website.name}>
+                    {website.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="p-category">Parent Category</Label>
-            <Input
-              id="p-category"
-              value={category}
-              onChange={(e) => handleCategory(e.target.value)}
-              placeholder="Sports"
-              required
-            />
+            <Select onValueChange={(value) => handleCategory(value)}>
+              <SelectTrigger id="website" className="w-full">
+                <SelectValue placeholder="Select a website" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.name}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Button type="submit">Add Website</Button>
+          <Button type="submit">Add Category</Button>
         </form>
       </div>
       {/* <div className="container mx-auto p-4">
@@ -242,13 +269,23 @@ export default function AddCategory() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {category.created_at}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2">
                         <Button
-                          className="w-full"
                           variant={"destructive"}
                           // onClick={() => handleDelete(category.id)}
                         >
                           Delete
+                        </Button>
+                        <Button
+                        variant={"outline"}
+                        // onClick={() => handleDelete(category.id)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                        // onClick={() => handleDelete(category.id)}
+                        >
+                          View Feeds
                         </Button>
                       </td>
                     </tr>

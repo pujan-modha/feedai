@@ -504,7 +504,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
                   <SelectContent>
                     {website.map((site) => (
                       <SelectItem key={site.id} value={site.url}>
-                        {site.url}
+                        {site.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
