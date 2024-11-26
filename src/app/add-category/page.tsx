@@ -181,7 +181,7 @@ export default function AddCategory() {
   });
 
   const filteredCategories = categories.filter(
-    (data: Website) =>
+    (data: Category) =>
       data.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       data.slug.toString().includes(searchTerm)
   );
