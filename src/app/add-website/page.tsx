@@ -2,18 +2,31 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Languages } from "@/lib/constants";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { DataTable } from "@/components/datatable/datatable";
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { ChevronDown, Trash2, Edit2 } from "lucide-react";
 
-// interface Category {
-//   id: string;
-//   name: string;
-//   slug: string;
-// }
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 
 interface Language {
   id: string;
@@ -21,11 +34,10 @@ interface Language {
 }
 
 interface Website {
-  id: string;
+  id: number;
   name: string;
   url: string;
   slug: string;
-  // categories: string;
   languages: string;
   created_at: string;
   modified_at: string;
@@ -48,6 +60,11 @@ export default function AddWebsite() {
   // const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [websites, setWebsites] = useState<Website[]>([]);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
 
   useEffect(() => {
     // fetchCategories();
@@ -86,6 +103,7 @@ export default function AddWebsite() {
         throw new Error("Failed to fetch websites");
       }
       const data = await response.json();
+      console.log(data);
       setWebsites(data);
     } catch (error) {
       console.error("Error fetching websites:", error);
@@ -105,25 +123,6 @@ export default function AddWebsite() {
       setError("Failed to fetch languages");
     }
   };
-
-  // const fetchCategories = async () => {
-  //   try {
-  //     const response = await fetch("/api/add-category");
-  //     if (!response.ok) {
-  //       throw new Error("Failed to fetch categories");
-  //     }
-  //     const data = await response.json();
-  //     console.log(data);
-  //     // setCategories(data);
-  //   } catch (error) {
-  //     console.error("Error fetching categories:", error);
-  //     setError("Failed to fetch categories");
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   console.log(selectedCategories);
-  // }, [selectedCategories]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     console.log("Hello" + name, url, languages, slug);
@@ -162,6 +161,92 @@ export default function AddWebsite() {
       console.error("Error adding website:", error);
     }
   };
+
+  const columns: ColumnDef<Website>[] = [
+    {
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row }) => <div className="w-[80px]">{row.getValue("id")}</div>,
+    },
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => <div className="w-[80px]">{row.getValue("name")}</div>,
+    },
+    {
+      accessorKey: "url",
+      header: "URL",
+      cell: ({ row }) => <div className="w-[80px]">{row.getValue("url")}</div>,
+    },
+    {
+      accessorKey: "slug",
+      header: "Slug",
+      cell: ({ row }) => <div className="w-[80px]">{row.getValue("slug")}</div>,
+    },
+    {
+      accessorKey: "languages",
+      header: "Languages",
+      cell: ({ row }) => (
+        <div className="w-[80px]">{row.getValue("languages")}</div>
+      ),
+    },
+    {
+      accessorKey: "created_at",
+      header: "Created At",
+      cell: ({ row }) => (
+        <div className="w-[80px]">{row.getValue("created_at")}</div>
+      ),
+    },
+    {
+      accessorKey: "modified_at",
+      header: "Modified At",
+      cell: ({ row }) => (
+        <div className="w-[80px]">{row.getValue("modified_at")}</div>
+      ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <div className="flex gap-2 items-center justify-center">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => handleDelete(row.original.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          <Button variant={"outline"} size="sm">
+            <Edit2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const filteredData = websites.filter(
+    (data: Website) =>
+      data.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      data.url.toString().includes(searchTerm)
+  );
+
+  const table = useReactTable({
+    websites,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+    },
+  });
 
   return (
     <div className="container mx-auto p-4">
@@ -239,7 +324,7 @@ export default function AddWebsite() {
           <RadioGroup
             id="languages"
             className="flex flex-wrap gap-4"
-            onValueChange={(value) => setSelectedLanguages([value])}
+            onValueChange={(value: string) => setSelectedLanguages([value])}
           >
             {Languages.map((lang, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -249,178 +334,49 @@ export default function AddWebsite() {
             ))}
           </RadioGroup>
         </div>
-        {/* <div className="space-y-2">
-          <Label>Categories</Label>
-          <div className="flex flex-wrap gap-4">
-            {categories.map((category) => (
-              <div key={category.id} className="flex items-center gap-2">
-                <Checkbox
-                  checked={selectedCategories.includes(category.slug)}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedCategories((prev) =>
-                        prev.includes(category.slug)
-                          ? prev
-                          : [...prev, category.slug]
-                      );
-                    } else {
-                      setSelectedCategories((prev) =>
-                        prev.filter((slg) => slg !== category.slug)
-                      );
-                    }
-                  }}
-                />
-                {category.name}
-              </div>
-            ))}
-          </div>
-        </div> */}
         <Button type="submit">Add Website</Button>
       </form>
-      <div className="flex flex-col mt-12">
-        <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-            <div className="shadow border-b border-gray-200 sm:rounded-lg overflow-x-scroll">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr className="">
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+
+      <div className="mt-12">
+        <div className="flex items-center py-4">
+          <Input
+            placeholder="Filter articles..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            className="max-w-sm"
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="ml-auto">
+                Columns <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
                     >
-                      Name
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      URL
-                    </th>
-                    {/* <th
-                      scope="col"
-                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Categories
-                    </th> */}
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Languages
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Slug
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Author
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Created At
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {websites.map((website) => (
-                    <tr key={website.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {website.name}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {website.url}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      {/* <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {website.categories
-                                .split(",")
-                                .map(
-                                  (cat) =>
-                                    cat
-                                      .replace(/-/g, " ")
-                                      .charAt(0)
-                                      .toUpperCase() +
-                                    cat.replace(/-/g, " ").slice(1)
-                                )
-                                .join(", ")}
-                            </div>
-                          </div>
-                        </div>
-                      </td> */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {website.languages}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {website.slug}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {website.author}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {website.created_at}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2">
-                        <Button
-                          className=""
-                          variant={"destructive"}
-                          onClick={() => handleDelete(website.id)}
-                        >
-                          Delete
-                        </Button>
-                        <Button className="">Edit</Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+        <DataTable
+          columns={columns}
+          data={filteredData}
+          sortValue={sorting[0]?.id}
+        />
       </div>
     </div>
   );
