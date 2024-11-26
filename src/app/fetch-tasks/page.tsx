@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/datatable/datatable";
+import { formatDate } from "@/lib/formatDate";
 
 // Define the Task type based on the specified fields
 type Task = {
@@ -88,14 +89,12 @@ const columns: ColumnDef<Task>[] = [
   {
     accessorKey: "start_time",
     header: "Start Time",
-    cell: ({ row }) => (
-      <div>{row.getValue("start_time")?.toLocaleString()}</div>
-    ),
+    cell: ({ row }) => <div>{formatDate(row.getValue("start_time"))}</div>,
   },
   {
     accessorKey: "end_time",
     header: "End Time",
-    cell: ({ row }) => <div>{row.getValue("end_time")?.toLocaleString()}</div>,
+    cell: ({ row }) => <div>{formatDate(row.getValue("start_time"))}</div>,
   },
   {
     accessorKey: "status",

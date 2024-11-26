@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { formatDate } from "@/lib/formatDate";
 
 // Define the GeneratedArticle type based on the schema
 type GeneratedArticle = {
@@ -54,7 +55,9 @@ const columns: ColumnDef<GeneratedArticle>[] = [
   {
     accessorKey: "task_id",
     header: "Task ID",
-    cell: ({ row }) => <div className="w-[80px]">{row.getValue("task_id")}</div>,
+    cell: ({ row }) => (
+      <div className="w-[80px]">{row.getValue("task_id")}</div>
+    ),
   },
   {
     accessorKey: "title",
@@ -83,9 +86,7 @@ const columns: ColumnDef<GeneratedArticle>[] = [
   {
     accessorKey: "created_at",
     header: "Created At",
-    cell: ({ row }) => (
-      <div>{row.getValue("created_at")?.toLocaleString()}</div>
-    ),
+    cell: ({ row }) => <div>{formatDate(row.getValue("created_at"))}</div>,
   },
   {
     accessorKey: "seo_title",
@@ -125,12 +126,16 @@ const columns: ColumnDef<GeneratedArticle>[] = [
   {
     accessorKey: "primary_category",
     header: "Primary Category",
-    cell: ({ row }) => <div className="text-nowrap">{row.getValue("primary_category")}</div>,
+    cell: ({ row }) => (
+      <div className="text-nowrap">{row.getValue("primary_category")}</div>
+    ),
   },
   {
     accessorKey: "secondary_category",
     header: "Secondary Category",
-    cell: ({ row }) => <div className="text-nowrap">{row.getValue("secondary_category")}</div>,
+    cell: ({ row }) => (
+      <div className="text-nowrap">{row.getValue("secondary_category")}</div>
+    ),
   },
   {
     id: "actions",

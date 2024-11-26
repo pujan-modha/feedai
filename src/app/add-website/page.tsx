@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Languages } from "@/lib/constants";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/datatable/datatable";
 import {
   ColumnDef,
@@ -18,6 +19,13 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChevronDown, Trash2, Edit2 } from "lucide-react";
 
 import {
@@ -47,24 +55,25 @@ interface Website {
 }
 
 export default function AddWebsite() {
-  const [name, setName] = useState("Example");
-  const [url, setUrl] = useState("https://example.com/feed.xml");
+  const [name, setName] = useState("");
+  const [url, setUrl] = useState("");
   const [languages, setLanguages] = useState<Language[]>([]);
-  const [slug, setSlug] = useState("example-hindi");
-  const [desc, setDesc] = useState("Description goes here...");
-  const [author, setAuthor] = useState("John Doe");
-  const [thumb, setThumb] = useState("https://example.com/placeholder.svg");
+  const [slug, setSlug] = useState("");
+  const [desc, setDesc] = useState("");
+  const [author, setAuthor] = useState("");
+  const [thumb, setThumb] = useState("");
   // const [categories, setCategories] = useState<Category[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string>([]);
   const [websites, setWebsites] = useState<Website[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const { toast } = useToast();
 
   useEffect(() => {
     // fetchCategories();
@@ -74,6 +83,15 @@ export default function AddWebsite() {
   useEffect(() => {
     fetchWebsites();
   }, []);
+
+  useEffect(() => {
+    if (name != "" && selectedLanguages.length > 0)
+      setSlug(
+        `${name
+          .toLowerCase()
+          .replace(" ", "-")}-${selectedLanguages[0].toLowerCase()}`
+      );
+  }, [name, selectedLanguages]);
 
   const handleDelete = async (id: number) => {
     try {
@@ -125,9 +143,9 @@ export default function AddWebsite() {
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    console.log("Hello" + name, url, languages, slug);
     try {
       e.preventDefault();
+      setIsLoading(true);
       // const joined_categories = selectedCategories.join(",");
       const joined_languages = selectedLanguages.join(",");
       console.log(name, url, joined_languages, slug, desc, author, thumb);
@@ -155,10 +173,22 @@ export default function AddWebsite() {
       setName("");
       setUrl("");
       setSelectedLanguages([]);
+      setDesc("");
+      setAuthor("");
+      setThumb("");
+      setSlug("");
+
+      toast({
+        title: "Success!",
+        description: "Website added successfully",
+      });
       // setSelectedCategories([]);
       setSuccessMessage("Website added successfully");
     } catch (error) {
       console.error("Error adding website:", error);
+    }
+    finally{
+      setIsLoading(false);
     }
   };
 
@@ -261,9 +291,9 @@ export default function AddWebsite() {
           <Label htmlFor="name">Website Name</Label>
           <Input
             id="name"
+            placeholder="Website Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder=""
             required
           />
         </div>
@@ -313,7 +343,7 @@ export default function AddWebsite() {
           <Label htmlFor="thumb">Default Thumbnail</Label>
           <Input
             id="thumb"
-            type="url"
+            type="file"
             value={thumb}
             onChange={(e) => setThumb(e.target.value)}
             placeholder="/placeholder.svg"
@@ -321,26 +351,29 @@ export default function AddWebsite() {
         </div>
         <div>
           <Label htmlFor="languages">Languages</Label>
-          <RadioGroup
-            id="languages"
-            className="flex flex-wrap gap-4"
+          <Select
             onValueChange={(value: string) => setSelectedLanguages([value])}
+            value={selectedLanguages[0]}
           >
-            {Languages.map((lang, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <RadioGroupItem value={lang} />
-                {lang}
-              </div>
-            ))}
-          </RadioGroup>
+            <SelectTrigger id="website" className="w-full">
+              <SelectValue placeholder="Select a language"/>
+            </SelectTrigger>
+            <SelectContent>
+              {languages.map((lang: Language) => (
+                <SelectItem key={lang.id} value={lang.name}>
+                  {lang.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Button type="submit">Add Website</Button>
+        <Button type="submit" disabled = {isLoading}>Add Website</Button>
       </form>
 
       <div className="mt-12">
         <div className="flex items-center py-4">
           <Input
-            placeholder="Filter articles..."
+            placeholder="Filter websites..."
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             className="max-w-sm"

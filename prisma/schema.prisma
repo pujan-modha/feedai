@@ -12,9 +12,9 @@ model categories {
   name        String    @db.VarChar(255)
   slug        String    @unique(map: "slug") @db.VarChar(255)
   parent_id   Int?
-  created_at  DateTime? @db.DateTime(0)
-  modified_at DateTime? @db.DateTime(0)
-  value       String?   @db.Text
+  is_parent   Boolean   @default(false)
+  created_at  DateTime? @default(now()) @db.DateTime(0)
+  modified_at DateTime? @default(now()) @db.DateTime(0)
 }
 
 model languages {
@@ -31,7 +31,7 @@ model websites {
   languages   String?  @default("English") @db.VarChar(200)
   created_at  DateTime @default(now()) @db.DateTime(0)
   modified_at DateTime @default(now()) @db.DateTime(0)
-  categories  String?  @db.VarChar(255)
+  categories  String?  @db.Text
   slug        String?  @unique(map: "slug") @db.VarChar(255)
   author      String?  @db.VarChar(255)
   description String?  @db.Text
