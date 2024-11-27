@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { feed_config, task_id, feed_url, feed_items, articles_count } =
+  const { feed_config, task_id, feed_url, feed_items, articles_count, modified_at } =
     start_task_config;
 
   const feed = await fetch(feed_url);
@@ -38,7 +38,13 @@ export async function POST(req: Request) {
   console.log(articles_count);
   console.log(feed_items.content);
   for (let i = 0; i < articles_count; i++) {
-    // we haveto replace hard coded number with article count
+    const isOld = compareDate(
+      parsedFeed.rss.channel.item[i][feed_items.pubDate],
+      modified_at
+    );
+    if(!isOld){
+      break
+    }
     let curr_content = parsedFeed.rss.channel.item[i][feed_items.content];
     console.log(curr_content);
     $ = cheerio.load(curr_content);
@@ -79,14 +85,6 @@ export async function POST(req: Request) {
       data: generated_articles_arr,
     });
 
-    // await prisma.tasks.update({
-    //   where: { id: task_id },
-    //   data: {
-    //     sucess_count: {
-    //       increment: 1,
-    //     },
-    //   },
-    // });
 
     images_arr.length = 0;
     links_arr.length = 0;
@@ -95,7 +93,10 @@ export async function POST(req: Request) {
     total_generated_articles_list.push(...generated_articles_arr);
   }
 
-  return NextResponse.json({ success: true, total_generated_articles_list });
+  return NextResponse.json({
+    success: true,
+    total_generated_articles_list: total_generated_articles_list,
+  });
 }
 
 async function completion(prompt: string, content: string) {
@@ -145,7 +146,7 @@ async function generate_articles(
         categories_arr[i],
         prompt,
         images_arr,
-        links_arr,
+        links_arr
       );
       console.log(images_arr);
       const completion_response = await completion(curr_prompt, content);
@@ -193,3 +194,9 @@ async function generate_articles(
   }
   return articles_arr;
 }
+
+const compareDate = (pubDate: string, current: number) => {
+  console.log(new Date(pubDate).getTime(), new Date(current).getTime());
+  return new Date(pubDate).getTime() > new Date(current).getTime();
+
+};

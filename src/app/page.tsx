@@ -105,11 +105,6 @@ Generate an SEO-optimized meta title, meta description, and meta keywords.
 Summary Creation:
 Write a 160-word summary that provides a general overview and generates curiosity to encourage readers to view the full article.
 
-Category Assignment:
-Assign categories to the article based on the specified website where it will be published.
-A list of pre-defined categories will be provided as input.
-Highlight the primary and secondary categories according to the content.
-
 Additional Guidelines:
 Ensure all output articles are SEO-friendly and adhere to Google News and search guidelines.`
   );

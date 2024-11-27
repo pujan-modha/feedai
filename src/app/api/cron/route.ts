@@ -5,12 +5,17 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const start_task = await prisma.tasks.findFirst({
     where: {
-      status: "incomplete",
+      status: {
+        in: ["incomplete", "completed"],
+      },
+    },
+    orderBy: {
+      modified_at: 'desc',
     },
   });
   if (!start_task) {
     return NextResponse.json(
-      { message: "No incomplete tasks found" },
+      { message: "All tasks are in progress!" },
       { status: 404 }
     );
   }
@@ -26,6 +31,7 @@ export async function GET() {
         ? JSON.parse(start_task.feed_items)
         : null,
       articles_count: start_task.articles_count,
+      modified_at: start_task.modified_at,
     };
     console.log(start_task_config.articles_count);
 
@@ -35,8 +41,7 @@ export async function GET() {
       },
       data: {
         status: "in-progress",
-        start_time: new Date(),
-        modified_at: new Date(),  
+        start_time: new Date(),  
       },
     });
 
@@ -58,7 +63,9 @@ export async function GET() {
       },
       data: {
         status: "completed",
+        latest_guids: data.latest_three_guids,
         end_time: new Date(),
+        modified_at: new Date(),
       },
     });
     return NextResponse.json(data.total_generated_articles_list, {

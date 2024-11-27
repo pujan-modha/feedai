@@ -9,9 +9,11 @@ export function current_prompt(
   return `You are tasked with processing and rewriting a news article to make it SEO-friendly, plagiarism-free, and compliant with Google News standards. The output must be in ${curr_lang} language. Follow these steps to generate the output:
 Content Transformation:
 ${user_prompt}
-Input Parameters:
-A list of pre-defined categories for the website. Make sure that categories must be taken from the list below:
-${curr_categories}
+Assign categories to the article strictly based on the list ${curr_categories}. Categories are divided into "Child Categories" and "Parent Categories" within this list.
+
+Primary Category: Select from the "Child Categories"
+Secondary Category: Select from the "Parent Categories"
+Under no circumstances should any category outside the provided list be used, nor should AI create a category. If no direct match is apparent, choose the closest existing category from the respective group, even if it is only tangentially related. Always ensure both the Primary and Secondary Categories are chosen strictly from within ${curr_categories["Parent Category"]} and ${curr_categories["Child Category"]} respectively.
 Instruction for Handling Images and Embeds:
     The input contains placeholders for images and embeds such as [IMAGE], [IFRAME]. Ensure that:
     You must replace placeholders like [IMAGE] and [IFRAME] with html tags with src ${images_arr.join(

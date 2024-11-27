@@ -36,7 +36,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Prepare data for insertion, assigning default values where necessary
     const newTaskData = {
       feed_url: task_obj.feed_url,
       feed_items: JSON.stringify(task_obj.feed_items),
@@ -44,7 +43,7 @@ export async function POST(req: Request) {
       articles_count: task_obj.article_count,
       status: "incomplete",
       created_at: new Date(),
-      modified_at: new Date(),
+      modified_at: new Date(0),
     };
 
     // Insert the new task into the database

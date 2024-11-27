@@ -12,9 +12,9 @@ model categories {
   name        String    @db.VarChar(255)
   slug        String    @unique(map: "slug") @db.VarChar(255)
   parent_id   Int?
-  is_parent   Boolean   @default(false)
   created_at  DateTime? @default(now()) @db.DateTime(0)
   modified_at DateTime? @default(now()) @db.DateTime(0)
+  is_parent   Boolean   @default(false)
 }
 
 model languages {
@@ -42,6 +42,7 @@ model tasks {
   id             Int       @id @default(autoincrement())
   feed_url       String?   @db.VarChar(255)
   feed_items     String?   @db.Text
+  latest_guids   String?  @db.Text
   created_at     DateTime? @default(now()) @db.DateTime(0)
   modified_at    DateTime? @db.DateTime(0)
   feed_config    String?   @db.Text

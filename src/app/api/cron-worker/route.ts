@@ -18,5 +18,5 @@ export async function GET() {
     { status: 200 }
   );
 }
-// Keep the script running
+
 process.stdin.resume();

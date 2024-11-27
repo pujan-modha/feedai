@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { XMLParser } from "fast-xml-parser";
 import * as cheerio from "cheerio";
 import { current_prompt } from "@/lib/prompt";
+import { populateCategories } from "@/lib/populateCategories";
 
 const parser = new XMLParser({ ignoreAttributes: false });
 
@@ -102,16 +103,26 @@ export async function POST(req: Request) {
     .replace(blockquoteScriptRegex, "[BLOCKQUOTE]");
   // console.log(curr_content);
 
-  if (images_arr.length === 0) {
-    images_arr.push("/placeholder.svg");
-    curr_content = "[IMAGE]" + curr_content;
+    if(images_arr.length === 0){
+      images_arr.push("/placeholder.svg")
+      curr_content = "[IMAGE]" + curr_content
+    }
+
+    const category_arr = [];
+   for (let i = 0; i < feed_config.selected_websites.length; i++) {
+    const populated_category = await populateCategories(
+      JSON.parse(feed_config.selected_websites[i].categories)
+    );
+    category_arr.push(populated_category);
   }
+  console.log(category_arr);
 
   const generated_articles_arr = await generate_articles(
     feed_config.num_articles,
     feed_config.selected_languages,
     feed_config.selected_websites,
     feed_config.userprompt,
+    category_arr,
     curr_content,
     images_arr,
     links_arr,
@@ -121,8 +132,6 @@ export async function POST(req: Request) {
   images_arr.length = 0;
   links_arr.length = 0;
   blockquote_arr.length = 0;
-
-  // console.log(generated_articles_arr);
 
   return NextResponse.json({
     success: true,
@@ -144,7 +153,7 @@ async function completion(prompt: string, content: string) {
         { role: "system", content: prompt },
         { role: "user", content: content },
       ],
-      temperature: 0,
+      temperature: 0.1,
     }),
   });
   return response.json();
@@ -155,6 +164,7 @@ async function generate_articles(
   selected_language: Array<string>,
   selected_website: Array<Website>,
   prompt: string,
+  category_arr: Array<any>,
   content: string,
   images_arr: Array<string>,
   links_arr: Array<string>,
@@ -162,24 +172,17 @@ async function generate_articles(
   thumbnail_image: string
 ) {
   const articles_arr = [];
-  const categories_arr = selected_website.map((website) => {
-    return website.categories;
-  });
   console.log(selected_website);
-  // const lang = selected_website.map((website) => {
-  //   return website.languages.split(",")[0].trim();
-  // })
-  // Take all the selected websites, extract their first element from the languages array
   const lang = selected_website.map((website) => {
     return website.languages.split(",")[0].trim();
   });
-  console.log(categories_arr);
-
+  console.log("hello",category_arr);
   for (let i = 0; i < aritcle_count; i++) {
+    
     try {
       const curr_prompt = current_prompt(
         lang[i],
-        categories_arr[i],
+        category_arr[i],
         prompt,
         images_arr,
         links_arr
@@ -224,11 +227,9 @@ async function generate_articles(
         };
         return replace(obj);
       };
-
+      
       completed_content_obj = replaceBlockquotes(completed_content_obj);
-
       const usage = completion_response.usage;
-
       console.log(completed_content_obj);
 
       const parsed_content = {
