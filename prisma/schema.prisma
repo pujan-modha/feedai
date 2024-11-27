@@ -12,9 +12,9 @@ model categories {
   name        String    @db.VarChar(255)
   slug        String    @unique(map: "slug") @db.VarChar(255)
   parent_id   Int?
-  is_parent   Boolean   @default(false)
   created_at  DateTime? @default(now()) @db.DateTime(0)
   modified_at DateTime? @default(now()) @db.DateTime(0)
+  is_parent   Boolean   @default(false)
 }
 
 model languages {
