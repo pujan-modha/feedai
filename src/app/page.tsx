@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 interface Website {
   id: string;
   name: string;
@@ -26,6 +27,7 @@ interface Website {
 
 interface Article {
   title: string;
+  thumbnail_image: string;
   content: string;
   heading: string;
   seo_title: string;
@@ -44,7 +46,6 @@ interface XMLAttributes {
   title: string;
   guid: string;
   link: string;
-  // thumbnailimage: string;
   description: string;
   // category: string;
   // author: string;
@@ -242,7 +243,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
         title: "Feed imported successfully!",
         description: "Feed articles have been imported and saved",
       });
-      handleReset()
+      handleReset();
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -595,58 +596,67 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
 
 function ArticleDisplay({ article }: { article: Article }) {
   return (
-    <Card className="w-full max-w-full mx-auto">
-      <CardHeader>
-        <CardTitle>{article.title}</CardTitle>
-        <div className="flex space-x-2 mt-2">
-          <Badge variant="default">{article.primary_category}</Badge>
-          <Badge variant="outline">{article.secondary_category}</Badge>
-        </div>
-        <div className="flex-col mt-4 text-sm text-gray-600">
-          <div className="flex items-center space-x-1">
-            <span className="font-semibold">Prompt Tokens:</span>
-            <span>{article.prompt_tokens}</span>
+    <>
+      <Card className="w-full max-w-full mx-auto">
+        <CardHeader>
+          <CardTitle>{article.title}</CardTitle>
+          <div className="flex space-x-2 mt-2">
+            <Badge variant="default">{article.primary_category}</Badge>
+            <Badge variant="outline">{article.secondary_category}</Badge>
           </div>
-          <div className="flex items-center space-x-1">
-            <span className="font-semibold">Completion Tokens:</span>
-            <span>{article.completion_tokens}</span>
+          <div className="flex-col mt-4 text-sm text-gray-600">
+            <div className="flex items-center space-x-1">
+              <span className="font-semibold">Prompt Tokens:</span>
+              <span>{article.prompt_tokens}</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="font-semibold">Completion Tokens:</span>
+              <span>{article.completion_tokens}</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className="font-semibold">Total Tokens:</span>
+              <span>{article.total_tokens}</span>
+            </div>
           </div>
-          <div className="flex items-center space-x-1">
-            <span className="font-semibold">Total Tokens:</span>
-            <span>{article.total_tokens}</span>
+          <span className="font-semibold">Thumbnail</span>
+          <img
+            src={article.thumbnail_image}
+            alt={article.title}
+            className="w-full object-cover"
+          />
+        </CardHeader>
+
+        <CardContent>
+          <div
+            className="prose max-w-none mb-8 bg-gray-200 p-4 rounded-lg"
+            dangerouslySetInnerHTML={{ __html: article.content }}
+          />
+          <div className="mt-8 space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold">SEO-Friendly Title</h3>
+              <p>{article.seo_title}</p>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">Meta Information</h3>
+              <ul className="list-disc pl-5">
+                <li>
+                  <strong>Title:</strong> {article.meta_title}
+                </li>
+                <li>
+                  <strong>Description:</strong> {article.meta_description}
+                </li>
+                <li>
+                  <strong>Keywords:</strong> {article.meta_keywords.join(", ")}
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">Summary</h3>
+              <p>{article.summary}</p>
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div
-          className="prose max-w-none mb-8 bg-gray-200 p-4 rounded-lg"
-          dangerouslySetInnerHTML={{ __html: article.content }}
-        />
-        <div className="mt-8 space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold">SEO-Friendly Title</h3>
-            <p>{article.seo_title}</p>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">Meta Information</h3>
-            <ul className="list-disc pl-5">
-              <li>
-                <strong>Title:</strong> {article.meta_title}
-              </li>
-              <li>
-                <strong>Description:</strong> {article.meta_description}
-              </li>
-              <li>
-                <strong>Keywords:</strong> {article.meta_keywords.join(", ")}
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">Summary</h3>
-            <p>{article.summary}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </>
   );
 }

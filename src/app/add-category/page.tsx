@@ -106,7 +106,6 @@ export default function AddCategory() {
   };
 
   const handleSubmitCategory = async (e: React.FormEvent<HTMLFormElement>) => {
-    // console.log(category, categorySlug, subCategories.join(","));
     try {
       e.preventDefault();
       const res = await fetch("/api/add-category", {

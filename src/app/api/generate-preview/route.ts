@@ -3,13 +3,13 @@ import { XMLParser } from "fast-xml-parser";
 import * as cheerio from "cheerio";
 import { current_prompt } from "@/lib/prompt";
 
-
 const parser = new XMLParser({ ignoreAttributes: false });
 
 interface Website {
   name: string;
   url: string;
   categories: Array<string>;
+  languages: Array<string>;
 }
 
 interface RewrittenArticle {
@@ -38,10 +38,41 @@ export async function POST(req: Request) {
   const images_arr: Array<string> = [];
   const links_arr: Array<string> = [];
   const blockquote_arr: Array<string> = [];
+  let thumbnail_image: string = "https://ui.shadcn.com/placeholder.svg";
+  let $ = cheerio.load("");
+
+  if (
+    typeof parsedFeed.rss.channel.item[0].thumbimage === "string" &&
+    parsedFeed.rss.channel.item[0].thumbimage
+  ) {
+    thumbnail_image = parsedFeed.rss.channel.item[0].thumbimage;
+  }
+  if (typeof parsedFeed.rss.channel.item[0].description === "string") {
+    $ = cheerio.load(parsedFeed.rss.channel.item[0].description);
+    console.log("A");
+    if ($("img").length > 0) {
+      console.log("HIT");
+      thumbnail_image = $("img").first().attr("src") || "";
+    }
+  }
+  if (typeof parsedFeed.rss.channel.item[0][feed_items.content] === "string") {
+    console.log("B");
+    $ = cheerio.load(parsedFeed.rss.channel.item[0][feed_items.content]);
+
+    if ($("img").length > 0) {
+      console.log("HIT");
+      thumbnail_image = $("img").first().attr("src") || "";
+    }
+  }
+
+  if (!thumbnail_image) {
+    thumbnail_image = "https://ui.shadcn.com/placeholder.svg";
+  }
+
+  console.log(thumbnail_image);
 
   let curr_content = parsedFeed.rss.channel.item[0][feed_items.content];
-  // console.log(curr_content);
-  const $ = cheerio.load(curr_content);
+  $ = cheerio.load(curr_content);
   $("img").each((_, img) => {
     const src = $(img).attr("src");
     if (src) {
@@ -64,17 +95,17 @@ export async function POST(req: Request) {
       blockquote_arr.push(match);
     });
   }
-  
+
   curr_content = curr_content
     .replace(/<img[^>]*>/gi, "[IMAGE]")
     .replace(/<iframe[^>]*>.*?<\/iframe>/gi, "[IFRAME]")
     .replace(blockquoteScriptRegex, "[BLOCKQUOTE]");
   // console.log(curr_content);
 
-    if(images_arr.length === 0){
-      images_arr.push("/placeholder.svg")
-      curr_content = "[IMAGE]" + curr_content
-    }
+  if (images_arr.length === 0) {
+    images_arr.push("/placeholder.svg");
+    curr_content = "[IMAGE]" + curr_content;
+  }
 
   const generated_articles_arr = await generate_articles(
     feed_config.num_articles,
@@ -84,7 +115,8 @@ export async function POST(req: Request) {
     curr_content,
     images_arr,
     links_arr,
-    blockquote_arr
+    blockquote_arr,
+    thumbnail_image
   );
   images_arr.length = 0;
   links_arr.length = 0;
@@ -126,7 +158,8 @@ async function generate_articles(
   content: string,
   images_arr: Array<string>,
   links_arr: Array<string>,
-  blockquote_arr: Array<string>
+  blockquote_arr: Array<string>,
+  thumbnail_image: string
 ) {
   const articles_arr = [];
   const categories_arr = selected_website.map((website) => {
@@ -151,12 +184,12 @@ async function generate_articles(
         images_arr,
         links_arr
       );
-      if(images_arr.length === 0){
-        images_arr.push("/placeholder.svg")
+      if (images_arr.length === 0) {
+        images_arr.push("/placeholder.svg");
       }
-      console.log(content)
+      console.log(content);
       const completion_response = await completion(curr_prompt, content);
-      console.log("Blockquote array",blockquote_arr);
+      console.log("Blockquote array", blockquote_arr);
       const content_str = completion_response.choices[0].message.content;
       let completed_content_obj;
 
@@ -192,21 +225,15 @@ async function generate_articles(
         return replace(obj);
       };
 
-      // Replace [BLOCKQUOTE] in the entire object
       completed_content_obj = replaceBlockquotes(completed_content_obj);
-
-      // console.log(
-      //   "Processed content object:",
-      //   JSON.stringify(completed_content_obj, null, 2)
-      // );
 
       const usage = completion_response.usage;
 
       console.log(completed_content_obj);
-      
 
       const parsed_content = {
         title: completed_content_obj.rewritten_article.title,
+        thumbnail_image: thumbnail_image,
         content: completed_content_obj.rewritten_article.content
           .flatMap((section: RewrittenArticle["content"][number]) => [
             `<h2 class="text-lg font-semibold">${section.heading}</h2>`,

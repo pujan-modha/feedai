@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-// import prisma from "@/lib/prisma";
 import { XMLParser } from "fast-xml-parser";
 
 const parser = new XMLParser({ ignoreAttributes: false });
@@ -24,6 +23,7 @@ export async function POST(req: Request) {
       parsedFeed.rss.channel.item[0].guid =
         parsedFeed.rss.channel.item[0].guid["#text"];
     }
+
     return NextResponse.json(
       {
         article_feed: parsedFeed.rss.channel.item[0],

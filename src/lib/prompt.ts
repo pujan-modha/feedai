@@ -5,6 +5,7 @@ export function current_prompt(
   images_arr: Array<string>,
   links_arr: Array<string>
 ) {
+  console.log(curr_categories);
   return `You are tasked with processing and rewriting a news article to make it SEO-friendly, plagiarism-free, and compliant with Google News standards. The output must be in ${curr_lang} language. Follow these steps to generate the output:
 Content Transformation:
 ${user_prompt}
