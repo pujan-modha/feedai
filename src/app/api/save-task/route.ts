@@ -20,11 +20,42 @@ export async function POST(req: Request) {
     }
     console.log(task_obj);
 
+    const same_feed_url_tasks = await prisma.tasks.findMany({
+      where: {
+        feed_url: task_obj.feed_url,
+      },
+    });
+
+    const selected_input_websites =
+      task_obj.feed_config.selected_websites || [];
+
+    for (const task of same_feed_url_tasks) {
+      const selected_websites =
+        JSON.parse(task.feed_config || "{}").selected_websites || [];
+
+      const matchingWebsite = selected_input_websites.find(
+        (inputWebsite: { url: string; name: string }) =>
+          selected_websites.some(
+            (existingWebsite: { url: string; name: string }) =>
+              existingWebsite.url === inputWebsite.url
+          )
+      );
+
+      if (matchingWebsite) {
+        return NextResponse.json(
+          {
+            error: `Task already exists for ${matchingWebsite.name} (${task_obj.feed_url})`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const existingTask = await prisma.tasks.findFirst({
       where: {
         feed_url: task_obj.feed_url,
         status: {
-          not: "completed",
+          not: "idle",
         },
       },
     });
@@ -41,7 +72,7 @@ export async function POST(req: Request) {
       feed_items: JSON.stringify(task_obj.feed_items),
       feed_config: JSON.stringify(task_obj.feed_config),
       articles_count: task_obj.article_count,
-      status: "incomplete",
+      status: "idle",
       created_at: new Date(),
       modified_at: new Date(),
     };

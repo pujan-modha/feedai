@@ -151,6 +151,14 @@ export default function AddCategory() {
       accessorKey: "name",
       header: "Name",
     },
+
+    {
+      accessorKey: "website_name",
+      header: "Website",
+      cell: ({ row }) => (
+        <div className="w-[80px]">{row.getValue("website_name")}</div>
+      ),
+    },
     {
       accessorKey: "created_at",
       header: "Created At",
@@ -165,7 +173,15 @@ export default function AddCategory() {
           <Button variant="outline" size="sm">
             <Edit2 className="h-4 w-4" />
           </Button>
-          <Button size="sm">
+          <Button
+            size="sm"
+            onClick={() =>
+              window.open(
+                `https://localhost:3000/${row.original["website_slug"]}/${row.original["slug"]}/feed.xml`,
+                "_blank"
+              )
+            }
+          >
             <Eye className="h-4 w-4" />
           </Button>
         </div>
@@ -173,7 +189,9 @@ export default function AddCategory() {
     },
   ];
 
-  useEffect(() => {console.log(website_id)},[website_id])
+  useEffect(() => {
+    console.log(website_id);
+  }, [website_id]);
 
   const table = useReactTable({
     categories,
@@ -197,7 +215,9 @@ export default function AddCategory() {
   const filteredCategories = categories.filter(
     (data: Category) =>
       data.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      data.slug.toString().includes(searchTerm)
+      data.slug.toString().includes(searchTerm) ||
+      data.website_name.toString().includes(searchTerm) ||
+      data.website_slug.toString().includes(searchTerm)
   );
 
   return (

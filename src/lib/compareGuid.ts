@@ -1,0 +1,1 @@
+export const compareGuid = (guid1: string, guid2: string) => {}

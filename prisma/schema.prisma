@@ -15,6 +15,10 @@ model categories {
   created_at  DateTime? @default(now()) @db.DateTime(0)
   modified_at DateTime? @default(now()) @db.DateTime(0)
   is_parent   Boolean   @default(false)
+  website_id  Int?
+  website_name String?  @db.VarChar(255)
+  website_slug String?  @db.VarChar(255)
+  
 }
 
 model languages {
@@ -42,16 +46,16 @@ model tasks {
   id             Int       @id @default(autoincrement())
   feed_url       String?   @db.VarChar(255)
   feed_items     String?   @db.Text
-  latest_guids   String?  @db.Text
   created_at     DateTime? @default(now()) @db.DateTime(0)
   modified_at    DateTime? @db.DateTime(0)
   feed_config    String?   @db.Text
   articles_count Int?      @default(0)
-  start_time     DateTime? @db.DateTime()
-  end_time       DateTime? @db.DateTime()
+  start_time     DateTime? @db.DateTime(0)
+  end_time       DateTime? @db.DateTime(0)
   status         String?   @db.VarChar(255)
   error_count    Int?      @default(0)
   sucess_count   Int?      @default(0)
+  latest_guids   String?   @db.Text
 }
 
 model generated_articles {

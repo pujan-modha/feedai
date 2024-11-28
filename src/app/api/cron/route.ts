@@ -2,13 +2,29 @@ import fetch from "node-fetch";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+const MAX_TASKS = 5;
+
 export async function GET() {
+
+  const in_progress_tasks = await prisma.tasks.findMany({
+    where: {
+      status: "in-progress",
+    },
+  });
+
+  if (in_progress_tasks.length >= MAX_TASKS) {
+    return NextResponse.json(
+      { message: "Max tasks limit reached!" },
+      { status: 404 }
+    );
+  }
+
   const start_task = await prisma.tasks.findFirst({
     where: {
       status: "idle",
     },
     orderBy: {
-      modified_at: 'desc',
+      modified_at: "desc",
     },
   });
   if (!start_task) {
@@ -31,7 +47,6 @@ export async function GET() {
       articles_count: start_task.articles_count,
       modified_at: start_task.modified_at,
     };
-    console.log(start_task_config.articles_count);
 
     await prisma.tasks.update({
       where: {
@@ -39,7 +54,7 @@ export async function GET() {
       },
       data: {
         status: "in-progress",
-        start_time: new Date(),  
+        start_time: new Date(),
       },
     });
 

@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { feed_config, task_id, feed_url, feed_items, articles_count, modified_at } =
+  const { feed_config, task_id, feed_url, feed_items, articles_count } =
     start_task_config;
 
   const feed = await fetch(feed_url);
@@ -38,12 +38,21 @@ export async function POST(req: Request) {
   console.log(articles_count);
   console.log(feed_items.content);
   for (let i = 0; i < articles_count; i++) {
-    const isOld = compareDate(
-      parsedFeed.rss.channel.item[i][feed_items.pubDate],
-      modified_at
-    );
-    if(!isOld){
-      break
+    
+  if (typeof parsedFeed.rss.channel.item[i].guid === "string") {
+    parsedFeed.rss.channel.item[i].guid = parsedFeed.rss.channel.item[0].guid;
+  } else {
+    parsedFeed.rss.channel.item[i].guid =
+      parsedFeed.rss.channel.item[i].guid["#text"];
+  }
+    const doesExist = await prisma.generated_articles.findFirst({
+      where: {
+        parent_guid: parsedFeed.rss.channel.item[i][feed_items.guid],
+      },
+    });
+    if (doesExist) {
+      console.log("article already exists");
+      break;
     }
     let curr_content = parsedFeed.rss.channel.item[i][feed_items.content];
     console.log(curr_content);
@@ -197,9 +206,3 @@ async function generate_articles(
   }
   return articles_arr;
 }
-
-const compareDate = (pubDate: string, current: number) => {
-  console.log(new Date(pubDate).getTime(), new Date(current).getTime());
-  return new Date(pubDate).getTime() > new Date(current).getTime();
-
-};

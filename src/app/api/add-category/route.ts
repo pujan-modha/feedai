@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
         slug: slug,
         is_parent: is_parent,
         parent_id: !is_parent ? parseInt(parent_category_id) : null,
+        website_id: parseInt(website_id),
       },
     });
 

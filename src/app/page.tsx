@@ -239,7 +239,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
         description: "Feed articles have been imported and saved",
       });
       handleReset();
-      window.location.href = "/fetch-tasks"
+      window.location.href = "/fetch-tasks";
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -499,11 +499,16 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
                     <SelectValue placeholder="Select a website" />
                   </SelectTrigger>
                   <SelectContent>
-                    {website.map((site) => (
-                      <SelectItem key={site.id} value={site.url}>
-                        {site.name}
-                      </SelectItem>
-                    ))}
+                    {website
+                      .filter((site) => {
+                        return site.categories &&
+                        JSON.parse(site.categories).length > 0;
+                      })
+                      .map((site) => (
+                        <SelectItem key={site.id} value={site.url}>
+                          {site.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
