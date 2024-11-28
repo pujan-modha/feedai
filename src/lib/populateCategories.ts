@@ -1,28 +1,35 @@
 import prisma from "./prisma";
 
-export async function populateCategories(categories: Array<any>) {
-  const json_category: any = {};
-  
+export async function populateCategories(categories: Array<string>) {
+  const json_categories: { [key: string]: string[] } = {};
+
   // Use Promise.all to wait for all async operations
-  await Promise.all(categories.map(async (category_id: string) => {
-    const parent_category = await prisma.categories.findFirst({
-      where: {
-        id: parseInt(category_id),
-      },
-    });
+  await Promise.all(
+    categories.map(async (category_id: string) => {
+      console.log(category_id);
+      const parent_category = await prisma.categories.findFirst({
+        where: {
+          id: parseInt(category_id),
+        },
+      });
 
-    const child_category = await prisma.categories.findMany({
-      where: {
-        parent_id: parseInt(category_id),
-      },
-    });
-    
-    json_category["Parent Category"] = parent_category.name;
-    json_category["Child Category"] = child_category.map((child) => {
-      return child.name;
-    });
-  }));
+      const child_categories = await prisma.categories.findMany({
+        where: {
+          parent_id: parseInt(category_id),
+        },
+      });
 
-  console.log("from populateCategories", json_category);
-  return json_category;
+      if (parent_category) {
+        // Create key in format "Parent Category Name (Category ID)"
+        const parentKey = `${parent_category.name} (ID: ${parent_category.id})`;
+        
+        // Map children to format "Child Category Name (Category ID)"
+        json_categories[parentKey] = child_categories.map(
+          child => `${child.name} (ID: ${child.id})`
+        );
+      }
+    })
+  );
+
+  return json_categories;
 }

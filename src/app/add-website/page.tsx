@@ -35,6 +35,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import URLInput from "@/components/ui/url-input";
+import { formatDate } from "@/lib/formatDate";
 
 interface Language {
   id: string;
@@ -85,13 +87,8 @@ export default function AddWebsite() {
   }, []);
 
   useEffect(() => {
-    if (name != "" && selectedLanguages.length > 0)
-      setSlug(
-        `${name
-          .toLowerCase()
-          .replace(" ", "-")}-${selectedLanguages[0].toLowerCase()}`
-      );
-  }, [name, selectedLanguages]);
+    if (name != "") setSlug(`${name.toLowerCase().replaceAll(" ", "-")}`);
+  }, [name]);
 
   const handleDelete = async (id: number) => {
     try {
@@ -156,7 +153,7 @@ export default function AddWebsite() {
         },
         body: JSON.stringify({
           name: name,
-          url: url,
+          url: "https://" + url,
           languages: joined_languages,
           slug: slug,
           description: desc,
@@ -182,12 +179,11 @@ export default function AddWebsite() {
         title: "Success!",
         description: "Website added successfully",
       });
+      fetchWebsites();
       // setSelectedCategories([]);
-      setSuccessMessage("Website added successfully");
     } catch (error) {
       console.error("Error adding website:", error);
-    }
-    finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -208,11 +204,11 @@ export default function AddWebsite() {
       header: "URL",
       cell: ({ row }) => <div className="w-[80px]">{row.getValue("url")}</div>,
     },
-    {
-      accessorKey: "slug",
-      header: "Slug",
-      cell: ({ row }) => <div className="w-[80px]">{row.getValue("slug")}</div>,
-    },
+    // {
+    //   accessorKey: "slug",
+    //   header: "Slug",
+    //   cell: ({ row }) => <div className="w-[80px]">{row.getValue("slug")}</div>,
+    // },
     {
       accessorKey: "languages",
       header: "Languages",
@@ -224,14 +220,16 @@ export default function AddWebsite() {
       accessorKey: "created_at",
       header: "Created At",
       cell: ({ row }) => (
-        <div className="w-[80px]">{row.getValue("created_at")}</div>
+        <div className="w-[80px]">{formatDate(row.getValue("created_at"))}</div>
       ),
     },
     {
       accessorKey: "modified_at",
       header: "Modified At",
       cell: ({ row }) => (
-        <div className="w-[80px]">{row.getValue("modified_at")}</div>
+        <div className="w-[80px]">
+          {formatDate(row.getValue("modified_at"))}
+        </div>
       ),
     },
     {
@@ -281,11 +279,6 @@ export default function AddWebsite() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Add Website</h1>
-      {successMessage && (
-        <div className="bg-green-50 p-4 rounded-md mb-4">
-          <p className="text-green-700">{successMessage}</p>
-        </div>
-      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="name">Website Name</Label>
@@ -299,14 +292,33 @@ export default function AddWebsite() {
         </div>
         <div>
           <Label htmlFor="feed-url">Website Feed URL</Label>
-          <Input
+          {/* <Input
             id="feed-url"
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://www.example.com"
             required
-          />
+          /> */}
+          <URLInput value={url} setValue={setUrl} />
+        </div>
+        <div>
+          <Label htmlFor="languages">Languages</Label>
+          <Select
+            onValueChange={(value: string) => setSelectedLanguages([value])}
+            value={selectedLanguages[0]}
+          >
+            <SelectTrigger id="website" className="w-full">
+              <SelectValue placeholder="Select a language" />
+            </SelectTrigger>
+            <SelectContent>
+              {languages.map((lang: Language) => (
+                <SelectItem key={lang.id} value={lang.name}>
+                  {lang.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label htmlFor="slug">Website Slug</Label>
@@ -349,25 +361,10 @@ export default function AddWebsite() {
             placeholder="/placeholder.svg"
           />
         </div>
-        <div>
-          <Label htmlFor="languages">Languages</Label>
-          <Select
-            onValueChange={(value: string) => setSelectedLanguages([value])}
-            value={selectedLanguages[0]}
-          >
-            <SelectTrigger id="website" className="w-full">
-              <SelectValue placeholder="Select a language"/>
-            </SelectTrigger>
-            <SelectContent>
-              {languages.map((lang: Language) => (
-                <SelectItem key={lang.id} value={lang.name}>
-                  {lang.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Button type="submit" disabled = {isLoading}>Add Website</Button>
+
+        <Button type="submit" disabled={isLoading}>
+          Add Website
+        </Button>
       </form>
 
       <div className="mt-12">

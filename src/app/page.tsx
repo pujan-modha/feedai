@@ -239,6 +239,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
         description: "Feed articles have been imported and saved",
       });
       handleReset();
+      window.location.href = "/fetch-tasks"
     } catch (error) {
       console.error("Error:", error);
       toast({

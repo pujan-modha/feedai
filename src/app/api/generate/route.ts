@@ -78,7 +78,8 @@ export async function POST(req: Request) {
       task_id,
       images_arr,
       links_arr,
-      blockquote_arr
+      blockquote_arr,
+      parsedFeed.rss.channel.item[i][feed_items.guid]
     );
 
     await prisma.generated_articles.createMany({
@@ -128,7 +129,8 @@ async function generate_articles(
   task_id: number,
   images_arr: Array<string>,
   links_arr: Array<string>,
-  blockquote_arr: Array<string>
+  blockquote_arr: Array<string>,
+  parent_guid: string
 ) {
   const articles_arr = [];
   const categories_arr = selected_website.map((website) => {
@@ -168,6 +170,7 @@ async function generate_articles(
         summary: completed_content_obj.summary,
         primary_category: completed_content_obj.categories.primary_category,
         secondary_category: completed_content_obj.categories.secondary_category,
+        parent_guid: parent_guid,
       };
       articles_arr.push(parsed_content);
     } catch {

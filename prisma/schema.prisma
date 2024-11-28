@@ -10,7 +10,7 @@ datasource db {
 model categories {
   id          Int       @id @default(autoincrement())
   name        String    @db.VarChar(255)
-  slug        String    @unique(map: "slug") @db.VarChar(255)
+  slug        String    @db.VarChar(255)
   parent_id   Int?
   created_at  DateTime? @default(now()) @db.DateTime(0)
   modified_at DateTime? @default(now()) @db.DateTime(0)
@@ -47,8 +47,8 @@ model tasks {
   modified_at    DateTime? @db.DateTime(0)
   feed_config    String?   @db.Text
   articles_count Int?      @default(0)
-  start_time     DateTime? @db.DateTime(0)
-  end_time       DateTime? @db.DateTime(0)
+  start_time     DateTime? @db.DateTime()
+  end_time       DateTime? @db.DateTime()
   status         String?   @db.VarChar(255)
   error_count    Int?      @default(0)
   sucess_count   Int?      @default(0)

@@ -17,6 +17,37 @@ export async function POST(req: NextRequest) {
       typeof is_parent,
       typeof website_id
     );
+
+    const given_website = await prisma.websites.findFirst({
+      where: {
+        id: parseInt(website_id)
+      }
+    })
+
+    if (!given_website)
+      return NextResponse.json(
+        { error: "Website not found" },
+        { status: 400 }
+      );
+
+    const website_categories = JSON.parse(given_website.categories || "[]");
+
+    for(let i = 0; i < website_categories.length;i++){
+      const existingCategory = await prisma.categories.findUnique({
+        where: {
+          id: website_categories[i],
+        },
+      });
+      console.log(existingCategory)
+      if (existingCategory && existingCategory.slug === slug) {
+        console.log("Ok")
+        return NextResponse.json(
+          { error: "Category with this slug already exists" },
+          { status: 400 }
+        );
+      }
+    }
+
     const category = await prisma.categories.create({
       data: {
         name: name,

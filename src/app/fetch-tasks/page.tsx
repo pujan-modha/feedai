@@ -68,16 +68,12 @@ const columns: ColumnDef<Task>[] = [
   {
     accessorKey: "created_at",
     header: "Created At",
-    cell: ({ row }) => (
-      <div>{row.getValue("created_at")?.toLocaleString()}</div>
-    ),
+    cell: ({ row }) => <div>{formatDate(row.getValue("created_at"))}</div>,
   },
   {
     accessorKey: "modified_at",
     header: "Modified At",
-    cell: ({ row }) => (
-      <div>{row.getValue("modified_at")?.toLocaleString()}</div>
-    ),
+    cell: ({ row }) => <div>{formatDate(row.getValue("modified_at"))}</div>,
   },
   {
     accessorKey: "articles_count",

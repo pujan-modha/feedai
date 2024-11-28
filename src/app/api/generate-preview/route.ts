@@ -115,7 +115,7 @@ export async function POST(req: Request) {
     );
     category_arr.push(populated_category);
   }
-  console.log(category_arr);
+  // console.log(category_arr);
 
   const generated_articles_arr = await generate_articles(
     feed_config.num_articles,

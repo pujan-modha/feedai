@@ -5,9 +5,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const start_task = await prisma.tasks.findFirst({
     where: {
-      status: {
-        in: ["incomplete", "completed"],
-      },
+      status: "idle",
     },
     orderBy: {
       modified_at: 'desc',
@@ -62,8 +60,7 @@ export async function GET() {
         id: start_task.id,
       },
       data: {
-        status: "completed",
-        latest_guids: data.latest_three_guids,
+        status: "idle",
         end_time: new Date(),
         modified_at: new Date(),
       },

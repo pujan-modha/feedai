@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { useToast } from "@/hooks/use-toast";
+import { formatDate } from "@/lib/formatDate";
 
 interface Category {
   id: string;
@@ -129,6 +130,7 @@ export default function AddCategory() {
         title: "Success!",
         description: `Category ${category_name} added successfully`,
       });
+      fetchCategories();
     } catch (error) {
       console.error("Error adding category:", error);
     }
@@ -152,6 +154,9 @@ export default function AddCategory() {
     {
       accessorKey: "created_at",
       header: "Created At",
+      cell: ({ row }) => (
+        <div className="w-[80px]">{formatDate(row.getValue("created_at"))}</div>
+      ),
     },
     {
       id: "actions",
@@ -205,6 +210,25 @@ export default function AddCategory() {
       )}
       <form onSubmit={handleSubmitCategory} className="space-y-4">
         <div>
+          <Label htmlFor="website">Website</Label>
+          <Select
+            onValueChange={(value) => {
+              setWebsiteId(value);
+            }}
+          >
+            <SelectTrigger id="website" className="w-full">
+              <SelectValue placeholder="Select a website" />
+            </SelectTrigger>
+            <SelectContent>
+              {websites.map((website) => (
+                <SelectItem key={website.id} value={website.id.toString()}>
+                  {website.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
           <Label htmlFor="name">Category Name</Label>
           <Input
             id="name"
@@ -234,21 +258,7 @@ export default function AddCategory() {
             required
           />
         </div>
-        <div>
-          <Label htmlFor="website">Website</Label>
-          <Select onValueChange={(value) => {setWebsiteId(value)}}>
-            <SelectTrigger id="website" className="w-full">
-              <SelectValue placeholder="Select a website" />
-            </SelectTrigger>
-            <SelectContent>
-              {websites.map((website) => (
-                <SelectItem key={website.id} value={website.id.toString()}>
-                  {website.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+
         <div>
           <Label htmlFor="p-category">Parent Category</Label>
           <Select

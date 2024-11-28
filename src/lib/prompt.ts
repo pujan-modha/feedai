@@ -5,33 +5,40 @@ export function current_prompt(
   images_arr: Array<string>,
   links_arr: Array<string>
 ) {
-  console.log(curr_categories);
+  console.log("Lmao", curr_categories);
   return `You are tasked with processing and rewriting a news article to make it SEO-friendly, plagiarism-free, and compliant with Google News standards. The output must be in ${curr_lang} language. Follow these steps to generate the output:
 Content Transformation:
 ${user_prompt}
-Assign categories to the article strictly based on the list ${curr_categories}. Categories are divided into "Child Categories" and "Parent Categories" within this list.
+Use only the categories provided below, exactly as structured:
+${JSON.stringify(curr_categories, null, 2)}.
+Categories are structured as "Secondary Category (ID: ID)": ["Primary Category 1 (ID: ID)", "Primary Category 2 (ID: ID)"]. Strictly adhere to the following rules:
 
-Primary Category: Select from the "Child Categories"
-Secondary Category: Select from the "Parent Categories"
-Under no circumstances should any category outside the provided list be used, nor should AI create a category. If no direct match is apparent, choose the closest existing category from the respective group, even if it is only tangentially related. Always ensure both the Primary and Secondary Categories are chosen strictly from within ${curr_categories["Parent Category"]} and ${curr_categories["Child Category"]} respectively.
-Instruction for Handling Images and Embeds:
-    The input contains placeholders for images and embeds such as [IMAGE], [IFRAME]. Ensure that:
-    You must replace placeholders like [IMAGE] and [IFRAME] with html tags with src ${images_arr.join(
-      " ,"
-    )} and ${links_arr.join(" ,")}
-    respectively, do not keep placeholders in the output.
-    The count of Images and Embeds in the output matches exactly the count of [IMAGE] and [IFRAME] in the input.
-    No extra images or embeds are added or removed.
-    Images and Embeds are placed in appropriate paragraphs to maintain logical flow, but the overall count remains consistent with the input.
-    Do not inculde [IMAGE] and [IFRAME] placeholders in the output.
-    Must include all images and embeds in the output in the same order as they appeared in the input.
-    The input also contains placeholders for blockquotes such as [BLOCKQUOTE]. Ensure that:
-    Keep [BLOCKQUOTE] placeholders in the output only if they appear in the input.
-    The count of Blockquotes in the output matches exactly the count of [BLOCKQUOTE] in the input.
-    No extra blockquotes are added or removed.
-    Blockquotes are placed in appropriate paragraphs to maintain logical flow, but the overall count remains consistent with the input.
-    Must include all blockquotes in the output in the same order as they appeared in the input.
-Output Format (Do not use backticks anywhere in the json and do not give response in markdown just give plain text):
+1. **Category Matching**:
+   - Select categories directly from the input structure provided above. Only use categories and IDs from this structure.
+   - Secondary categories must match the keys exactly, including casing, spacing, and format.
+   - Primary categories must match the values exactly, including casing, spacing, and format.
+
+2. **Category Selection Rules**:
+   - If a secondary category is selected, it must have been explicitly provided in the input.
+   - Primary categories chosen must belong to the list under the selected secondary category in the input.
+
+2.5 **Handling Categories when article do not match any input category**:
+   - If an article does not match any input category, you must select the closest matching category from the list of categories provided in the input.
+
+3. **ID Validation**:
+   - Ensure that both "primary_category_id" and "secondary_category_id" are integer IDs directly extracted from the input.
+   - Do not invent or modify any IDs.
+4. **Instruction for Handling Images and Embeds**:
+   - Replace placeholders like [IMAGE] and [IFRAME] with corresponding HTML tags using the URLs provided in ${images_arr.join(
+     " ,"
+   )} and ${links_arr.join(
+    " ,"
+  )}, ensuring no placeholders remain in the output.
+   - Maintain the exact count of images and embeds as in the input.
+   - Include images and embeds in the logical flow of the article, in the same order as their placeholders appeared.
+   - Blockquotes ([BLOCKQUOTE]) must be preserved in the output only if present in the input. Do not add or remove blockquotes beyond what is provided.
+
+**Output Format (strictly adhere to this format, do not use backticks or markdown in the response)**:
 {
   "rewritten_article": {
     "title": "SEO-Friendly Article Title Here",
@@ -39,24 +46,37 @@ Output Format (Do not use backticks anywhere in the json and do not give respons
       {
         "heading": "Main Heading for Section",
         "paragraphs": [
-          "Paragraph 1 of this section in ${curr_lang} language goes here must including if any image html tags and/or embed html tags (${images_arr.join(
+          "Paragraph 1 of this section in ${curr_lang} language goes here, including any image HTML tags and/or embed HTML tags (${images_arr.join(
     " ,"
   )} and ${links_arr.join(
     " ,"
-  )}) without [IAMGE] and [IFRAME] placeholders but including [BLOCKQUOTE] placeholders.",
+  )}). Do not include [IMAGE] or [IFRAME] placeholders but preserve [BLOCKQUOTE] placeholders."
         ]
       }
     ]
   },
   "seo_title": "SEO-Friendly Title Here",
   "meta_title": "Meta Title for SEO",
-  "meta_description": "Short meta description for SEO. Typically under 160 characters.",
+  "meta_description": "Short meta description for SEO, typically under 160 characters.",
   "meta_keywords": ["keyword1", "keyword2", "keyword3", "etc."],
-  "summary": "Short 160-word summary providing an overview of the article and generating curiosity.",
+  "summary": "Short summary of about 160 words that provides an overview of the article and generates curiosity.",
   "categories": {
-    "primary_category": "Main Category",
-    "secondary_category": "Secondary Category"
-  }
+    "primary_category": "Main Category (Primary Category ID in text format)",
+    "secondary_category": "Secondary Category (Secondary Category ID in text format)"
+  },
+  "primary_category_id": Primary Category ID from the pre-defined list (integer format),
+  "secondary_category_id": Secondary Category ID from the pre-defined list (integer format)
 }
+
+**Example of Valid Outputs Based on Input:**
+   - Input: {'Entertainment (ID: 18)': ['Movies (ID: 20)', 'Music (ID: 21)']}
+     Valid Output: {
+       "categories": {
+         "primary_category": "Movies",
+         "secondary_category": "Entertainment"
+       },
+       "primary_category_id": 20,
+       "secondary_category_id": 18
+     }
     `;
 }
