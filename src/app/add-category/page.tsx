@@ -34,6 +34,14 @@ import {
 
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/formatDate";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogHeader,
+} from "@/components/ui/dialog";
 
 interface Category {
   id: string;
@@ -67,6 +75,10 @@ export default function AddCategory() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [edited_category_name, setEditedCategoryName] = useState("");
+  const [edited_category_slug, setEditedCategorySlug] = useState("");
+  const [edited_category_id, setEditedCategoryId] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -77,6 +89,12 @@ export default function AddCategory() {
   useEffect(() => {
     setCategorySlug(category_name.toLowerCase().replaceAll(" ", "-").trim());
   }, [category_name]);
+
+  useEffect(() => {
+    setEditedCategorySlug(
+      edited_category_name.toLowerCase().replaceAll(" ", "-").trim()
+    );
+  }, [edited_category_name]);
 
   const fetchCategories = async () => {
     try {
@@ -136,6 +154,60 @@ export default function AddCategory() {
     }
   };
 
+  const handleEditCategoryName = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    try {
+      e.preventDefault();
+      const formElements = e.target as HTMLFormElement;
+      const nameInput = formElements.querySelector("#name") as HTMLInputElement;
+      const slugInput = formElements.querySelector("#slug") as HTMLInputElement;
+
+      if (!nameInput || !slugInput) {
+        throw new Error("Required form elements not found");
+      }
+
+      const res = await fetch("/api/edit-category", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: nameInput.value,
+          slug: slugInput.value,
+          id: edited_category_id,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update category");
+      }
+
+      toast({
+        title: "Success!",
+        description: "Category updated successfully",
+      });
+
+      toast({
+        title: "Success",
+        description: "Sucessfully updated category",
+      });
+      fetchCategories();
+    } catch (error) {
+      console.error("Error updating category:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update category",
+        variant: "destructive",
+      });
+    } finally {
+      setEditedCategoryName("");
+      setEditedCategorySlug("");
+      setEditedCategoryId("");
+      setDialogOpen(false);
+    }
+  };
+
   const handleParentCategory = (category_id: string) => {
     if (category_id === "parent-category") {
       setIsParentCategory(true);
@@ -147,6 +219,10 @@ export default function AddCategory() {
   };
 
   const columns: ColumnDef<Category>[] = [
+    {
+      accessorKey: "id",
+      header: "ID",
+    },
     {
       accessorKey: "name",
       header: "Name",
@@ -169,10 +245,51 @@ export default function AddCategory() {
     {
       id: "actions",
       cell: ({ row }) => (
-        <div className="space-x-2 flex items-center justify-center">
-          <Button variant="outline" size="sm">
-            <Edit2 className="h-4 w-4" />
-          </Button>
+        <div>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setEditedCategoryName(row.getValue("name"));
+                  setEditedCategorySlug(row.original["slug"]);
+                  setEditedCategoryId(row.getValue("id"));
+                  setDialogOpen(true);
+                }}
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {`Edit category ${row.getValue("name")}`}
+                </DialogTitle>
+              </DialogHeader>
+              <form
+                className="space-y-2"
+                onSubmit={(e) => handleEditCategoryName(e)}
+              >
+                <div>
+                  <Label htmlFor="name">Edit Category Name</Label>
+                  <Input
+                    type="text"
+                    id="name"
+                    defaultValue={edited_category_name}
+                  />
+                  <Label htmlFor="slug">Edit Category Slug</Label>
+                  <Input
+                    type="text"
+                    id="slug"
+                    defaultValue={edited_category_slug}
+                  />
+                </div>
+                <Button type="submit">Submit</Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+
           <Button
             size="sm"
             onClick={() =>
