@@ -202,7 +202,7 @@ export default function AddWebsite() {
     {
       accessorKey: "url",
       header: "URL",
-      cell: ({ row }) => <div className="w-[80px]">{row.getValue("url")}</div>,
+      cell: ({ row }) => <div className="w-full">{row.getValue("url")}</div>,
     },
     // {
     //   accessorKey: "slug",
