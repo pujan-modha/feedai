@@ -34,6 +34,13 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogTitle,
+  DialogHeader,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import URLInput from "@/components/ui/url-input";
 import { formatDate } from "@/lib/formatDate";
@@ -64,6 +71,11 @@ export default function AddWebsite() {
   const [desc, setDesc] = useState("");
   const [author, setAuthor] = useState("");
   const [thumb, setThumb] = useState("");
+  const [edited_website_desc, setEditedWebsiteDesc] = useState("");
+  const [edited_website_author, setEditedWebsiteAuthor] = useState("");
+  const [edited_website_id, setEditedWebsiteId] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   // const [categories, setCategories] = useState<Category[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -136,6 +148,51 @@ export default function AddWebsite() {
     } catch (error) {
       console.error("Error fetching languages:", error);
       setError("Failed to fetch languages");
+    }
+  };
+
+  const handleEditWebsite = async (e: React.FormEvent<HTMLFormElement>) => {
+    try {
+      e.preventDefault();
+      const formElements = e.target as HTMLFormElement;
+      const descInput = formElements.querySelector("#website_desc") as HTMLInputElement;
+      const authorInput = formElements.querySelector(
+        "#website_author"
+      ) as HTMLInputElement;
+      if (!descInput || !authorInput) {
+        throw new Error("Required form elements not found");
+      }
+      const res = await fetch("/api/edit-website", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          desc: descInput.value,
+          author: authorInput.value,
+          id: edited_website_id,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to update website");
+      }
+      toast({
+        title: "Success!",
+        description: "Website updated successfully",
+      });
+      fetchWebsites();
+    } catch (error) {
+      console.error("Error updating website:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update website",
+        variant: "destructive",
+      });
+    } finally {
+      setEditedWebsiteDesc("");
+      setEditedWebsiteAuthor("");
+      setEditedWebsiteId("");
+      setDialogOpen(false);
     }
   };
 
@@ -243,9 +300,48 @@ export default function AddWebsite() {
           >
             <Trash2 className="h-4 w-4" />
           </Button>
-          <Button variant={"outline"} size="sm">
-            <Edit2 className="h-4 w-4" />
-          </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setEditedWebsiteDesc(row.original["description"]);
+                  setEditedWebsiteAuthor(row.original["author"]);
+                  setEditedWebsiteId(row.getValue("id"));
+                  setDialogOpen(true);
+                }}
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {`Edit category ${row.getValue("name")}`}
+                </DialogTitle>
+              </DialogHeader>
+              <form
+                className="space-y-2"
+                onSubmit={(e) => handleEditWebsite(e)}
+              >
+                <div>
+                  <Label htmlFor="website_desc">Edit Website Description</Label>
+                  <Textarea
+                    id="website_desc"
+                    defaultValue={edited_website_desc}
+                  />
+                  <Label htmlFor="website_author">Edit Website Author</Label>
+                  <Input
+                    type="text"
+                    id="website_author"
+                    defaultValue={edited_website_author}
+                  />
+                </div>
+                <Button type="submit">Submit</Button>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       ),
     },

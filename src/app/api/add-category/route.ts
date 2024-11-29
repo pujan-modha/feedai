@@ -20,27 +20,24 @@ export async function POST(req: NextRequest) {
 
     const given_website = await prisma.websites.findFirst({
       where: {
-        id: parseInt(website_id)
-      }
-    })
+        id: parseInt(website_id),
+      },
+    });
 
     if (!given_website)
-      return NextResponse.json(
-        { error: "Website not found" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Website not found" }, { status: 400 });
 
     const website_categories = JSON.parse(given_website.categories || "[]");
 
-    for(let i = 0; i < website_categories.length;i++){
+    for (let i = 0; i < website_categories.length; i++) {
       const existingCategory = await prisma.categories.findUnique({
         where: {
           id: website_categories[i],
         },
       });
-      console.log(existingCategory)
+      console.log(existingCategory);
       if (existingCategory && existingCategory.slug === slug) {
-        console.log("Ok")
+        console.log("Ok");
         return NextResponse.json(
           { error: "Category with this slug already exists" },
           { status: 400 }
@@ -55,6 +52,8 @@ export async function POST(req: NextRequest) {
         is_parent: is_parent,
         parent_id: !is_parent ? parseInt(parent_category_id) : null,
         website_id: parseInt(website_id),
+        website_name: given_website.name,
+        website_slug: given_website.slug,
       },
     });
 
