@@ -245,7 +245,7 @@ export default function AddCategory() {
       id: "actions",
       cell: ({ row }) => (
         <div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          {/* <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button
                 variant="ghost"
@@ -287,7 +287,7 @@ export default function AddCategory() {
                 <Button type="submit">Submit</Button>
               </form>
             </DialogContent>
-          </Dialog>
+          </Dialog> */}
 
           <Button
             size="sm"
