@@ -44,6 +44,7 @@ import {
 import { Input } from "@/components/ui/input";
 import URLInput from "@/components/ui/url-input";
 import { formatDate } from "@/lib/formatDate";
+import { auth } from "../auth";
 
 interface Language {
   id: string;
@@ -71,9 +72,14 @@ export default function AddWebsite() {
   const [desc, setDesc] = useState("");
   const [author, setAuthor] = useState("");
   const [thumb, setThumb] = useState("");
+
   const [edited_website_desc, setEditedWebsiteDesc] = useState("");
   const [edited_website_author, setEditedWebsiteAuthor] = useState("");
   const [edited_website_id, setEditedWebsiteId] = useState("");
+  const [edited_website_language, setEditedWebsiteLanguage] = useState("");
+  const [edited_website_thumbimage, setEditedWebsiteThumbImage] = useState("");
+  const [edited_website_url, setEditedWebsiteUrl] = useState("");
+
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // const [categories, setCategories] = useState<Category[]>([]);
@@ -155,13 +161,27 @@ export default function AddWebsite() {
     try {
       e.preventDefault();
       const formElements = e.target as HTMLFormElement;
-      const descInput = formElements.querySelector("#website_desc") as HTMLInputElement;
+      const descInput = formElements.querySelector(
+        "#website_desc"
+      ) as HTMLInputElement;
       const authorInput = formElements.querySelector(
         "#website_author"
       ) as HTMLInputElement;
-      if (!descInput || !authorInput) {
-        throw new Error("Required form elements not found");
+      const thumbInput = formElements.querySelector(
+        "#website_thumb"
+      ) as HTMLInputElement;
+      const urlInput = formElements.querySelector(
+        "#website_url"
+      ) as HTMLInputElement;
+      if (
+        !descInput.value ||
+        !authorInput.value ||
+        !urlInput.value ||
+        !edited_website_language
+      ) {
+        throw new Error("Please fill all the fields");
       }
+      console.log(descInput.value, authorInput.value, thumbInput.value, urlInput.value);
       const res = await fetch("/api/edit-website", {
         method: "PATCH",
         headers: {
@@ -170,6 +190,9 @@ export default function AddWebsite() {
         body: JSON.stringify({
           desc: descInput.value,
           author: authorInput.value,
+          languages: edited_website_language,
+          thumb: edited_website_thumbimage,
+          url: edited_website_url,
           id: edited_website_id,
         }),
       });
@@ -300,6 +323,7 @@ export default function AddWebsite() {
           >
             <Trash2 className="h-4 w-4" />
           </Button>
+
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button
@@ -307,6 +331,8 @@ export default function AddWebsite() {
                 size="icon"
                 onClick={() => {
                   setEditedWebsiteDesc(row.original["description"]);
+                  setEditedWebsiteLanguage(row.getValue("languages"));
+                  setEditedWebsiteUrl(row.getValue("url"));
                   setEditedWebsiteAuthor(row.original["author"]);
                   setEditedWebsiteId(row.getValue("id"));
                   setDialogOpen(true);
@@ -318,7 +344,7 @@ export default function AddWebsite() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {`Edit category ${row.getValue("name")}`}
+                  {`Edit website ${row.getValue("name")}`}
                 </DialogTitle>
               </DialogHeader>
               <form
@@ -326,11 +352,48 @@ export default function AddWebsite() {
                 onSubmit={(e) => handleEditWebsite(e)}
               >
                 <div>
+                  <Label htmlFor="website_language">
+                    Edit Website Language
+                  </Label>
+                  <Select
+                    onValueChange={(value: string) =>
+                      setEditedWebsiteLanguage(value)
+                    }
+                    value={edited_website_language}
+                  >
+                    <SelectTrigger id="website" className="w-full">
+                      <SelectValue placeholder="Select a language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {languages.map((lang: Language) => (
+                        <SelectItem key={lang.id} value={lang.name}>
+                          {lang.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Label htmlFor="website_desc">Edit Website Description</Label>
                   <Textarea
                     id="website_desc"
                     defaultValue={edited_website_desc}
                   />
+
+                  <Label htmlFor="website_thumb">Edit Website Thumb</Label>
+                  <Input
+                    type="file"
+                    id="website_thumb"
+                    placeholder="/placeholder.svg"
+                    //image type only png or jpg
+                    accept=".png, .jpg, .jpeg, .svg, .gif, .webp,"
+                  />
+
+                  <Label htmlFor="website_url">Edit Website URL</Label>
+                  <Input
+                    defaultValue={edited_website_url}
+                    type="text"
+                    id="website_url"
+                  />
+
                   <Label htmlFor="website_author">Edit Website Author</Label>
                   <Input
                     type="text"

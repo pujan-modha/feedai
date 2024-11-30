@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import cron from "node-cron";
-// Schedule the task to run every 1 minutes
+
 export async function GET() {
   cron.schedule("* * * * *", async () => {
     console.log("Running cron job");
@@ -11,7 +11,9 @@ export async function GET() {
         message: "Cron job started",
       },
     });
-    await fetch("http://localhost:3000/api/cron");
+    for (let i = 0; i < parseInt(process.env.NEXT_PUBLIC_MAX_TASKS || "2"); i++) {
+      await fetch("http://localhost:3000/api/cron");
+    }
   });
   return NextResponse.json(
     { success: "Cron job scheduled to run every 1 minutes" },

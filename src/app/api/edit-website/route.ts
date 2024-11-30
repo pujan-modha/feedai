@@ -2,24 +2,32 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export async function PATCH(req: NextRequest) {
-  const { desc, author, id } = await req.json();
+  const { desc, author, languages, thumb, url, id } = await req.json();
   console.log(desc, author, id);
-  if (!desc || !author) {
+  if (!id) { 
     return NextResponse.json({
       status: 400,
-      error: "Provide all the required fields!",
+      error: "Id is required!",
     });
+  }
+
+  const dataToUpdate = {
+    description: desc,
+    author: author,
+    languages: languages,
+    url: url,
+    modified_at: new Date(),
+  };
+
+  if (thumb !== null) {
+    dataToUpdate.thumb = thumb;
   }
 
   const edited_website = await prisma.websites.update({
     where: {
       id: parseInt(id),
     },
-    data: {
-      description: desc, 
-      author: author,
-      modified_at: new Date(),
-    },
+    data: dataToUpdate,
   });
 
   return NextResponse.json({
