@@ -58,23 +58,23 @@ model tasks {
 }
 
 model generated_articles {
-  id                 Int       @id @default(autoincrement())
-  task_id            Int
-  title              String    @db.VarChar(255)
-  content            String    @db.Text
-  created_at         DateTime? @default(now()) @db.DateTime(0)
-  modified_at        DateTime? @db.DateTime(0)
-  seo_title          String?   @db.VarChar(255)
-  meta_title         String?   @db.VarChar(255)
-  meta_description   String?   @db.Text
-  meta_keywords      String?   @db.Text
-  summary            String?   @db.Text
-  primary_category   String?   @db.VarChar(255)
-  secondary_category String?   @db.VarChar(255)
-  parent_guid        String?   @db.VarChar(255)
-  website_slug       String?   @db.VarChar(255)
-  primary_category_id Int?     @db.Int
-  secondary_category_id Int?   @db.Int
+  id                    Int       @id @default(autoincrement())
+  task_id               Int
+  title                 String    @db.VarChar(255)
+  content               String    @db.Text
+  created_at            DateTime? @default(now()) @db.DateTime(0)
+  modified_at           DateTime? @db.DateTime(0)
+  seo_title             String?   @db.VarChar(255)
+  meta_title            String?   @db.VarChar(255)
+  meta_description      String?   @db.Text
+  meta_keywords         String?   @db.Text
+  summary               String?   @db.Text
+  primary_category      String?   @db.VarChar(255)
+  secondary_category    String?   @db.VarChar(255)
+  parent_guid           String?   @db.VarChar(255)
+  primary_category_id   Int?
+  secondary_category_id Int?
+  website_slug          String?   @db.VarChar(255)
 }
 
 model cron_logs {

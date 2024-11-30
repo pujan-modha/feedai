@@ -61,8 +61,8 @@ Categories are structured as "Secondary Category (ID: ID)": ["Primary Category 1
   "meta_keywords": ["keyword1", "keyword2", "keyword3", "etc."],
   "summary": "Short summary of about 160 words that provides an overview of the article and generates curiosity.",
   "categories": {
-    "primary_category": "Main Category (Primary Category ID in text format)",
-    "secondary_category": "Secondary Category (Secondary Category ID in text format)"
+    "primary_category": "Primary Category from the pre-defined list",
+    "secondary_category": "Secondary Category from the pre-defined list"
   },
   "primary_category_id": Primary Category ID from the pre-defined list (integer format),
   "secondary_category_id": Secondary Category ID from the pre-defined list (integer format)

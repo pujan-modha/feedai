@@ -12,25 +12,20 @@ export async function GET(
   console.log(website_slug);
   console.log(category_slug);
 
-  const found_website = await prisma.website.findUnique({
+  // Fetch website from database
+  const website = await prisma.websites.findUnique({
     where: {
       slug: website_slug,
     },
   });
 
-  if (!found_website) {
-    return new NextResponse("Website not found", { status: 404 });
+  if (!website) {
+    return new NextResponse("Website not found", {
+      status: 404,
+    });
   }
 
-  const found_category = await prisma.category.findUnique({
-    where: {
-      slug: category_slug,
-    },
-  });
-
-  if (!found_category) {
-    return new NextResponse("Category not found", { status: 404 });
-  }
+  
 
   // Fetch articles from database
   const articles = await prisma.generated_articles.findMany({

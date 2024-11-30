@@ -10,6 +10,7 @@ const parser = new XMLParser({ ignoreAttributes: false });
 interface Website {
   name: string;
   url: string;
+  slug: string;
   categories: Array<string>;
 }
 
@@ -177,7 +178,11 @@ async function generate_articles(
         summary: completed_content_obj.summary,
         primary_category: completed_content_obj.categories.primary_category,
         secondary_category: completed_content_obj.categories.secondary_category,
+        website_slug: selected_website[i].slug,
+        primary_category_id: completed_content_obj.primary_category_id,
+        secondary_category_id: completed_content_obj.secondary_category_id,
         parent_guid: parent_guid,
+
       };
       articles_arr.push(parsed_content);
     } catch {
