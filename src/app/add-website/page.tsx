@@ -83,7 +83,6 @@ export default function AddWebsite() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // const [categories, setCategories] = useState<Category[]>([]);
-  const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedLanguages, setSelectedLanguages] = useState<string>([]);
