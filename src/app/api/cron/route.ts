@@ -30,9 +30,11 @@ export async function GET() {
       status: "idle",
     },
     orderBy: {
-      modified_at: "desc",
+      modified_at: "asc",
     },
   });
+
+  console.log(start_task);
   if (!start_task) {
     return NextResponse.json(
       { message: "All tasks are in progress!" },
@@ -61,6 +63,7 @@ export async function GET() {
       data: {
         status: "in-progress",
         start_time: new Date(),
+        modified_at: new Date(),
       },
     });
 
@@ -98,6 +101,7 @@ export async function GET() {
       data: {
         status: `error: ${error}`,
         end_time: new Date(),
+        modified_at: new Date(),
       },
     });
     return NextResponse.json(

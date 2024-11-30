@@ -11,7 +11,7 @@ Content Transformation:
 ${user_prompt}
 Use only the categories provided below, exactly as structured:
 ${JSON.stringify(curr_categories, null, 2)}.
-Categories are structured as "Secondary Category (ID: ID)": ["Primary Category 1 (ID: ID)", "Primary Category 2 (ID: ID)"]. Strictly adhere to the following rules:
+Categories are structured as "Secondary Category (Slug: slug)": ["Primary Category 1 (Slug: slug)", "Primary Category 2 (Slug: slug)"]. Strictly adhere to the following rules:
 
 1. **Category Matching**:
    - Select categories directly from the input structure provided above. Only use categories and IDs from this structure.
@@ -25,9 +25,9 @@ Categories are structured as "Secondary Category (ID: ID)": ["Primary Category 1
 2.5 **Handling Categories when article do not match any input category**:
    - If an article does not match any input category, you must select the closest matching category from the list of categories provided in the input.
 
-3. **ID Validation**:
-   - Ensure that both "primary_category_id" and "secondary_category_id" are integer IDs directly extracted from the input.
-   - Do not invent or modify any IDs.
+3. **Slug Validation**:
+   - Ensure that both "primary_category_slug" and "secondary_category_slug" are directly extracted from the input.
+   - Do not invent or modify any Slugs.
 4. **Instruction for Handling Images and Embeds**:
    - Replace placeholders like [IMAGE] and [IFRAME] with corresponding HTML tags using the URLs provided in ${images_arr.join(
      " ,"
@@ -61,22 +61,22 @@ Categories are structured as "Secondary Category (ID: ID)": ["Primary Category 1
   "meta_keywords": ["keyword1", "keyword2", "keyword3", "etc."],
   "summary": "Short summary of about 160 words that provides an overview of the article and generates curiosity.",
   "categories": {
-    "primary_category": "Primary Category from the pre-defined list",
-    "secondary_category": "Secondary Category from the pre-defined list"
+    "primary_category": "Primary Category from the provided input list (Must be from the provided input and do not include slug)",
+    "secondary_category": "Secondary Category from the provided input list (Must be from the provided input and do not include slug)"
   },
-  "primary_category_id": Primary Category ID from the pre-defined list (integer format) and make sure that it is the same ID which is associated with primary_category,
-  "secondary_category_id": Secondary Category ID from the pre-defined list (integer format) and make sure that it is the same ID which is associated with secondary_category
+  "primary_category_slug": "Primary Category Slug from the provided input list and make sure that it is the same Slug which is associated with primary_category",
+  "secondary_category_slug": "Secondary Category Slug from the provided input list and make sure that it is the same Slug which is associated with secondary_category"
 }
 
 **Example of Valid Outputs Based on Input:**
-   - Input: {'Entertainment (ID: 18)': ['Movies (ID: 20)', 'Music (ID: 21)']}
+   - Input: {'Entertainment (Slug: entertainment)': ['Movies (Slug: movies)', 'Music (Slug: music)']}
      Valid Output: {
        "categories": {
          "primary_category": "Movies",
          "secondary_category": "Entertainment"
        },
-       "primary_category_id": 20,
-       "secondary_category_id": 18
+       "primary_category_slug": "movies (Must be from provided input)",
+       "secondary_category_slug": "entertainment (Must be from provided input)"
      }
     `;
 }

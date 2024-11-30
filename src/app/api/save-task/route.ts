@@ -74,7 +74,7 @@ export async function POST(req: Request) {
       articles_count: task_obj.article_count,
       status: "idle",
       created_at: new Date(),
-      modified_at: new Date(),
+      modified_at: new Date(0),
     };
 
     // Insert the new task into the database

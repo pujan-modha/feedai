@@ -14,6 +14,14 @@ interface Website {
   categories: Array<string>;
 }
 
+interface RewrittenArticle {
+  title: string;
+  content: Array<{
+    heading: string;
+    paragraphs: Array<string>;
+  }>;
+}
+
 export async function POST(req: Request) {
   const start_task_config = await req.json();
   if (!start_task_config) {
@@ -34,8 +42,36 @@ export async function POST(req: Request) {
   const images_arr: Array<string> = [];
   const links_arr: Array<string> = [];
   const blockquote_arr: Array<string> = [];
+  let thumbnail_image: string = "https://ui.shadcn.com/placeholder.svg";
 
-  // console.log(images_arr);
+  if (
+    typeof parsedFeed.rss.channel.item[0].thumbimage === "string" &&
+    parsedFeed.rss.channel.item[0].thumbimage
+  ) {
+    thumbnail_image = parsedFeed.rss.channel.item[0].thumbimage;
+  }
+  if (typeof parsedFeed.rss.channel.item[0].description === "string") {
+    $ = cheerio.load(parsedFeed.rss.channel.item[0].description);
+    console.log("A");
+    if ($("img").length > 0) {
+      console.log("HIT");
+      thumbnail_image = $("img").first().attr("src") || "";
+    }
+  }
+  if (typeof parsedFeed.rss.channel.item[0][feed_items.content] === "string") {
+    console.log("B");
+    $ = cheerio.load(parsedFeed.rss.channel.item[0][feed_items.content]);
+
+    if ($("img").length > 0) {
+      console.log("HIT");
+      thumbnail_image = $("img").first().attr("src") || "";
+    }
+  }
+
+  if (!thumbnail_image) {
+    thumbnail_image = "https://ui.shadcn.com/placeholder.svg";
+  }
+
   console.log(articles_count);
   console.log(feed_items.content);
   for (let i = 0; i < articles_count; i++) {
@@ -69,14 +105,27 @@ export async function POST(req: Request) {
       if (src) links_arr.push(src);
     });
 
-    $("blockquote").each((_, blockquote) => {
-      const blockquoteString = $.html(blockquote);
-      blockquote_arr.push(blockquoteString);
-    });
+    // $("blockquote").each((_, blockquote) => {
+    //   const blockquoteString = $.html(blockquote);
+    //   blockquote_arr.push(blockquoteString);
+    // });
+
+    const blockquoteScriptRegex =
+      /<blockquote[^>]*>[\s\S]*?<\/blockquote>(?:\s*<script[^>]*?><\/script>)?/g;
+
+    const matches = curr_content.match(blockquoteScriptRegex);
+
+    if (matches) {
+      matches.forEach((match: string) => {
+        blockquote_arr.push(match);
+      });
+    }
+
     curr_content = curr_content
       .replace(/<img[^>]*>/gi, "[IMAGE]")
       .replace(/<iframe[^>]*>.*?<\/iframe>/gi, "[IFRAME]")
-      .replace(/<blockquote[^>]*>.*?<\/blockquote>/gi, "[BLOCKQUOTE]");
+      .replace(blockquoteScriptRegex, "[BLOCKQUOTE]");
+
     console.log(curr_content);
     const generated_articles_arr = await generate_articles(
       feed_config.num_articles,
@@ -138,6 +187,7 @@ async function generate_articles(
   images_arr: Array<string>,
   links_arr: Array<string>,
   blockquote_arr: Array<string>,
+  thumbnail_image: string,
   parent_guid: string
 ) {
   const articles_arr = [];
@@ -145,6 +195,7 @@ async function generate_articles(
     return website.categories;
   });
   console.log(categories_arr);
+  console.log("Blockquote array", blockquote_arr);
 
   for (let i = 0; i < aritcle_count; i++) {
     images_arr = images_arr.map((img_link) => {
@@ -160,9 +211,35 @@ async function generate_articles(
       );
       console.log(images_arr);
       const completion_response = await completion(curr_prompt, content);
-      const completed_content_obj = JSON.parse(
+      let completed_content_obj = JSON.parse(
         completion_response.choices[0].message.content
       );
+
+      const replaceBlockquotes = (obj: any): any => {
+        let blockquoteIndex = 0;
+        const replace = (item: any): any => {
+          if (typeof item === "string") {
+            return item.replace(/\[BLOCKQUOTE\]/g, () => {
+              const replacement =
+                blockquote_arr[blockquoteIndex] || "[BLOCKQUOTE]";
+              blockquoteIndex = (blockquoteIndex + 1) % blockquote_arr.length;
+              return replacement;
+            });
+          } else if (Array.isArray(item)) {
+            return item.map(replace);
+          } else if (typeof item === "object" && item !== null) {
+            const newObj: { [key: string]: any } = {};
+            for (const [key, value] of Object.entries(item)) {
+              newObj[key] = replace(value);
+            }
+            return newObj;
+          }
+          return item;
+        };
+        return replace(obj);
+      };
+
+      completed_content_obj = replaceBlockquotes(completed_content_obj);
 
       console.log(completed_content_obj);
       const parsed_content = {
@@ -171,6 +248,7 @@ async function generate_articles(
         content: JSON.stringify(
           completed_content_obj.rewritten_article.content
         ),
+        thumb_image: thumbnail_image,
         seo_title: completed_content_obj.seo_title,
         meta_title: completed_content_obj.meta_title,
         meta_description: completed_content_obj.meta_description,
@@ -179,10 +257,9 @@ async function generate_articles(
         primary_category: completed_content_obj.categories.primary_category,
         secondary_category: completed_content_obj.categories.secondary_category,
         website_slug: selected_website[i].slug,
-        primary_category_id: completed_content_obj.primary_category_id,
-        secondary_category_id: completed_content_obj.secondary_category_id,
+        primary_category_slug: completed_content_obj.primary_category_slug,
+        secondary_category_slug: completed_content_obj.secondary_category_slug,
         parent_guid: parent_guid,
-
       };
       articles_arr.push(parsed_content);
     } catch {

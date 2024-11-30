@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Navbar } from "./navbar";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -31,20 +30,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div
-          id="navbar"
-          className="flex bg-gray-100 z-50 h-16 items-center w-full px-8"
-        >
-          <Link href="/" className="text-3xl font-black">FeedAI</Link>
-          <div className="ml-auto space-x-4">
-            <Link href="/">Home</Link>
-            <Link href="/add-website">Websites</Link>
-            <Link href="/add-category">Categories</Link>
-            <Link href="/fetch-articles">Articles</Link>
-            <Link href="/fetch-tasks">Tasks</Link>
-            <Button variant="outline">Logout</Button>
-          </div>
-        </div>
+        <Navbar />
         {children}
         <Toaster />
       </body>

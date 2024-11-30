@@ -3,11 +3,12 @@ import prisma from "@/lib/prisma";
 
 // get slug from url param
 export async function GET(
-  request: Request,
-  { params }: { params: { slug: string } }
+  _request: Request,
+  { params }: { params: { slug: string[] } }
 ) {
-  const website_slug = params.slug[0];
-  const category_slug = params.slug[1];
+  const { slug } = await params;
+  const website_slug = slug[0];
+  const category_slug = slug[1];
 
   console.log(website_slug);
   console.log(category_slug);
@@ -42,6 +43,12 @@ export async function GET(
   const articles = await prisma.generated_articles.findMany({
     where: {
       website_slug: website_slug,
+      ...(category_slug && {
+        OR: [
+          { primary_category_slug: category_slug },
+          { secondary_category_slug: category_slug },
+        ],
+      }),
     },
     orderBy: {
       created_at: "desc",
@@ -86,14 +93,11 @@ export async function GET(
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Feed AI RSS</title>
-    <link>${process.env.NEXT_PUBLIC_BASE_URL}</link>
-    <description>Latest articles from Feed AI</description>
-    <language>en</language>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-    <atom:link href="${
-      process.env.NEXT_PUBLIC_BASE_URL
-    }/api/feed" rel="self" type="application/rss+xml" />
+    <title>${website.name}</title>
+    <link>${website.url}</link>
+    <description>${website.description}</description>
+    <language>${website.languages}</language>
+    <lastBuildDate>${articles[0].created_at}</lastBuildDate>
     ${itemsXml}
   </channel>
 </rss>`;

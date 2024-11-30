@@ -21,11 +21,11 @@ export async function populateCategories(categories: Array<string>) {
 
       if (parent_category) {
         // Create key in format "Parent Category Name (Category ID)"
-        const parentKey = `${parent_category.name} (ID: ${parent_category.id})`;
+        const parentKey = `${parent_category.name} (Slug: ${parent_category.slug})`;
         
         // Map children to format "Child Category Name (Category ID)"
         json_categories[parentKey] = child_categories.map(
-          child => `${child.name} (ID: ${child.id})`
+          child => `${child.name} (Slug: ${child.slug})` 
         );
       }
     })

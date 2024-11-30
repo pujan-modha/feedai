@@ -258,8 +258,11 @@ export default function AddWebsite() {
         title: "Success!",
         description: "Website added successfully",
       });
-      fetchWebsites();
-      // setSelectedCategories([]);
+      
+      // refresh
+      setTimeout(() => {
+        window.location.href = window.location.href;
+      }, 2000);
     } catch (error) {
       console.error("Error adding website:", error);
     } finally {

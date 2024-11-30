@@ -62,6 +62,7 @@ model generated_articles {
   task_id               Int
   title                 String    @db.VarChar(255)
   content               String    @db.Text
+  thumb_image           String?    @db.Text
   created_at            DateTime? @default(now()) @db.DateTime(0)
   modified_at           DateTime? @db.DateTime(0)
   seo_title             String?   @db.VarChar(255)
@@ -74,6 +75,8 @@ model generated_articles {
   parent_guid           String?   @db.VarChar(255)
   primary_category_id   Int?
   secondary_category_id Int?
+  primary_category_slug String?   @db.VarChar(255)
+  secondary_category_slug String?   @db.VarChar(255)
   website_slug          String?   @db.VarChar(255)
 }
 

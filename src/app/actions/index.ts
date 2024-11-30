@@ -9,18 +9,22 @@ export async function handleLogin(prevState: any, formData: FormData) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: true,
-      redirectTo: "/",
-    });
-
-    if (!result?.ok) {
-      return { error: "Invalid credentials" };
+    // Allow direct access to /feeds without authentication
+    if (formData.get('redirectTo') === '/feeds') {
+      redirect('/feeds');
     }
 
-    // Instead of returning success, redirect directly
+    if (!email || !password) {
+      return { error: "Email and password are required" };
+    }
+
+    await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    // If signIn doesn't throw, it was successful
     redirect("/");
   } catch (error) {
     if (error instanceof AuthError) {
@@ -28,7 +32,7 @@ export async function handleLogin(prevState: any, formData: FormData) {
         case "CredentialsSignin":
           return { error: "Invalid credentials" };
         default:
-          return { error: "Something went wrong" };
+          return { error: "An error occurred during sign in" };
       }
     }
     throw error;
@@ -36,10 +40,14 @@ export async function handleLogin(prevState: any, formData: FormData) {
 }
 
 export async function handleLogout() {
-  await signOut({ redirectTo: "/login" });
+  await signOut();
+  redirect("/login");
 }
 
 export async function getCurrentUser() {
   const session = await auth();
-  return session?.user;
+  if (!session?.user) {
+    redirect("/login");
+  }
+  return session.user;
 }
