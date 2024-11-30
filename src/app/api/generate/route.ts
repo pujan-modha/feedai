@@ -38,13 +38,12 @@ export async function POST(req: Request) {
   console.log(articles_count);
   console.log(feed_items.content);
   for (let i = 0; i < articles_count; i++) {
-    
-  if (typeof parsedFeed.rss.channel.item[i].guid === "string") {
-    parsedFeed.rss.channel.item[i].guid = parsedFeed.rss.channel.item[0].guid;
-  } else {
-    parsedFeed.rss.channel.item[i].guid =
-      parsedFeed.rss.channel.item[i].guid["#text"];
-  }
+    if (typeof parsedFeed.rss.channel.item[i].guid === "string") {
+      parsedFeed.rss.channel.item[i].guid = parsedFeed.rss.channel.item[i].guid;
+    } else {
+      parsedFeed.rss.channel.item[i].guid =
+        parsedFeed.rss.channel.item[i].guid["#text"];
+    }
     const doesExist = await prisma.generated_articles.findFirst({
       where: {
         parent_guid: parsedFeed.rss.channel.item[i][feed_items.guid],
@@ -94,7 +93,6 @@ export async function POST(req: Request) {
     await prisma.generated_articles.createMany({
       data: generated_articles_arr,
     });
-
 
     images_arr.length = 0;
     links_arr.length = 0;

@@ -2,9 +2,28 @@ import fetch from "node-fetch";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-// const MAX_TASKS = 5;
+const MAX_TASKS = 2;
 
 export async function GET() {
+
+  const ongoing_task = await prisma.tasks.findFirst({
+    where: {
+      status: "in-progress",
+    },
+  });
+
+  const ongoing_tasks_count = await prisma.tasks.count({
+    where: {
+      status: "in-progress",
+    },
+  });
+
+  if (ongoing_task !== null && ongoing_tasks_count > MAX_TASKS) {
+    return NextResponse.json(
+      { message: "Max tasks limit reached" },
+      { status: 404 }
+    );
+  }
 
   const start_task = await prisma.tasks.findFirst({
     where: {
