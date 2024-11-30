@@ -51,11 +51,18 @@ export async function GET(
 
   // Generate RSS items from articles
   const itemsXml = articles
-    .map(
-      (article) => `
+    .map((article) => {
+      const content = JSON.parse(article.content)
+        .map((section: { paragraphs: string[] }) =>
+          section.paragraphs.join("\n")
+        )
+        .join("\n");
+      console.log(content);
+      return `
     <item>
       <title><![CDATA[${article.title}]]></title>
       <description><![CDATA[${article.summary}]]></description>
+      <content><![CDATA[${content}]]></content>
       <pubDate>${
         article.created_at ? new Date(article.created_at).toUTCString() : ""
       }</pubDate>
@@ -71,11 +78,9 @@ export async function GET(
       }
       ${website.author ? `<author>${website.author}</author>` : ""}
     </item>
-  `
-    )
+  `;
+    })
     .join("\n");
-
-    console.log(itemsXml);
 
   // Create the full RSS feed
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
