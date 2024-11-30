@@ -72,6 +72,9 @@ model generated_articles {
   primary_category   String?   @db.VarChar(255)
   secondary_category String?   @db.VarChar(255)
   parent_guid        String?   @db.VarChar(255)
+  website_slug       String?   @db.VarChar(255)
+  primary_category_id Int?     @db.Int
+  secondary_category_id Int?   @db.Int
 }
 
 model cron_logs {
