@@ -293,7 +293,7 @@ export default function AddCategory() {
             size="sm"
             onClick={() =>
               window.open(
-                `${process.env.NEXT_PUBLIC_SITE_URL}/${row.original["website_slug"]}/${row.original["slug"]}/feed.xml`,
+                `${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${row.original["website_slug"]}/${row.original["slug"]}/feed.xml`,
                 "_blank"
               )
             }

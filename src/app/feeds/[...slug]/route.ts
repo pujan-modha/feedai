@@ -8,7 +8,7 @@ export async function GET(
 ) {
   const website_slug = params.slug[0];
   const category_slug = params.slug[1];
-  
+
   console.log(website_slug);
   console.log(category_slug);
 
@@ -25,14 +25,28 @@ export async function GET(
     });
   }
 
-  
+  // const category = await prisma.categories.findFirst({
+  //   where: {
+  //     slug: category_slug,
+  //     website_id: website.id,
+  //   },
+  // });
+
+  // if (!category) {
+  //   return new NextResponse("Category not found", {
+  //     status: 404,
+  //   });
+  // }
 
   // Fetch articles from database
   const articles = await prisma.generated_articles.findMany({
+    where: {
+      website_slug: website_slug,
+    },
     orderBy: {
       created_at: "desc",
     },
-    take: 10, // Limit to latest 10 articles
+    take: 50,
   });
 
   // Generate RSS items from articles
@@ -41,16 +55,27 @@ export async function GET(
       (article) => `
     <item>
       <title><![CDATA[${article.title}]]></title>
-      <link>${article.url}</link>
-      <guid>${article.guid}</guid>
-      <description><![CDATA[${article.description}]]></description>
-      <pubDate>${new Date(article.created_at).toUTCString()}</pubDate>
-      ${article.categories ? `<category>${article.categories}</category>` : ""}
-      ${article.author ? `<author>${article.author}</author>` : ""}
+      <description><![CDATA[${article.summary}]]></description>
+      <pubDate>${
+        article.created_at ? new Date(article.created_at).toUTCString() : ""
+      }</pubDate>
+      ${
+        article.primary_category
+          ? `<category>${article.primary_category}</category>`
+          : ""
+      }
+      ${
+        article.secondary_category
+          ? `<category>${article.secondary_category}</category>`
+          : ""
+      }
+      ${website.author ? `<author>${website.author}</author>` : ""}
     </item>
   `
     )
     .join("\n");
+
+    console.log(itemsXml);
 
   // Create the full RSS feed
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -72,7 +97,7 @@ export async function GET(
   return new NextResponse(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600", // Cache for 1 hour
+      // "Cache-Control": "public, max-age=3600", // Cache for 1 hour
     },
   });
 }

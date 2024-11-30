@@ -64,8 +64,8 @@ Categories are structured as "Secondary Category (ID: ID)": ["Primary Category 1
     "primary_category": "Primary Category from the pre-defined list",
     "secondary_category": "Secondary Category from the pre-defined list"
   },
-  "primary_category_id": Primary Category ID from the pre-defined list (integer format),
-  "secondary_category_id": Secondary Category ID from the pre-defined list (integer format)
+  "primary_category_id": Primary Category ID from the pre-defined list (integer format) and make sure that it is the same ID which is associated with primary_category,
+  "secondary_category_id": Secondary Category ID from the pre-defined list (integer format) and make sure that it is the same ID which is associated with secondary_category
 }
 
 **Example of Valid Outputs Based on Input:**
