@@ -518,6 +518,7 @@ export default function AddWebsite() {
             value={thumb}
             onChange={(e) => setThumb(e.target.value)}
             placeholder="/placeholder.svg"
+            accept=".png, .jpg, .jpeg, .svg, .gif, .webp,"
           />
         </div>
 
