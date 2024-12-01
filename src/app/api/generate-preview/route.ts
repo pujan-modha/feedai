@@ -193,6 +193,7 @@ async function generate_articles(
       console.log(content);
       const completion_response = await completion(curr_prompt, content);
       console.log("Blockquote array", blockquote_arr);
+      console.log(completion_response);
       const content_str = completion_response.choices[0].message.content;
       let completed_content_obj;
 

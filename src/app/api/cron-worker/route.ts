@@ -11,9 +11,14 @@ export async function GET() {
         message: "Cron job started",
       },
     });
-    for (let i = 0; i < parseInt(process.env.NEXT_PUBLIC_MAX_TASKS || "2"); i++) {
+    for (
+      let i = 0;
+      i < parseInt(process.env.NEXT_PUBLIC_MAX_TASKS || "2");
+      i++
+    ) {
       await fetch("http://localhost:3000/api/cron");
     }
+    await fetch("http://localhost:3000/api/purge-articles");
   });
   return NextResponse.json(
     { success: "Cron job scheduled to run every 1 minutes" },

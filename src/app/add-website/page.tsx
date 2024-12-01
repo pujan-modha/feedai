@@ -458,7 +458,7 @@ export default function AddWebsite() {
           />
         </div>
         <div>
-          <Label htmlFor="feed-url">Website Url</Label>
+          <Label htmlFor="feed-url">Website URL</Label>
           {/* <Input
             id="feed-url"
             type="url"
@@ -470,7 +470,7 @@ export default function AddWebsite() {
           <URLInput value={url} setValue={setUrl} />
         </div>
         <div>
-          <Label htmlFor="languages">Languages</Label>
+          <Label htmlFor="languages">Language</Label>
           <Select
             onValueChange={(value: string) => setSelectedLanguages([value])}
             value={selectedLanguages[0]}

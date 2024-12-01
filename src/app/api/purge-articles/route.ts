@@ -1,12 +1,12 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
-  const { days } = await req.json();
-  if (!days) {
+export async function GET() {
+  const days = parseInt(process.env.DELETE_AFTER_DAYS || "7", 10);
+  if (isNaN(days)) {
     return NextResponse.json(
-      { error: "Invalid input: Missing or incorrect task fields" },
-      { status: 400 }
+      { error: "Invalid configuration: DELETE_AFTER_DAYS must be a number" },
+      { status: 500 }
     );
   }
   await prisma.generated_articles.deleteMany({
@@ -16,4 +16,5 @@ export async function POST(req: Request) {
       },
     },
   });
+  return NextResponse.json({ message: "Articles purged successfully" });
 }

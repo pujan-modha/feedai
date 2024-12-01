@@ -575,7 +575,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
       {generatedArticles.length > 0 && (
         <div className="mt-8">
           <h2 className="text-xl font-bold mb-4">Generated Versions</h2>
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid lg:grid-cols-2 gap-8">
             {generatedArticles.map((article, index) => (
               <ArticleDisplay key={index} article={article} />
             ))}
