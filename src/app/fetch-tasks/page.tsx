@@ -184,7 +184,7 @@ export default function TasksTable() {
     {
       accessorKey: "id",
       header: "ID",
-      cell: ({ row }) => <div className="w-[80px]">{row.getValue("id")}</div>,
+      cell: ({ row }) => <div className="w-full">{row.getValue("id")}</div>,
     },
     {
       accessorKey: "feed_url",

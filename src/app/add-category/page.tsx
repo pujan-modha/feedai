@@ -188,14 +188,14 @@ export default function AddCategory() {
       accessorKey: "website_name",
       header: "Website",
       cell: ({ row }) => (
-        <div className="w-[80px]">{row.getValue("website_name")}</div>
+        <div className="w-full">{row.getValue("website_name")}</div>
       ),
     },
     {
       accessorKey: "created_at",
       header: "Created At",
       cell: ({ row }) => (
-        <div className="w-[80px]">{formatDate(row.getValue("created_at"))}</div>
+        <div className="w-full">{formatDate(row.getValue("created_at"))}</div>
       ),
     },
     {

@@ -280,12 +280,12 @@ export default function AddWebsite() {
     {
       accessorKey: "id",
       header: "ID",
-      cell: ({ row }) => <div className="w-[80px]">{row.getValue("id")}</div>,
+      cell: ({ row }) => <div className="w-full">{row.getValue("id")}</div>,
     },
     {
       accessorKey: "name",
       header: "Name",
-      cell: ({ row }) => <div className="w-[80px]">{row.getValue("name")}</div>,
+      cell: ({ row }) => <div className="w-full">{row.getValue("name")}</div>,
     },
     {
       accessorKey: "url",
@@ -295,27 +295,27 @@ export default function AddWebsite() {
     // {
     //   accessorKey: "slug",
     //   header: "Slug",
-    //   cell: ({ row }) => <div className="w-[80px]">{row.getValue("slug")}</div>,
+    //   cell: ({ row }) => <div className="w-full">{row.getValue("slug")}</div>,
     // },
     {
       accessorKey: "languages",
       header: "Languages",
       cell: ({ row }) => (
-        <div className="w-[80px]">{row.getValue("languages")}</div>
+        <div className="w-full">{row.getValue("languages")}</div>
       ),
     },
     {
       accessorKey: "created_at",
       header: "Created At",
       cell: ({ row }) => (
-        <div className="w-[80px]">{formatDate(row.getValue("created_at"))}</div>
+        <div className="w-full">{formatDate(row.getValue("created_at"))}</div>
       ),
     },
     {
       accessorKey: "modified_at",
       header: "Modified At",
       cell: ({ row }) => (
-        <div className="w-[80px]">
+        <div className="w-full">
           {formatDate(row.getValue("modified_at"))}
         </div>
       ),

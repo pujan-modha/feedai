@@ -126,7 +126,7 @@ export default function GeneratedArticlesTable() {
       accessorKey: "task_id",
       header: "Task ID",
       cell: ({ row }) => (
-        <div className="w-[80px]">{row.getValue("task_id")}</div>
+        <div className="w-full">{row.getValue("task_id")}</div>
       ),
     },
     {
