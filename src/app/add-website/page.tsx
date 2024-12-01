@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -44,7 +45,6 @@ import {
 import { Input } from "@/components/ui/input";
 import URLInput from "@/components/ui/url-input";
 import { formatDate } from "@/lib/formatDate";
-import { auth } from "../auth";
 
 interface Language {
   id: string;
@@ -72,6 +72,7 @@ export default function AddWebsite() {
   const [desc, setDesc] = useState("");
   const [author, setAuthor] = useState("");
   const [thumb, setThumb] = useState("");
+  const [thumbPreview, setThumbPreview] = useState<string | null>(null);
 
   const [edited_website_desc, setEditedWebsiteDesc] = useState("");
   const [edited_website_author, setEditedWebsiteAuthor] = useState("");
@@ -85,7 +86,7 @@ export default function AddWebsite() {
   // const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedLanguages, setSelectedLanguages] = useState<string>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [websites, setWebsites] = useState<Website[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -180,7 +181,12 @@ export default function AddWebsite() {
       ) {
         throw new Error("Please fill all the fields");
       }
-      console.log(descInput.value, authorInput.value, thumbInput.value, urlInput.value);
+      console.log(
+        descInput.value,
+        authorInput.value,
+        thumbInput.value,
+        urlInput.value
+      );
       const res = await fetch("/api/edit-website", {
         method: "PATCH",
         headers: {
@@ -258,7 +264,7 @@ export default function AddWebsite() {
         title: "Success!",
         description: "Website added successfully",
       });
-      
+
       // refresh
       setTimeout(() => {
         window.location.href = window.location.href;
@@ -452,7 +458,7 @@ export default function AddWebsite() {
           />
         </div>
         <div>
-          <Label htmlFor="feed-url">Website Feed URL</Label>
+          <Label htmlFor="feed-url">Website Url</Label>
           {/* <Input
             id="feed-url"
             type="url"
@@ -517,11 +523,29 @@ export default function AddWebsite() {
           <Input
             id="thumb"
             type="file"
-            value={thumb}
-            onChange={(e) => setThumb(e.target.value)}
+            className="hover:cursor-pointer"
+            onChange={(e) => {
+              setThumb(e.target.value);
+              if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                  setThumbPreview(event.target?.result as string);
+                };
+                reader.readAsDataURL(e.target.files[0]);
+              }
+            }}
             placeholder="/placeholder.svg"
             accept=".png, .jpg, .jpeg, .svg, .gif, .webp,"
           />
+          {thumbPreview && (
+            <div className="mt-2">
+              <img
+                src={thumbPreview}
+                alt="Thumbnail preview"
+                className="max-w-xs h-auto"
+              />
+            </div>
+          )}
         </div>
 
         <Button type="submit" disabled={isLoading}>

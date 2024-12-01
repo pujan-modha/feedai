@@ -23,7 +23,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { DataTable } from "@/components/datatable/datatable";
-import { ChevronDown, Trash2, Edit2, Eye } from "lucide-react";
+import { ChevronDown, Eye } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -34,13 +34,6 @@ import {
 
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/formatDate";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogTitle,
-  DialogHeader,
-} from "@/components/ui/dialog";
 
 interface Category {
   id: string;
@@ -48,6 +41,8 @@ interface Category {
   slug: string;
   value: string;
   created_at: string;
+  website_name: string;
+  website_slug: string;
 }
 
 interface Website {
@@ -61,23 +56,18 @@ export default function AddCategory() {
   const [parent_category_id, setParentCategoryId] =
     useState<string>("parent-category");
   const [isParentCategory, setIsParentCategory] = useState<boolean>(true);
-  const [successCategoryMessage, setSuccessCategoryMessage] = useState("");
+  const [successCategoryMessage] = useState("");
   const [websites, setWebsites] = useState<Website[]>([]);
   const [website_id, setWebsiteId] = useState<string>("");
-  const [successBulkCategoryMessage, setSuccessBulkCategoryMessage] =
-    useState("");
 
   // For Tabular Data
   const [categories, setCategories] = useState<Category[]>([]);
+  const [website_categories, setWebsiteCategories] = useState<Category[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
-  const [edited_category_name, setEditedCategoryName] = useState("");
-  const [edited_category_slug, setEditedCategorySlug] = useState("");
-  const [edited_category_id, setEditedCategoryId] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -88,12 +78,6 @@ export default function AddCategory() {
   useEffect(() => {
     setCategorySlug(category_name.toLowerCase().replaceAll(" ", "-").trim());
   }, [category_name]);
-
-  useEffect(() => {
-    setEditedCategorySlug(
-      edited_category_name.toLowerCase().replaceAll(" ", "-").trim()
-    );
-  }, [edited_category_name]);
 
   const fetchCategories = async () => {
     try {
@@ -153,60 +137,6 @@ export default function AddCategory() {
     }
   };
 
-  const handleEditCategoryName = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
-    try {
-      e.preventDefault();
-      const formElements = e.target as HTMLFormElement;
-      const nameInput = formElements.querySelector("#name") as HTMLInputElement;
-      const slugInput = formElements.querySelector("#slug") as HTMLInputElement;
-
-      if (!nameInput || !slugInput) {
-        throw new Error("Required form elements not found");
-      }
-
-      const res = await fetch("/api/edit-category", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: nameInput.value,
-          slug: slugInput.value,
-          id: edited_category_id,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to update category");
-      }
-
-      toast({
-        title: "Success!",
-        description: "Category updated successfully",
-      });
-
-      toast({
-        title: "Success",
-        description: "Sucessfully updated category",
-      });
-      fetchCategories();
-    } catch (error) {
-      console.error("Error updating category:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update category",
-        variant: "destructive",
-      });
-    } finally {
-      setEditedCategoryName("");
-      setEditedCategorySlug("");
-      setEditedCategoryId("");
-      setDialogOpen(false);
-    }
-  };
-
   const handleParentCategory = (category_id: string) => {
     if (category_id === "parent-category") {
       setIsParentCategory(true);
@@ -217,6 +147,34 @@ export default function AddCategory() {
     }
   };
 
+  const handleCategoryViaWebsite = async () => {
+    const data = await fetch(`/api/fetch-category-from-website`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        website_id: website_id,
+      }),
+    });
+    if (!data.ok) {
+      throw new Error("Failed to fetch categories");
+    }
+    const response = await data.json();
+    console.log(response);
+    setWebsiteCategories(response.website_categories);
+  };
+
+  useEffect(() => {
+    if (website_id) {
+      console.log(website_id);
+      handleCategoryViaWebsite();
+      // Reset parent category to default when website changes
+      setIsParentCategory(true);
+      setParentCategoryId("parent-category");
+    }
+  }, [website_id]);
+
   const columns: ColumnDef<Category>[] = [
     {
       accessorKey: "id",
@@ -226,7 +184,6 @@ export default function AddCategory() {
       accessorKey: "name",
       header: "Name",
     },
-
     {
       accessorKey: "website_name",
       header: "Website",
@@ -245,55 +202,11 @@ export default function AddCategory() {
       id: "actions",
       cell: ({ row }) => (
         <div>
-          {/* <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setEditedCategoryName(row.getValue("name"));
-                  setEditedCategorySlug(row.original["slug"]);
-                  setEditedCategoryId(row.getValue("id"));
-                  setDialogOpen(true);
-                }}
-              >
-                <Edit2 className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {`Edit category ${row.getValue("name")}`}
-                </DialogTitle>
-              </DialogHeader>
-              <form
-                className="space-y-2"
-                onSubmit={(e) => handleEditCategoryName(e)}
-              >
-                <div>
-                  <Label htmlFor="name">Edit Category Name</Label>
-                  <Input
-                    type="text"
-                    id="name"
-                    defaultValue={edited_category_name}
-                  />
-                  <Label htmlFor="slug">Edit Category Slug</Label>
-                  <Input
-                    type="text"
-                    id="slug"
-                    defaultValue={edited_category_slug}
-                  />
-                </div>
-                <Button type="submit">Submit</Button>
-              </form>
-            </DialogContent>
-          </Dialog> */}
-
           <Button
             size="sm"
             onClick={() =>
               window.open(
-                `${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${row.original["website_slug"]}/${row.original["slug"]}/feed.xml`,
+                `${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${row.original["website_slug"]}/${row.original["slug"]}/`,
                 "_blank"
               )
             }
@@ -305,12 +218,8 @@ export default function AddCategory() {
     },
   ];
 
-  useEffect(() => {
-    console.log(website_id);
-  }, [website_id]);
-
   const table = useReactTable({
-    categories,
+    data: categories,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -374,16 +283,6 @@ export default function AddCategory() {
             required
           />
         </div>
-        {/* <div>
-            <Label htmlFor="name">Subcategories (Comma separated)</Label>
-            <Input
-              id="sub-categories"
-              value={subCategories}
-              onChange={(e) => setSubCategories(e.target.value.split(","))}
-              placeholder="local,national,international"
-              required
-            />
-          </div> */}
         <div>
           <Label htmlFor="category-slug">Category Slug</Label>
           <Input
@@ -394,12 +293,11 @@ export default function AddCategory() {
             required
           />
         </div>
-
         <div>
           <Label htmlFor="p-category">Parent Category</Label>
           <Select
             onValueChange={(value) => handleParentCategory(value)}
-            defaultValue="parent-category"
+            value={parent_category_id}
           >
             <SelectTrigger id="website" className="w-full">
               <SelectValue placeholder="Select a category" />
@@ -408,7 +306,7 @@ export default function AddCategory() {
               <SelectItem value="parent-category">
                 This is Parent Category
               </SelectItem>
-              {categories.map((category) => (
+              {website_categories.map((category) => (
                 <SelectItem key={category.id} value={category.id.toString()}>
                   {category.name}
                 </SelectItem>
