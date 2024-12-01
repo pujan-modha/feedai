@@ -137,6 +137,7 @@ export async function POST(req: Request) {
       images_arr,
       links_arr,
       blockquote_arr,
+      thumbnail_image,
       parsedFeed.rss.channel.item[i][feed_items.guid]
     );
 
