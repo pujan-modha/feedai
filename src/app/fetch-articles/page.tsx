@@ -12,24 +12,17 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  ArrowUpDown,
-  ChevronDown,
-  Eye,
-  MoreHorizontal,
-  Trash2,
-} from "lucide-react";
+import { ArrowUpDown, ChevronDown, Eye, Trash2, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Card, CardTitle, CardHeader, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogTrigger,
@@ -50,7 +43,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { formatDate } from "@/lib/formatDate";
-import {useToast} from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Define the GeneratedArticle type based on the schema
 type GeneratedArticle = {
@@ -82,15 +82,83 @@ export default function GeneratedArticlesTable() {
   const [rowSelection, setRowSelection] = React.useState({});
   const [data, setData] = React.useState<GeneratedArticle[]>([]);
   const { toast } = useToast();
+  const [websites, setWebsites] = React.useState<string[]>([]); // Populate with your websites
+  const [categories, setCategories] = React.useState<string[]>([]); // Populate with your categories
+  const [selectedWebsite, setSelectedWebsite] = React.useState<string | null>(
+    null
+  );
+  const [availableCategories, setAvailableCategories] = React.useState<
+    string[]
+  >([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   const fetchData = async () => {
-    const response = await fetch("/api/fetch-articles");
-    const data = await response.json();
-    setData(data);
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/fetch-articles");
+      const data = await response.json();
+      setData(data);
+    } catch (error) {
+      console.error("Error fetching articles:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch articles",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   React.useEffect(() => {
     fetchData();
   }, []);
+
+  React.useEffect(() => {
+    // Extract unique websites from data
+    const uniqueWebsites = Array.from(
+      new Set(data.map((article) => article.website_slug))
+    );
+    setWebsites(uniqueWebsites);
+
+    // Extract unique categories combining primary and secondary
+    const uniqueCategories = Array.from(
+      new Set(
+        data
+          .flatMap((article) => [
+            article.primary_category,
+            article.secondary_category,
+          ])
+          .filter(Boolean)
+      )
+    );
+    setCategories(uniqueCategories);
+  }, [data]);
+
+  React.useEffect(() => {
+    if (selectedWebsite) {
+      // Filter articles for selected website
+      const websiteArticles = data.filter(
+        (article) => article.website_slug === selectedWebsite
+      );
+
+      // Get unique categories for selected website
+      const websiteCategories = Array.from(
+        new Set(
+          websiteArticles
+            .flatMap((article) => [
+              article.primary_category,
+              article.secondary_category,
+            ])
+            .filter(Boolean)
+        )
+      );
+
+      setAvailableCategories(websiteCategories);
+    } else {
+      setAvailableCategories([]);
+    }
+  }, [selectedWebsite, data]);
 
   const handleDeleteArticle = async (id: number) => {
     try {
@@ -148,12 +216,19 @@ export default function GeneratedArticlesTable() {
     },
 
     {
+      accessorKey: "website_slug",
       header: "Website",
       cell: ({ row }) => (
         <div className="font-medium capitalize">
-          {row.original["website_slug"].replaceAll("-", " ")}
+          {row.original.website_slug
+            ? row.original.website_slug.replaceAll("-", " ")
+            : "Unknown"}
         </div>
       ),
+      enableColumnFilter: true,
+      filterFn: (row, id, filterValue) => {
+        return row.getValue(id) === filterValue;
+      },
     },
 
     {
@@ -175,6 +250,17 @@ export default function GeneratedArticlesTable() {
       cell: ({ row }) => (
         <div className="text-nowrap">{row.getValue("secondary_category")}</div>
       ),
+    },
+    {
+      id: "category",
+      header: "Category",
+      enableColumnFilter: true,
+      filterFn: (row, id, filterValue) => {
+        return (
+          row.original.primary_category === filterValue ||
+          row.original.secondary_category === filterValue
+        );
+      },
     },
     {
       id: "actions",
@@ -282,12 +368,12 @@ export default function GeneratedArticlesTable() {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    getFilteredRowModel: getFilteredRowModel(), // Make sure this is included
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     state: {
       sorting,
-      columnFilters,
+      columnFilters, // Make sure columnFilters is included in state
       columnVisibility,
       rowSelection,
     },
@@ -314,6 +400,82 @@ export default function GeneratedArticlesTable() {
     const response = await data.json();
     return response.website;
   };
+
+  // Update WebsiteFilter component
+  const WebsiteFilter = () => {
+    return (
+      <Select
+        value={selectedWebsite || undefined}
+        onValueChange={(value) => {
+          setSelectedWebsite(value);
+          setColumnFilters((prev) => [
+            ...prev.filter((f) => f.id !== "website_slug"),
+            { id: "website_slug", value },
+          ]);
+        }}
+        disabled={isLoading}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Select Website">
+            {selectedWebsite
+              ? selectedWebsite.replaceAll("-", " ")
+              : "Select Website"}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {websites
+            .filter((website) => website) // Remove null/undefined
+            .map((website) => (
+              <SelectItem key={website} value={website}>
+                {website.replaceAll("-", " ")}
+              </SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
+    );
+  };
+
+  // Update CategoryFilter component
+  const CategoryFilter = () => {
+    const [selectedCategory, setSelectedCategory] = React.useState<
+      string | undefined
+    >();
+
+    return (
+      <Select
+        value={selectedCategory}
+        disabled={!selectedWebsite || isLoading}
+        onValueChange={(value) => {
+          setSelectedCategory(value);
+          setColumnFilters((prev) => [
+            ...prev.filter((f) => f.id !== "category"),
+            { id: "category", value },
+          ]);
+        }}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Select Category">
+            {selectedCategory || "Select Category"}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {availableCategories
+            .filter((category) => category) // Remove null/undefined
+            .map((category) => (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
+    );
+  };
+
+  const LoadingSpinner = () => (
+    <div className="w-full h-24 flex items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </div>
+  );
 
   return (
     <div className="w-full p-4">
@@ -352,11 +514,24 @@ export default function GeneratedArticlesTable() {
         </DropdownMenu>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={filteredData}
-        sortValue={sorting[0]?.id}
-      />
+      <div className="flex gap-4 py-4">
+        <WebsiteFilter />
+        <CategoryFilter />
+      </div>
+
+      {isLoading ? (
+        <LoadingSpinner />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={
+            selectedWebsite
+              ? table.getFilteredRowModel().rows.map((row) => row.original)
+              : []
+          }
+          sortValue={sorting[0]?.id}
+        />
+      )}
     </div>
   );
 }
@@ -367,5 +542,58 @@ function DetailItem({ label, value }) {
       <h4 className="font-medium text-sm text-gray-500">{label}</h4>
       <p className="text-sm">{value}</p>
     </div>
+  );
+}
+
+function ArticleComponent({ article }: { article: Article }) {
+  return (
+    <>
+      <Card className="w-full max-w-full mx-auto">
+        <CardHeader>
+          <CardTitle>{article.title}</CardTitle>
+          <div className="flex space-x-2 mt-2">
+            <Badge variant="default">{article.primary_category}</Badge>
+            <Badge variant="outline">{article.secondary_category}</Badge>
+          </div>
+          <span className="font-semibold">Thumbnail</span>
+          <img
+            src={article.thumbnail_image}
+            alt={article.title}
+            className="w-full object-cover"
+          />
+        </CardHeader>
+
+        <CardContent>
+          <div
+            className="prose max-w-none mb-8 bg-gray-200 p-4 rounded-lg"
+            dangerouslySetInnerHTML={{ __html: article.content }}
+          />
+          <div className="mt-8 space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold">SEO-Friendly Title</h3>
+              <p>{article.seo_title}</p>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">Meta Information</h3>
+              <ul className="list-disc pl-5">
+                <li>
+                  <strong>Title:</strong> {article.meta_title}
+                </li>
+                <li>
+                  <strong>Description:</strong> {article.meta_description}
+                </li>
+                <li>
+                  <strong>Keywords:</strong> {article.meta_keywords.join(", ")}
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">Summary</h3>
+              <p>{article.summary}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </>
   );
 }

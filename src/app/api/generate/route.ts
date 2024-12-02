@@ -246,9 +246,16 @@ async function generate_articles(
       const parsed_content = {
         task_id: task_id,
         title: completed_content_obj.rewritten_article.title,
-        content: JSON.stringify(
-          completed_content_obj.rewritten_article.content
-        ),
+        content:` 
+          ${completed_content_obj.rewritten_article.content
+            .flatMap((section: RewrittenArticle["content"][number]) => [
+              `<h2 class="text-lg font-semibold">${section.heading}</h2>`,
+              ...section.paragraphs.map(
+                (paragraph: string) => `<p>${paragraph}</p></br>`
+              ),
+            ])
+            .join("")}
+        `,
         thumb_image: thumbnail_image,
         seo_title: completed_content_obj.seo_title,
         meta_title: completed_content_obj.meta_title,
