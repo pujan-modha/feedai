@@ -253,7 +253,7 @@ export default function GeneratedArticlesTable() {
     },
     {
       id: "category",
-      header: "Category",
+      header: "",
       enableColumnFilter: true,
       filterFn: (row, id, filterValue) => {
         return (
