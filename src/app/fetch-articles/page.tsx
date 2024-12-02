@@ -71,6 +71,19 @@ type GeneratedArticle = {
 
 import { DataTable } from "@/components/datatable/datatable";
 
+interface Website {
+  id: number;
+  name: string;
+  slug: string;
+  categories: Array<number>;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 export default function GeneratedArticlesTable() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -82,13 +95,17 @@ export default function GeneratedArticlesTable() {
   const [rowSelection, setRowSelection] = React.useState({});
   const [data, setData] = React.useState<GeneratedArticle[]>([]);
   const { toast } = useToast();
-  const [websites, setWebsites] = React.useState<string[]>([]); // Populate with your websites
+  const [websites, setWebsites] = React.useState<Website[]>([]); // Populate with your websites
   const [categories, setCategories] = React.useState<string[]>([]); // Populate with your categories
+  const [selected_id, setSelected_id] = React.useState<string | null>(null);
   const [selectedWebsite, setSelectedWebsite] = React.useState<string | null>(
     null
   );
+  const [selectedCategory, setSelectedCategory] = React.useState<
+    string | undefined
+  >();
   const [availableCategories, setAvailableCategories] = React.useState<
-    string[]
+    Category[]
   >([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
@@ -115,50 +132,39 @@ export default function GeneratedArticlesTable() {
   }, []);
 
   React.useEffect(() => {
-    // Extract unique websites from data
-    const uniqueWebsites = Array.from(
-      new Set(data.map((article) => article.website_slug))
-    );
-    setWebsites(uniqueWebsites);
-
-    // Extract unique categories combining primary and secondary
-    const uniqueCategories = Array.from(
-      new Set(
-        data
-          .flatMap((article) => [
-            article.primary_category,
-            article.secondary_category,
-          ])
-          .filter(Boolean)
-      )
-    );
-    setCategories(uniqueCategories);
+    const getArticleFilter = async () => {
+      const res = await fetch("/api/fetch-websites", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const websites = await res.json();
+      setWebsites(websites);
+    };
+    getArticleFilter();
   }, [data]);
 
   React.useEffect(() => {
-    if (selectedWebsite) {
-      // Filter articles for selected website
-      const websiteArticles = data.filter(
-        (article) => article.website_slug === selectedWebsite
-      );
+    const getCategoriesFromWebsite = async () => {
+      if (selectedWebsite) {
+        const res = await fetch("/api/fetch-category-from-website", {
+          method: "POST",
+          body: JSON.stringify({
+            website_id: selected_id,
+            want_child: true,
+          }),
+        });
 
-      // Get unique categories for selected website
-      const websiteCategories = Array.from(
-        new Set(
-          websiteArticles
-            .flatMap((article) => [
-              article.primary_category,
-              article.secondary_category,
-            ])
-            .filter(Boolean)
-        )
-      );
-
-      setAvailableCategories(websiteCategories);
-    } else {
-      setAvailableCategories([]);
-    }
-  }, [selectedWebsite, data]);
+        const websiteCategories = await res.json();
+        console.log(websiteCategories);
+        setAvailableCategories(websiteCategories.website_categories);
+      } else {
+        setAvailableCategories([]);
+      }
+    };
+    getCategoriesFromWebsite();
+  }, [selected_id, selectedWebsite]);
 
   const handleDeleteArticle = async (id: number) => {
     try {
@@ -191,25 +197,15 @@ export default function GeneratedArticlesTable() {
 
   const columns: ColumnDef<GeneratedArticle>[] = [
     {
-      accessorKey: "task_id",
-      header: "Task ID",
+      accessorKey: "id",
+      header: "Article ID",
       cell: ({ row }) => (
-        <div className="w-full">{row.getValue("task_id")}</div>
+        <div className="w-full">{row.getValue("id")}</div>
       ),
     },
     {
       accessorKey: "title",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Title
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
+      header: "Title",
       cell: ({ row }) => (
         <div className="font-medium">{row.getValue("title")}</div>
       ),
@@ -257,8 +253,8 @@ export default function GeneratedArticlesTable() {
       enableColumnFilter: true,
       filterFn: (row, id, filterValue) => {
         return (
-          row.original.primary_category === filterValue ||
-          row.original.secondary_category === filterValue
+          row.original.primary_category_slug === filterValue ||
+          row.original.secondary_category_slug === filterValue
         );
       },
     },
@@ -315,6 +311,12 @@ export default function GeneratedArticlesTable() {
                     <DetailItem
                       label="Meta Description"
                       value={row.original.meta_description}
+                    />
+                  </div>
+                  <div className="col-span-full">
+                    <DetailItem
+                      label="Thumbnail Image"
+                      value={<img src={row.original.thumb_image} />}
                     />
                   </div>
                   <div className="col-span-full">
@@ -385,49 +387,40 @@ export default function GeneratedArticlesTable() {
       data.task_id.toString().includes(searchTerm)
   );
 
-  const handleSlugtoWebsite = async (slug: string) => {
-    const data = await fetch(`/api/slug-to-website`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ slug }),
-    });
-    console.log(data);
-    if (!data.ok) {
-      throw new Error("Failed to fetch categories");
-    }
-    const response = await data.json();
-    return response.website;
-  };
-
   // Update WebsiteFilter component
   const WebsiteFilter = () => {
     return (
       <Select
         value={selectedWebsite || undefined}
-        onValueChange={(value) => {
-          setSelectedWebsite(value);
+        onValueChange={(value: string) => {
+          const parsed_value = JSON.parse(value);
+          setSelectedWebsite(parsed_value.name);
+          setSelected_id(parsed_value.id);
           setColumnFilters((prev) => [
             ...prev.filter((f) => f.id !== "website_slug"),
-            { id: "website_slug", value },
+            { id: "website_slug", value: parsed_value.slug },
           ]);
         }}
         disabled={isLoading}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Select Website">
-            {selectedWebsite
-              ? selectedWebsite.replaceAll("-", " ")
-              : "Select Website"}
+            {selectedWebsite ? selectedWebsite : "Select Website"}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {websites
             .filter((website) => website) // Remove null/undefined
             .map((website) => (
-              <SelectItem key={website} value={website}>
-                {website.replaceAll("-", " ")}
+              <SelectItem
+                key={website.id}
+                value={JSON.stringify({
+                  slug: website.slug,
+                  id: website.id,
+                  name: website.name,
+                })}
+              >
+                {website.name}
               </SelectItem>
             ))}
         </SelectContent>
@@ -437,35 +430,37 @@ export default function GeneratedArticlesTable() {
 
   // Update CategoryFilter component
   const CategoryFilter = () => {
-    const [selectedCategory, setSelectedCategory] = React.useState<
-      string | undefined
-    >();
-
     return (
       <Select
-        value={selectedCategory}
+        value={selectedCategory || undefined}
         disabled={!selectedWebsite || isLoading}
-        onValueChange={(value) => {
-          setSelectedCategory(value);
+        onValueChange={(value: string) => {
+          const parsed_value = JSON.parse(value);
+          setSelectedCategory(parsed_value.name);
           setColumnFilters((prev) => [
             ...prev.filter((f) => f.id !== "category"),
-            { id: "category", value },
+            { id: "category", "value":parsed_value.slug },
           ]);
         }}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Select Category">
-            {selectedCategory || "Select Category"}
+            {selectedCategory}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
-          {availableCategories
-            .filter((category) => category) // Remove null/undefined
-            .map((category) => (
-              <SelectItem key={category} value={category}>
-                {category}
-              </SelectItem>
-            ))}
+          {availableCategories.map((category) => (
+            <SelectItem
+              key={category.id}
+              value={JSON.stringify({
+                slug: category.slug,
+                id: category.id,
+                name: category.name,
+              })}
+            >
+              {category.name}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     );

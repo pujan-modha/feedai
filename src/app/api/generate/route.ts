@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   const images_arr: Array<string> = [];
   const links_arr: Array<string> = [];
   const blockquote_arr: Array<string> = [];
-  let thumbnail_image: string = "https://ui.shadcn.com/placeholder.svg";
+  let thumbnail_image: string = "";
 
   if (
     typeof parsedFeed.rss.channel.item[0].thumbimage === "string" &&
@@ -68,11 +68,6 @@ export async function POST(req: Request) {
     }
   }
 
-  if (!thumbnail_image) {
-    thumbnail_image = "https://ui.shadcn.com/placeholder.svg";
-  }
-
-  console.log(articles_count);
   console.log(feed_items.content);
   for (let i = 0; i < articles_count; i++) {
     if (typeof parsedFeed.rss.channel.item[i].guid === "string") {
@@ -95,8 +90,13 @@ export async function POST(req: Request) {
     $ = cheerio.load(curr_content);
     $("img").each((_, img) => {
       const src = $(img).attr("src");
-      if (src) {
-        images_arr.push(src);
+      const alt = $(img).attr("alt");
+      const changed_image_url = src?.replace(
+        src.split("/").pop()!.split(".")[0],
+        alt || "image"
+      );
+      if (src && changed_image_url) {
+        images_arr.push(changed_image_url);
       }
     });
 
@@ -104,11 +104,6 @@ export async function POST(req: Request) {
       const src = $(iframe).attr("src");
       if (src) links_arr.push(src);
     });
-
-    // $("blockquote").each((_, blockquote) => {
-    //   const blockquoteString = $.html(blockquote);
-    //   blockquote_arr.push(blockquoteString);
-    // });
 
     const blockquoteScriptRegex =
       /<blockquote[^>]*>[\s\S]*?<\/blockquote>(?:\s*<script[^>]*?><\/script>)?/g;
@@ -125,6 +120,10 @@ export async function POST(req: Request) {
       .replace(/<img[^>]*>/gi, "[IMAGE]")
       .replace(/<iframe[^>]*>.*?<\/iframe>/gi, "[IFRAME]")
       .replace(blockquoteScriptRegex, "[BLOCKQUOTE]");
+
+    if (!thumbnail_image) {
+      thumbnail_image = feed_config.selected_websites[i].thumb;
+    }
 
     console.log(curr_content);
     const generated_articles_arr = await generate_articles(
@@ -246,7 +245,7 @@ async function generate_articles(
       const parsed_content = {
         task_id: task_id,
         title: completed_content_obj.rewritten_article.title,
-        content:` 
+        content: ` 
           ${completed_content_obj.rewritten_article.content
             .flatMap((section: RewrittenArticle["content"][number]) => [
               `<h2 class="text-lg font-semibold">${section.heading}</h2>`,

@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   const images_arr: Array<string> = [];
   const links_arr: Array<string> = [];
   const blockquote_arr: Array<string> = [];
-  let thumbnail_image: string = "https://ui.shadcn.com/placeholder.svg";
+  let thumbnail_image: string = "";
   let $ = cheerio.load("");
 
   if (
@@ -65,12 +65,6 @@ export async function POST(req: Request) {
       thumbnail_image = $("img").first().attr("src") || "";
     }
   }
-
-  if (!thumbnail_image) {
-    thumbnail_image = "https://ui.shadcn.com/placeholder.svg";
-  }
-
-  console.log(thumbnail_image);
 
   let curr_content = parsedFeed.rss.channel.item[0][feed_items.content];
   $ = cheerio.load(curr_content);
@@ -103,19 +97,22 @@ export async function POST(req: Request) {
     .replace(blockquoteScriptRegex, "[BLOCKQUOTE]");
   // console.log(curr_content);
 
-    if(images_arr.length === 0){
-      images_arr.push("/placeholder.svg")
-      curr_content = "[IMAGE]" + curr_content
-    }
+  if (images_arr.length === 0) {
+    images_arr.push(thumbnail_image);
+    curr_content = "[IMAGE]" + curr_content;
+  }
 
-    const category_arr = [];
-   for (let i = 0; i < feed_config.selected_websites.length; i++) {
+  const category_arr = [];
+  for (let i = 0; i < feed_config.selected_websites.length; i++) {
     const populated_category = await populateCategories(
       JSON.parse(feed_config.selected_websites[i].categories)
     );
     category_arr.push(populated_category);
   }
   // console.log(category_arr);
+  if (!thumbnail_image) {
+    thumbnail_image = feed_config.selected_websites[0].thumb;
+  }
 
   const generated_articles_arr = await generate_articles(
     feed_config.num_articles,
@@ -176,9 +173,8 @@ async function generate_articles(
   const lang = selected_website.map((website) => {
     return website.languages.split(",")[0].trim();
   });
-  console.log("hello",category_arr);
+  console.log("hello", category_arr);
   for (let i = 0; i < aritcle_count; i++) {
-    
     try {
       const curr_prompt = current_prompt(
         lang[i],
@@ -188,7 +184,7 @@ async function generate_articles(
         links_arr
       );
       if (images_arr.length === 0) {
-        images_arr.push("/placeholder.svg");
+        images_arr.push(thumbnail_image);
       }
       console.log(content);
       const completion_response = await completion(curr_prompt, content);
@@ -228,7 +224,7 @@ async function generate_articles(
         };
         return replace(obj);
       };
-      
+
       completed_content_obj = replaceBlockquotes(completed_content_obj);
       const usage = completion_response.usage;
       console.log(completed_content_obj);

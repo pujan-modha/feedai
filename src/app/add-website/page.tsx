@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDown, Trash2, Edit2 } from "lucide-react";
+import { ChevronDown, Trash2, Edit2, Eye } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -46,11 +46,6 @@ import { Input } from "@/components/ui/input";
 import URLInput from "@/components/ui/url-input";
 import { formatDate } from "@/lib/formatDate";
 
-interface Language {
-  id: string;
-  name: string;
-}
-
 interface Website {
   id: number;
   name: string;
@@ -67,7 +62,7 @@ interface Website {
 export default function AddWebsite() {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
-  const [languages, setLanguages] = useState<Language[]>([]);
+  const languages: Array<string> = Languages;
   const [slug, setSlug] = useState("");
   const [desc, setDesc] = useState("");
   const [author, setAuthor] = useState("");
@@ -94,11 +89,6 @@ export default function AddWebsite() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const { toast } = useToast();
-
-  useEffect(() => {
-    // fetchCategories();
-    fetchLanguages();
-  }, []);
 
   useEffect(() => {
     fetchWebsites();
@@ -140,20 +130,6 @@ export default function AddWebsite() {
       setWebsites(data);
     } catch (error) {
       console.error("Error fetching websites:", error);
-    }
-  };
-
-  const fetchLanguages = async () => {
-    try {
-      const response = await fetch("/api/add-language");
-      if (!response.ok) {
-        throw new Error("Failed to fetch languages");
-      }
-      const data = await response.json();
-      setLanguages(data);
-    } catch (error) {
-      console.error("Error fetching languages:", error);
-      setError("Failed to fetch languages");
     }
   };
 
@@ -315,9 +291,7 @@ export default function AddWebsite() {
       accessorKey: "modified_at",
       header: "Modified At",
       cell: ({ row }) => (
-        <div className="w-full">
-          {formatDate(row.getValue("modified_at"))}
-        </div>
+        <div className="w-full">{formatDate(row.getValue("modified_at"))}</div>
       ),
     },
     {
@@ -325,13 +299,16 @@ export default function AddWebsite() {
       cell: ({ row }) => (
         <div className="flex gap-2 items-center justify-center">
           <Button
-            variant="destructive"
             size="sm"
-            onClick={() => handleDelete(row.original.id)}
+            onClick={() =>
+              window.open(
+                `${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${row.original["slug"]}/`,
+                "_blank"
+              )
+            }
           >
-            <Trash2 className="h-4 w-4" />
+            <Eye className="w-4 h-4" />
           </Button>
-
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button
@@ -373,9 +350,9 @@ export default function AddWebsite() {
                       <SelectValue placeholder="Select a language" />
                     </SelectTrigger>
                     <SelectContent>
-                      {languages.map((lang: Language) => (
-                        <SelectItem key={lang.id} value={lang.name}>
-                          {lang.name}
+                      {languages.map((lang: string, idx: number) => (
+                        <SelectItem key={idx} value={lang}>
+                          {lang}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -413,6 +390,13 @@ export default function AddWebsite() {
               </form>
             </DialogContent>
           </Dialog>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => handleDelete(row.original.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       ),
     },
@@ -479,9 +463,9 @@ export default function AddWebsite() {
               <SelectValue placeholder="Select a language" />
             </SelectTrigger>
             <SelectContent>
-              {languages.map((lang: Language) => (
-                <SelectItem key={lang.id} value={lang.name}>
-                  {lang.name}
+              {languages.map((lang: string, idx: number) => (
+                <SelectItem key={idx} value={lang}>
+                  {lang}
                 </SelectItem>
               ))}
             </SelectContent>

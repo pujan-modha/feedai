@@ -9,4 +9,5 @@ export const Languages = [
   "Bengali",
   "Gujarati",
   "Punjabi",
+  "Urdu",
 ];

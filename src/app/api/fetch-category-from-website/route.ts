@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export async function POST(request: Request) {
-  const { website_id } = await request.json();
+  const { website_id, want_child } = await request.json();
 
   const website = await prisma.websites.findUnique({
     where: {
@@ -18,10 +18,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, website_categories: [] });
   }
 
+  const website_categories = JSON.parse(website.categories!);
 
-  const website_categories = JSON.parse(website.categories!)
-
-  if ( website_categories.length === 0 ) {
+  if (website_categories.length === 0) {
     return NextResponse.json({ success: false, website_categories: [] });
   }
 
@@ -41,5 +40,28 @@ export async function POST(request: Request) {
     },
   });
 
-  return NextResponse.json({ success: true, "website_categories":categories });
+  if (want_child) {
+    const both_categories = [...categories];
+    await Promise.all(
+      categories.map(async (category) => {
+        const child_categories = await prisma.categories.findMany({
+          where: {
+            parent_id: category.id,
+          },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            website_name: true,
+            website_slug: true,
+            created_at: true,
+          },
+        });
+        both_categories.push(...child_categories)
+      })
+    );
+
+    return NextResponse.json({ success: true, website_categories: both_categories });
+  }
+  return NextResponse.json({ success: true, website_categories: categories });
 }
