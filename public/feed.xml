@@ -18,11 +18,6 @@
         <![CDATA[
           <div>
             <h1>NASA's Journey to Mars</h1>
-            
-            <!-- Embedded Image -->
-            <p>Take a look at the Red Planet:</p>
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/OSIRIS_Mars_true_color.jpg/220px-OSIRIS_Mars_true_color.jpg" alt="Mars Surface" style="max-width: 100%; height: auto;" />
-
             <!-- Embedded Twitter Post -->
             <p>Latest updates from NASA:</p>
             <blockquote class="twitter-tweet"><p lang="en" dir="ltr">Wow, Germany carries a lot of the cost of the EU! <a href="https://t.co/DPHUz2nWX0">pic.twitter.com/DPHUz2nWX0</a></p>&mdash; Elon Musk (@elonmusk) <a href="https://twitter.com/elonmusk/status/1859477251831533763?ref_src=twsrc%5Etfw">November 21, 2024</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
