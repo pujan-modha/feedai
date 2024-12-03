@@ -74,13 +74,23 @@ export async function POST(req: NextRequest) {
         },
       });
     }
-
+    await prisma.logs.create({
+      data: {
+        message: "Category added successfully",
+        category: "add-category",
+      },
+    });
     return NextResponse.json({
       message: "Category added successfully",
       categoryId: category.id,
     });
   } catch (error) {
-    console.error("Error:", error);
+    await prisma.logs.create({
+      data: {
+        message: (error instanceof Error) ? error.message : 'Unknown error',
+        category: "add-category",
+      },
+    });
     return NextResponse.json(
       {
         error:

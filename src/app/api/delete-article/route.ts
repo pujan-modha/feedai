@@ -21,9 +21,20 @@ export async function DELETE(req: NextRequest) {
         id: parseInt(id),
       },
     });
+    await prisma.logs.create({
+      data: {
+        message: "Article deleted successfully",
+        category: "delete-article",
+      },
+    });
     return NextResponse.json({ message: "Article deleted successfully" });
   } catch (error) {
-    console.error("Error deleting article:", error);
+    await prisma.logs.create({
+      data: {
+        message: error instanceof Error ? error.message : "An unknown error occurred",
+        category: "delete-article",
+      },
+    });
     return NextResponse.json(
       {
         error:

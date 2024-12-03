@@ -13,11 +13,22 @@ export async function DELETE(req: Request) {
         id: id,
       },
     });
+    await prisma.logs.create({
+      data: {
+        message: "Website deleted successfully",
+        category: "delete-website",
+      },
+    });
     return new Response(JSON.stringify(deletedWebsite), {
       status: 200,
     });
   } catch (error) {
-    console.error("Error deleting website:", error);
+    await prisma.logs.create({
+      data: {
+        message: (error as Error).message,
+        category: "delete-website",
+      },
+    });
     return new Response("Error deleting website", { status: 500 });
   }
 }

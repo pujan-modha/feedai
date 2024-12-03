@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
+import { Languages } from "@/lib/constants";
 interface Website {
   id: string;
   name: string;
@@ -60,6 +60,7 @@ export default function FeedAI() {
   const [feedUrl, setFeedUrl] = useState("https://chopaltv.com/feed.xml");
   const [latestArticle, setLatestArticle] = useState<Article | null>(null);
   const [articleCount, setArticleCount] = useState(0);
+  const [input_feed_language, setInputFeedLanguage] = useState<string>("");
   const [xmlAttributes, setXmlAttributes] = useState<XMLAttributes>({
     title: "",
     guid: "",
@@ -157,6 +158,12 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     return [];
   };
 
+  useEffect(() => {
+    if (input_feed_language) {
+      console.log(input_feed_language);
+    }
+  }, [input_feed_language]);
+
   const handleFieldMapping = (field: string, value: string) => {
     // Check if all fields have been filled in xmlatteibutes
     const attributeKey = fieldToAttributeMap[field];
@@ -213,6 +220,13 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     try {
       e.preventDefault();
       setError(null);
+      if (!input_feed_language) {
+        toast({
+          title: "Error",
+          description: "Please select a feed language",
+        });
+        return;
+      }
       setSaveSuccess(false);
       setIsLoading({ ...isLoading, saveFeed: true });
       const task_obj = {
@@ -220,6 +234,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
         feed_url: feedUrl,
         feed_items: xmlAttributes,
         feed_config: task_config,
+        input_feed_language: input_feed_language,
       };
       console.log(task_obj);
       const res = await fetch("/api/save-task", {
@@ -387,14 +402,34 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     <div className="container mx-auto p-4">
       <form onSubmit={handleFetchFeed} className="space-y-4">
         <div>
-          <Label htmlFor="feedUrl">RSS Feed URL</Label>
-          <Input
-            id="feedUrl"
-            type="url"
-            value={feedUrl}
-            onChange={(e) => setFeedUrl(e.target.value)}
-            required
-          />
+          <div className="flex gap-2 items-center">
+            <div className="w-full">
+              <Label htmlFor="feedUrl">RSS Feed URL</Label>
+              <Input
+                id="feedUrl"
+                type="url"
+                value={feedUrl}
+                onChange={(e) => setFeedUrl(e.target.value)}
+                required
+              />
+            </div>
+            <div className="w-full">
+              <Label htmlFor="feedUrl">Feed Language</Label>
+              <Select onValueChange={(e) => setInputFeedLanguage(e)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select feed language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Languages.map((lang: string, idx: number) => (
+                    <SelectItem key={idx} value={lang}>
+                      {lang}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <Button
             className="w-full mt-2"
             type="submit"
@@ -501,8 +536,10 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
                   <SelectContent>
                     {website
                       .filter((site) => {
-                        return site.categories &&
-                        JSON.parse(site.categories).length > 0;
+                        return (
+                          site.categories &&
+                          JSON.parse(site.categories).length > 0
+                        );
                       })
                       .map((site) => (
                         <SelectItem key={site.id} value={site.url}>

@@ -104,6 +104,7 @@ export default function GeneratedArticlesTable() {
   const [selectedCategory, setSelectedCategory] = React.useState<
     string | undefined
   >();
+
   const [availableCategories, setAvailableCategories] = React.useState<
     Category[]
   >([]);
@@ -199,9 +200,7 @@ export default function GeneratedArticlesTable() {
     {
       accessorKey: "id",
       header: "Article ID",
-      cell: ({ row }) => (
-        <div className="w-full">{row.getValue("id")}</div>
-      ),
+      cell: ({ row }) => <div className="w-full">{row.getValue("id")}</div>,
     },
     {
       accessorKey: "title",
@@ -245,6 +244,13 @@ export default function GeneratedArticlesTable() {
       header: "Secondary Category",
       cell: ({ row }) => (
         <div className="text-nowrap">{row.getValue("secondary_category")}</div>
+      ),
+    },
+    {
+      accessorKey: "thumb_image",
+      header: "Thumbnail Image",
+      cell: ({ row }) => (
+        <a href={row.getValue("thumb_image")}>{row.getValue("thumb_image")}</a>
       ),
     },
     {
@@ -439,7 +445,7 @@ export default function GeneratedArticlesTable() {
           setSelectedCategory(parsed_value.name);
           setColumnFilters((prev) => [
             ...prev.filter((f) => f.id !== "category"),
-            { id: "category", "value":parsed_value.slug },
+            { id: "category", value: parsed_value.slug },
           ]);
         }}
       >

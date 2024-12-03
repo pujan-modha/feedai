@@ -21,9 +21,21 @@ export async function DELETE(req: NextRequest) {
         id: parseInt(id),
       },
     });
+    await prisma.logs.create({
+      data: {
+        message: "Task deleted successfully",
+        category: "delete-task",
+      },
+    });
     return NextResponse.json({ message: "Task deleted successfully" });
   } catch (error) {
-    console.error("Error deleting task:", error);
+    await prisma.logs.create({
+      data: {
+        message: (error as Error).message,
+        category: "delete-task",
+      },
+    });
+
     return NextResponse.json(
       {
         error:

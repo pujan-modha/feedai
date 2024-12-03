@@ -44,15 +44,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-// Define the Task type based on the specified fields
 type Task = {
   id: number;
   feed_url: string;
   feed_config: string;
+  websites: string;
   created_at: Date | null;
+  modified_at: Date | null;
   articles_count: number | null;
   start_time: Date | null;
   end_time: Date | null;
@@ -64,6 +73,7 @@ type Task = {
 interface Website {
   id: number;
   name: string;
+  slug: string;
 }
 
 export default function TasksTable() {
@@ -76,7 +86,9 @@ export default function TasksTable() {
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [data, setData] = React.useState<Task[]>([]);
+  const [websites, setWebsites] = React.useState<Website[]>([]);
   const [editPrompt, setEditPrompt] = React.useState("");
+  const [selectedWebsite, setSelectedWebsite] = React.useState<string>("");
   const [isSaving, setIsSaving] = React.useState(false);
   const { toast } = useToast();
 
@@ -88,6 +100,16 @@ export default function TasksTable() {
 
   React.useEffect(() => {
     fetchData();
+  }, []);
+
+  const fetchWebsites = async () => {
+    const response = await fetch("/api/fetch-websites");
+    const data = await response.json();
+    setWebsites(data);
+  };
+
+  React.useEffect(() => {
+    fetchWebsites();
   }, []);
 
   const handleDeleteTask = async (id: number) => {
@@ -202,6 +224,11 @@ export default function TasksTable() {
       ),
     },
     {
+      accessorKey: "input_feed_language",
+      header: "Input Feed Language",
+      cell: ({ row }) => <div className="text-center">{row.getValue("input_feed_language")}</div>,
+    },
+    {
       accessorKey: "created_at",
       header: "Created At",
       cell: ({ row }) => <div>{formatDate(row.getValue("created_at"))}</div>,
@@ -229,7 +256,7 @@ export default function TasksTable() {
     {
       header: "Websites",
       cell: ({ row }) => (
-        <div className="text-center">
+        <div className="text-left truncate w-[180px]">
           {handleGetWebsites(row.original["feed_config"])}
         </div>
       ),
@@ -242,7 +269,7 @@ export default function TasksTable() {
     {
       accessorKey: "end_time",
       header: "End Time",
-      cell: ({ row }) => <div>{formatDate(row.getValue("start_time"))}</div>,
+      cell: ({ row }) => <div>{formatDate(row.getValue("end_time"))}</div>,
     },
     {
       accessorKey: "status",
@@ -339,12 +366,17 @@ export default function TasksTable() {
     },
   ];
 
-  const filteredData = data.filter(
-    (data) =>
-      data.feed_url.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      data.id.toString().includes(searchTerm) ||
-      data.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredData = data.filter((task) => {
+    const websiteNames = handleGetWebsites(task.feed_config).toLowerCase();
+    return (
+      task.feed_url.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      task.id.toString().includes(searchTerm) ||
+      task.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      websiteNames
+        .split(", ")
+        .some((name) => name.includes(searchTerm.toLowerCase()))
+    );
+  });
 
   const table = useReactTable({
     data,
@@ -374,32 +406,39 @@ export default function TasksTable() {
           onChange={(event) => setSearchTerm(event.target.value)}
           className="max-w-sm"
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Select
+          value={selectedWebsite || undefined}
+          onValueChange={(value: string) => {
+            const parsed_value = JSON.parse(value);
+            setSelectedWebsite(parsed_value.name);
+            setSearchTerm(parsed_value.name.toLowerCase());
+          }}
+        >
+          <SelectTrigger className="w-[180px] ml-4">
+            <SelectValue placeholder="Select Website">
+              {selectedWebsite ? selectedWebsite : "Select Website"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={JSON.stringify({ name: "" })}>
+              All Websites
+            </SelectItem>
+            {websites
+              .filter((website) => website)
+              .map((website) => (
+                <SelectItem
+                  key={website.id}
+                  value={JSON.stringify({
+                    slug: website.slug,
+                    id: website.id,
+                    name: website.name,
+                  })}
+                >
+                  {website.name}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <DataTable

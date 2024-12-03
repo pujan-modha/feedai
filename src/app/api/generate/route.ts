@@ -43,6 +43,7 @@ export async function POST(req: Request) {
   const links_arr: Array<string> = [];
   const blockquote_arr: Array<string> = [];
   let thumbnail_image: string = "";
+  let is_thumbnail_in_content = false;
 
   console.log(feed_items.content);
   for (let i = 0; i < articles_count; i++) {
@@ -70,21 +71,17 @@ export async function POST(req: Request) {
     }
     if (typeof parsedFeed.rss.channel.item[i].description === "string") {
       $ = cheerio.load(parsedFeed.rss.channel.item[i].description);
-      console.log("A");
       if ($("img").length > 0) {
-        console.log("HIT");
         thumbnail_image = $("img").first().attr("src") || "";
       }
     }
     if (
       typeof parsedFeed.rss.channel.item[i][feed_items.content] === "string"
     ) {
-      console.log("B");
       $ = cheerio.load(parsedFeed.rss.channel.item[i][feed_items.content]);
-
       if ($("img").length > 0) {
-        console.log("HIT");
         thumbnail_image = $("img").first().attr("src") || "";
+        is_thumbnail_in_content = true;
       }
     }
     let curr_content = parsedFeed.rss.channel.item[i][feed_items.content];
@@ -92,12 +89,18 @@ export async function POST(req: Request) {
     $ = cheerio.load(curr_content);
     $("img").each((_, img) => {
       const src = $(img).attr("src");
-      const alt = $(img).attr("alt");
+      let alt = $(img).attr("alt");
+      if (src === thumbnail_image) {
+        return;
+      }
+      if (!alt) {
+        alt = parsedFeed.rss.channel.item[i][feed_items.title];
+      }
       const changed_image_url = src?.replace(
         src.split("/").pop()!.split(".")[0],
-        alt || "image"
+        alt || parsedFeed.rss.channel.item[i][feed_items.title]
       );
-      if (src && changed_image_url) {
+      if (src && changed_image_url && src !== thumbnail_image) {
         images_arr.push(changed_image_url);
       }
     });
@@ -122,6 +125,11 @@ export async function POST(req: Request) {
       .replace(/<img[^>]*>/gi, "[IMAGE]")
       .replace(/<iframe[^>]*>.*?<\/iframe>/gi, "[IFRAME]")
       .replace(blockquoteScriptRegex, "[BLOCKQUOTE]");
+
+    if (images_arr.length === 0 || is_thumbnail_in_content) {
+      images_arr.push(thumbnail_image);
+      curr_content = curr_content.replace("[IMAGE]", "");
+    }
 
     if (!thumbnail_image) {
       thumbnail_image = feed_config.selected_websites[i].thumb;
@@ -271,7 +279,7 @@ async function generate_articles(
         parent_guid: parent_guid,
       };
       articles_arr.push(parsed_content);
-    } catch {
+    } catch(error) {
       await prisma.tasks.update({
         where: { id: task_id },
         data: {
@@ -279,6 +287,12 @@ async function generate_articles(
             increment: 1,
           },
           modified_at: new Date(),
+        },
+      });
+      await prisma.logs.create({
+        data: {
+          message: "Error while processing task " + task_id + ": " + (error as Error).message,
+          category: "task-error",
         },
       });
       continue;

@@ -45,10 +45,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Website not found" }, { status: 404 });
     }
 
-    if(website_category.categories) {
+    if (website_category.categories) {
       const website_categories = JSON.parse(website_category.categories);
       const updated_website_categories = website_categories.filter(
-        (category:number) => category !== category_id
+        (category: number) => category !== category_id
       );
       await prisma.websites.update({
         where: {
@@ -60,9 +60,20 @@ export async function DELETE(req: NextRequest) {
       });
     }
 
+    await prisma.logs.create({
+      data: {
+        message: "Category deleted successfully",
+        category: "delete-category",
+      },
+    });
     return NextResponse.json({ deleted_category: delete_category });
   } catch (error) {
-    console.log(error);
+    await prisma.logs.create({
+      data: {
+        message: (error as Error).message,
+        category: "delete-category",
+      },
+    });
     return NextResponse.json(
       {
         error:

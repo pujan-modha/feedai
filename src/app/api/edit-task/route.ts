@@ -28,9 +28,20 @@ export async function PATCH(req: NextRequest) {
         feed_config: JSON.stringify(feed_config),
       },
     });
+    await prisma.logs.create({
+      data: {
+        message: "User prompt for task id " + id + " updated successfully",
+        category: "edit-task",
+      },
+    });
     return NextResponse.json({ message: "User prompt for task id " + id + " updated successfully" });
   } catch (error) {
-    console.error("Error updating task:", error);
+    await prisma.logs.create({
+      data: {
+        message: error instanceof Error ? error.message : "An unknown error occurred",
+        category: "edit-task",
+      },
+    });
     return NextResponse.json(
       {
         error:

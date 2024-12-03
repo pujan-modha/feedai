@@ -3,6 +3,7 @@ import { XMLParser } from "fast-xml-parser";
 import * as cheerio from "cheerio";
 import { current_prompt } from "@/lib/prompt";
 import { populateCategories } from "@/lib/populateCategories";
+import prisma from "@/lib/prisma";
 
 const parser = new XMLParser({ ignoreAttributes: false });
 
@@ -40,6 +41,7 @@ export async function POST(req: Request) {
   const links_arr: Array<string> = [];
   const blockquote_arr: Array<string> = [];
   let thumbnail_image: string = "";
+  let is_thumbnail_in_content = false;
   let $ = cheerio.load("");
 
   if (
@@ -63,6 +65,7 @@ export async function POST(req: Request) {
     if ($("img").length > 0) {
       console.log("HIT");
       thumbnail_image = $("img").first().attr("src") || "";
+      is_thumbnail_in_content = true;
     }
   }
 
@@ -70,7 +73,10 @@ export async function POST(req: Request) {
   $ = cheerio.load(curr_content);
   $("img").each((_, img) => {
     const src = $(img).attr("src");
-    if (src) {
+    if (src === thumbnail_image) {
+      return;
+    }
+    if (src && src !== thumbnail_image) {
       images_arr.push(src);
     }
   });
@@ -95,11 +101,10 @@ export async function POST(req: Request) {
     .replace(/<img[^>]*>/gi, "[IMAGE]")
     .replace(/<iframe[^>]*>.*?<\/iframe>/gi, "[IFRAME]")
     .replace(blockquoteScriptRegex, "[BLOCKQUOTE]");
-  // console.log(curr_content);
 
-  if (images_arr.length === 0) {
+  if (images_arr.length === 0 || is_thumbnail_in_content) {
     images_arr.push(thumbnail_image);
-    curr_content = "[IMAGE]" + curr_content;
+    curr_content = curr_content.replace("[IMAGE]", "");
   }
 
   const category_arr = [];
@@ -113,7 +118,7 @@ export async function POST(req: Request) {
   if (!thumbnail_image) {
     thumbnail_image = feed_config.selected_websites[0].thumb;
   }
-
+  console.log(images_arr);
   const generated_articles_arr = await generate_articles(
     feed_config.num_articles,
     feed_config.selected_languages,
@@ -129,6 +134,7 @@ export async function POST(req: Request) {
   images_arr.length = 0;
   links_arr.length = 0;
   blockquote_arr.length = 0;
+  thumbnail_image = "";
 
   return NextResponse.json({
     success: true,
@@ -255,6 +261,12 @@ async function generate_articles(
       articles_arr.push(parsed_content);
     } catch (error) {
       console.error("Error:", error);
+      await prisma.logs.create({
+        data: {
+          message: error.message,
+          category: "generate-preview",
+        },
+      })
     }
   }
   return articles_arr;

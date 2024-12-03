@@ -11,6 +11,7 @@ export async function POST(req: Request) {
       !task_obj.feed_url ||
       !task_obj.feed_items ||
       !task_obj.feed_config ||
+      !task_obj.input_feed_language ||
       typeof task_obj.article_count !== "number"
     ) {
       return NextResponse.json(
@@ -71,6 +72,7 @@ export async function POST(req: Request) {
       feed_url: task_obj.feed_url,
       feed_items: JSON.stringify(task_obj.feed_items),
       feed_config: JSON.stringify(task_obj.feed_config),
+      input_feed_language: task_obj.input_feed_language,
       articles_count: task_obj.article_count,
       status: "idle",
       created_at: new Date(),
@@ -81,19 +83,34 @@ export async function POST(req: Request) {
     const createdTask = await prisma.tasks.create({
       data: newTaskData,
     });
-
+    await prisma.logs.create({
+      data: {
+        message: "Task created successfully",
+        category: "save-task",
+      },
+    });
     return NextResponse.json({ task: createdTask }, { status: 201 });
   } catch (error) {
-    console.error("Error creating task:", error);
-
     if (error instanceof PrismaClientKnownRequestError) {
       // Handle specific Prisma errors if necessary
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      await prisma.logs.create({
+          data: {
+              message: errorMessage,
+              category: "save-task",
+          },
+      });
       return NextResponse.json(
         { error: "Database error occurred while creating task" },
         { status: 500 }
       );
     }
-
+    await prisma.logs.create({
+      data: {
+        message: error instanceof Error ? error.message : "An unknown error occurred",
+        category: "save-task",
+      },
+    });
     return NextResponse.json(
       { error: "An error occurred while processing your request" },
       { status: 500 }

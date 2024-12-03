@@ -3,13 +3,16 @@ import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, url, languages, slug, description, author, thumb } = await req.json();
+    const { name, url, languages, slug, description, author, thumb } =
+      await req.json();
     if (!name || !url || !languages || !slug || !author || !thumb)
       return NextResponse.json(
-        { error: "Name, URL, Slug, Author, Thumbnail and Language are required" },
+        {
+          error: "Name, URL, Slug, Author, Thumbnail and Language are required",
+        },
         { status: 400 }
       );
-      console.log(name, url, languages, slug, description, author, thumb);
+    console.log(name, url, languages, slug, description, author, thumb);
     const website = await prisma.websites.create({
       data: {
         name: name,
@@ -21,12 +24,23 @@ export async function POST(req: NextRequest) {
         thumb: thumb,
       },
     });
+    await prisma.logs.create({
+      data: {
+        message: "Website added successfully",
+        category: "add-website",
+      },
+    });
     return NextResponse.json({
       message: "Website added successfully",
       websiteId: website.id,
     });
   } catch (error) {
-    console.error("Bro, Error:", error);
+    await prisma.logs.create({
+      data: {
+        message: (error as Error).message,
+        category: "add-website",
+      },
+    });
     return NextResponse.json(
       {
         error:
