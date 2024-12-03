@@ -16,6 +16,9 @@
       <description>NASA's latest developments in Mars exploration.</description>
       <content:encoded>
         <![CDATA[
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Desert_Sunlight_Solar_Farm_2016.jpg/1280px-Desert_Sunlight_Solar_Farm_2016.jpg" alt="Solar Farm" style="max-width: 100%; height: auto;" />
+            <img src="https://pyxis.nymag.com/v1/imgs/697/0d7/abf32e2a0e357a255a3a7ff77d1ef1db3e-kids-toys-lede.rhorizontal.w700.jpg" alt="Robot Image" style="max-width: 100%; height: auto;" />
+
           <div>
             <h1>NASA's Journey to Mars</h1>
             <!-- Embedded Twitter Post -->
