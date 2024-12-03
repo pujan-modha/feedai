@@ -268,7 +268,7 @@ export default function TasksTable() {
     },
     {
       accessorKey: "end_time",
-      header: "End Time",
+      header: "Cron Last Run",
       cell: ({ row }) => <div>{formatDate(row.getValue("end_time"))}</div>,
     },
     {
