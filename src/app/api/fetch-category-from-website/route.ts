@@ -52,6 +52,7 @@ export async function POST(request: Request) {
             id: true,
             name: true,
             slug: true,
+            parent_id: true,
             website_name: true,
             website_slug: true,
             created_at: true,

@@ -228,6 +228,7 @@ async function generate_articles(
       completed_content_obj = replaceBlockquotes(completed_content_obj);
       const usage = completion_response.usage;
       console.log(completed_content_obj);
+      console.log(completed_content_obj.rewritten_article);
 
       const parsed_content = {
         title: completed_content_obj.rewritten_article.title,

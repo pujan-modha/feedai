@@ -23,14 +23,20 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { DataTable } from "@/components/datatable/datatable";
-import { ChevronDown, Eye } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
+import * as XLSX from "xlsx";
 
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import { useToast } from "@/hooks/use-toast";
 import { formatDate } from "@/lib/formatDate";
@@ -41,8 +47,10 @@ interface Category {
   slug: string;
   value: string;
   created_at: string;
+  parent_id: string;
   website_name: string;
   website_slug: string;
+  children?: Category[];
 }
 
 interface Website {
@@ -137,6 +145,13 @@ export default function AddCategory() {
     }
   };
 
+  const getParentCategoryFromId = (category_id: string) => {
+    const parent_category = categories.find(
+      (category) => category.id === category_id
+    );
+    return { name: parent_category?.name, slug: parent_category?.slug };
+  };
+
   const handleParentCategory = (category_id: string) => {
     if (category_id === "parent-category") {
       setIsParentCategory(true);
@@ -165,6 +180,36 @@ export default function AddCategory() {
     setWebsiteCategories(response.website_categories);
   };
 
+  const handleDeleteCategory = async (category_id: number) => {
+    try {
+      const data = await fetch(`/api/delete-category`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          category_id: category_id,
+        }),
+      });
+      if (!data.ok) {
+        throw new Error("Failed to delete category");
+      }
+      const response = await data.json();
+      const category_name = response.deleted_category.name;
+      toast({
+        title: "Category Deleted",
+        description: `Category ${category_name} has been deleted. Please delete the related articles in the article master manually.`,
+      });
+      fetchCategories();
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete category. Please try again later.",
+      });
+    }
+  };
+
   useEffect(() => {
     if (website_id) {
       console.log(website_id);
@@ -177,12 +222,35 @@ export default function AddCategory() {
 
   const columns: ColumnDef<Category>[] = [
     {
-      accessorKey: "id",
-      header: "ID",
+      id: "expander",
+      header: () => null,
+      cell: ({ row }) => {
+        return row.original.children && row.original.children.length > 0 ? (
+          <Button
+            variant="ghost"
+            onClick={row.getToggleExpandedHandler()}
+            className="w-6 h-6 p-0"
+          >
+            {row.getIsExpanded() ? "▼" : "►"}
+          </Button>
+        ) : null;
+      },
     },
     {
       accessorKey: "name",
       header: "Name",
+    },
+    {
+      accessorKey: "slug",
+      header: "Slug",
+    },
+    {
+      accessorKey: "parent_id",
+      header: "Parent Category",
+      cell: ({ row }) => {
+        const category = getParentCategoryFromId(row.getValue("parent_id"));
+        return <div className="w-full">{category.name || "-"}</div>;
+      },
     },
     {
       accessorKey: "website_name",
@@ -199,20 +267,46 @@ export default function AddCategory() {
       ),
     },
     {
+      header: "Feed URL",
+      cell: ({ row }) => (
+        <a
+          href={`${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${row.original["website_slug"]}/${row.original["slug"]}/`}
+          target="_blank"
+          className="w-full"
+        >{`${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${row.original["website_slug"]}/${row.original["slug"]}/`}</a>
+      ),
+    },
+    {
       id: "actions",
       cell: ({ row }) => (
         <div>
-          <Button
-            size="sm"
-            onClick={() =>
-              window.open(
-                `${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${row.original["website_slug"]}/${row.original["slug"]}/`,
-                "_blank"
-              )
-            }
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="destructive">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the
+                  category.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() =>
+                    handleDeleteCategory(parseInt(row.original.id))
+                  }
+                  className="text-white bg-destructive hover:bg-destructive/80"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       ),
     },
@@ -239,11 +333,19 @@ export default function AddCategory() {
 
   const filteredCategories = categories.filter(
     (data: Category) =>
-      data.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      data.slug.toString().includes(searchTerm) ||
-      data.website_name.toString().includes(searchTerm) ||
-      data.website_slug.toString().includes(searchTerm)
+      data.slug.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getParentCategoryFromId(data.parent_id)
+        .slug?.toString()
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
   );
+
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(columns);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Categories");
+    XLSX.writeFile(workbook, "categories.xlsx");
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -325,32 +427,9 @@ export default function AddCategory() {
             onChange={(event) => setSearchTerm(event.target.value)}
             className="max-w-sm"
           />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                Columns <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button onClick={exportToExcel} className="ml-auto">
+            Export to Excel
+          </Button>
         </div>
         <DataTable
           columns={columns}

@@ -44,30 +44,6 @@ export async function POST(req: Request) {
   const blockquote_arr: Array<string> = [];
   let thumbnail_image: string = "";
 
-  if (
-    typeof parsedFeed.rss.channel.item[0].thumbimage === "string" &&
-    parsedFeed.rss.channel.item[0].thumbimage
-  ) {
-    thumbnail_image = parsedFeed.rss.channel.item[0].thumbimage;
-  }
-  if (typeof parsedFeed.rss.channel.item[0].description === "string") {
-    $ = cheerio.load(parsedFeed.rss.channel.item[0].description);
-    console.log("A");
-    if ($("img").length > 0) {
-      console.log("HIT");
-      thumbnail_image = $("img").first().attr("src") || "";
-    }
-  }
-  if (typeof parsedFeed.rss.channel.item[0][feed_items.content] === "string") {
-    console.log("B");
-    $ = cheerio.load(parsedFeed.rss.channel.item[0][feed_items.content]);
-
-    if ($("img").length > 0) {
-      console.log("HIT");
-      thumbnail_image = $("img").first().attr("src") || "";
-    }
-  }
-
   console.log(feed_items.content);
   for (let i = 0; i < articles_count; i++) {
     if (typeof parsedFeed.rss.channel.item[i].guid === "string") {
@@ -84,6 +60,32 @@ export async function POST(req: Request) {
     if (doesExist) {
       console.log("article already exists");
       break;
+    }
+
+    if (
+      typeof parsedFeed.rss.channel.item[i].thumbimage === "string" &&
+      parsedFeed.rss.channel.item[i].thumbimage
+    ) {
+      thumbnail_image = parsedFeed.rss.channel.item[i].thumbimage;
+    }
+    if (typeof parsedFeed.rss.channel.item[i].description === "string") {
+      $ = cheerio.load(parsedFeed.rss.channel.item[i].description);
+      console.log("A");
+      if ($("img").length > 0) {
+        console.log("HIT");
+        thumbnail_image = $("img").first().attr("src") || "";
+      }
+    }
+    if (
+      typeof parsedFeed.rss.channel.item[i][feed_items.content] === "string"
+    ) {
+      console.log("B");
+      $ = cheerio.load(parsedFeed.rss.channel.item[i][feed_items.content]);
+
+      if ($("img").length > 0) {
+        console.log("HIT");
+        thumbnail_image = $("img").first().attr("src") || "";
+      }
     }
     let curr_content = parsedFeed.rss.channel.item[i][feed_items.content];
     console.log(curr_content);
@@ -171,7 +173,7 @@ async function completion(prompt: string, content: string) {
         { role: "system", content: prompt },
         { role: "user", content: content },
       ],
-      temperature: 0,
+      temperature: 0.1,
     }),
   });
   return response.json();
@@ -248,7 +250,7 @@ async function generate_articles(
         content: ` 
           ${completed_content_obj.rewritten_article.content
             .flatMap((section: RewrittenArticle["content"][number]) => [
-              `<h2 class="text-lg font-semibold">${section.heading}</h2>`,
+              `<h2>${section.heading}</h2>`,
               ...section.paragraphs.map(
                 (paragraph: string) => `<p>${paragraph}</p></br>`
               ),

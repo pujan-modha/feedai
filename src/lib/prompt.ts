@@ -5,7 +5,7 @@ export function current_prompt(
   images_arr: Array<string>,
   links_arr: Array<string>
 ) {
-  console.log("Lmao", curr_categories);
+  console.log(curr_lang)
   return `You are tasked with processing and rewriting a news article to make it SEO-friendly, plagiarism-free, and compliant with Google News standards. The output must be in ${curr_lang} language. Follow these steps to generate the output:
 Content Transformation:
 ${user_prompt}
@@ -15,8 +15,8 @@ Categories are structured as "Secondary Category (Slug: slug)": ["Primary Catego
 
 1. **Category Matching**:
    - Select categories directly from the input structure provided above. Only use categories and IDs from this structure.
-   - Secondary categories must match the keys exactly, including casing, spacing, and format.
-   - Primary categories must match the values exactly, including casing, spacing, and format.
+   - Secondary categories must match the keys exactly, including casing, spacing, format and language.
+   - Primary categories must match the values exactly, including casing, spacing, format and language.
 
 2. **Category Selection Rules**:
    - If a secondary category is selected, it must have been explicitly provided in the input.
