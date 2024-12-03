@@ -269,11 +269,19 @@ export default function AddCategory() {
     {
       header: "Feed URL",
       cell: ({ row }) => (
-        <a
-          href={`${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${row.original["website_slug"]}/${row.original["slug"]}/`}
-          target="_blank"
-          className="w-full"
-        >{`${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${row.original["website_slug"]}/${row.original["slug"]}/`}</a>
+        <div className="w-full">
+          {row.original.is_parent ? (
+            "-"
+          ) : (
+            <a
+              href={`${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${row.original.website_slug}/${row.original.slug}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {`${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${row.original.website_slug}/${row.original.slug}/`}
+            </a>
+          )}
+        </div>
       ),
     },
     {
