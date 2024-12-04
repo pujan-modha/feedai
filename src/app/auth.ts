@@ -1,5 +1,7 @@
+import prisma from "@/lib/prisma";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { compare } from "bcryptjs";
 
 export const {
   handlers: { GET, POST },
@@ -23,19 +25,34 @@ export const {
         }
 
         try {
-          // Replace this with your actual authentication logic
-          // Example: checking against a database
-          if (
-            credentials.email === "user@feedai.in" &&
-            credentials.password === "password"
-          ) {
-            return {
-              id: "1",
-              email: credentials.email,
-              name: "Test User",
-            };
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email as string,
+            },
+            select: {
+              id: true,
+              email: true,
+              password: true,
+            },
+          });
+
+          if (!user) {
+            return null;
           }
-          return null;
+
+          const isPasswordValid = await compare(
+            credentials.password as string,
+            user.password
+          );
+          console.log(isPasswordValid)
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: user.id.toString(),
+            email: user.email,
+          };
         } catch (error) {
           console.error("Auth error:", error);
           return null;
@@ -57,7 +74,7 @@ export const {
     async session({ session, token }) {
       if (session?.user) {
         session.user.id = token.id as string;
-        session.user.email = token.email ?? '';
+        session.user.email = token.email ?? "";
       }
       return session;
     },

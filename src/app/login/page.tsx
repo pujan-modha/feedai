@@ -3,52 +3,44 @@
 import { useFormState } from "react-dom";
 import { handleLogin } from "../actions/index";
 import { Button } from "@/components/ui/button";
-import React from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useActionState } from "react";
 
 const initialState = {
   error: "",
+  success: undefined,
+  url: undefined,
 };
 
-export default function LoginPage() {
-  const [state, formAction] = React.useActionState(handleLogin, initialState);
+export default function LoginForm() {
+  const [state, formAction] = useActionState(handleLogin, initialState);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.success && state.url) {
+      router.push(state.url);
+    }
+  }, [state, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <form action={formAction} className="space-y-4 w-full max-w-md p-8">
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            className="mt-1 block w-full rounded-md border p-2"
-          />
+    <div className="flex flex-col items-center justify-center h-screen">
+      <form action={formAction} className="space-y-4 w-full max-w-sm">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" name="email" type="email" required />
         </div>
-
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium">
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            className="mt-1 block w-full rounded-md border p-2"
-          />
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input id="password" name="password" type="password" required />
         </div>
-
-        {state?.error && (
-          <div className="text-red-500 text-sm">{state.error}</div>
+        {state.error && (
+          <p className="text-red-500 text-sm mt-2">{state.error}</p>
         )}
-
-        <Button
-          type="submit"
-        >
-          Sign in
+        <Button type="submit" className="w-full">
+          Log in
         </Button>
       </form>
     </div>
