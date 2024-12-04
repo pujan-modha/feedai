@@ -4,7 +4,7 @@ import { auth } from "./app/auth";
 
 export async function middleware(request: NextRequest) {
   const session = await auth();
-  const publicPaths = ["/login", "/signup", "/auth/error"];
+  const publicPaths = ["/login", "/auth/error"];
   const isPublicPath =
     publicPaths.includes(request.nextUrl.pathname) ||
     request.nextUrl.pathname.startsWith("/feeds");
@@ -13,11 +13,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (
-    session &&
-    (request.nextUrl.pathname === "/login" ||
-      request.nextUrl.pathname === "/signup")
-  ) {
+  if (session && request.nextUrl.pathname === "/login") {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

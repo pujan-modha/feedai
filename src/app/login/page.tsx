@@ -5,7 +5,6 @@ import { handleLogin } from "../actions/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useActionState } from "react";
 
@@ -22,6 +21,7 @@ export default function LoginForm() {
   useEffect(() => {
     if (state.success && state.url) {
       router.push(state.url);
+      window.location.reload();
     }
   }, [state, router]);
 

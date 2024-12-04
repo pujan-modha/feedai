@@ -3,6 +3,7 @@
 import { signIn, signOut, auth } from "../auth";
 import { hash } from "bcryptjs";
 import { AuthError } from "next-auth";
+import { getSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 
@@ -20,7 +21,6 @@ export async function handleLogin(prevState: any, formData: FormData) {
       password,
       redirect: false,
     });
-
     if (result?.error) {
       return { error: "Invalid credentials" };
     }
@@ -28,7 +28,6 @@ export async function handleLogin(prevState: any, formData: FormData) {
     if (result?.url) {
       return { success: true, url: result.url };
     }
-
     return { success: true, url: "/" };
   } catch (error) {
     console.error("Login error:", error);
@@ -51,9 +50,11 @@ export async function handleLogout() {
 
 export async function getCurrentUser() {
   const session = await auth();
+  console.log(session);
   if (!session?.user) {
     return null;
   }
+
   return session.user;
 }
 
@@ -96,17 +97,17 @@ export async function handleSignup(prevState: any, formData: FormData) {
     }
 
     // Sign in the new user
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    // const result = await signIn("credentials", {
+    //   email,
+    //   password,
+    //   redirect: false,
+    // });
 
-    if (result?.error) {
-      return { error: "Error signing in after account creation" };
-    }
+    // if (result?.error) {
+    //   return { error: "Error signing in after account creation" };
+    // }
 
-    return { success: true, url: "/" };
+    return { success: true, url: "" };
   } catch (error) {
     console.error("Signup error:", error);
     return { error: "An error occurred during sign up" };

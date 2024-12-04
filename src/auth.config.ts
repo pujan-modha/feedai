@@ -10,7 +10,7 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith("/");
       const isOnPublicPage =
-        ["/login", "/signup", "/auth/error"].includes(nextUrl.pathname) ||
+        ["/login", "/auth/error"].includes(nextUrl.pathname) ||
         nextUrl.pathname.startsWith("/feeds");
 
       if (isOnPublicPage) return true;
@@ -18,5 +18,5 @@ export const authConfig = {
       return true;
     },
   },
-  providers: [], // configured in auth.ts
+  providers: [],
 } satisfies NextAuthConfig;

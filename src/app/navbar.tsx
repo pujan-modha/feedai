@@ -1,13 +1,53 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
 import { Menu, X } from "lucide-react";
+import { getCurrentUser } from "./actions";
+
+interface User {
+  id: number;
+  email: string;
+  isAdmin: boolean;
+}
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        try {
+          const fetchedUser = await getCurrentUser();
+          console.log(fetchedUser);
+          if (!fetchedUser) {
+            return;
+          }
+          const res = await fetch("/api/get-admin", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              id: fetchedUser.id,
+            }),
+          });
+          if (!res.ok) {
+            throw new Error("Failed to fetch admin status");
+          }
+          const isAdmin = await res.json();
+          (fetchedUser as unknown as User).isAdmin = isAdmin;
+          setUser(fetchedUser as unknown as User);
+        } catch (error) {}
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+      }
+    };
+    getUser();
+  }, []);
 
   return (
     <nav className="bg-gray-100 z-50 relative">
@@ -62,6 +102,14 @@ export const Navbar = () => {
             >
               Logs
             </Link>
+            {user?.isAdmin && (
+              <Link
+                href="/signup"
+                className="hover:text-gray-600 transition-colors"
+              >
+                Add User
+              </Link>
+            )}
 
             <Button variant="outline" onClick={() => signOut()}>
               Logout
@@ -109,6 +157,14 @@ export const Navbar = () => {
           >
             Logs
           </Link>
+          {user?.isAdmin && (
+            <Link
+              href="/signup"
+              className="block px-3 py-2 rounded-md hover:bg-gray-200"
+            >
+              Add User
+            </Link>
+          )}
           <div className="px-3 py-2">
             <Button
               variant="outline"

@@ -1,7 +1,11 @@
 import prisma from "@/lib/prisma";
-import NextAuth from "next-auth";
+import NextAuth, { User as NextAuthUser } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
+
+interface User extends NextAuthUser {
+  isAdmin: boolean;
+}
 
 export const {
   handlers: { GET, POST },
@@ -44,11 +48,10 @@ export const {
             credentials.password as string,
             user.password
           );
-          console.log(isPasswordValid)
           if (!isPasswordValid) {
             return null;
           }
-
+          console.log(user);
           return {
             id: user.id.toString(),
             email: user.email,
