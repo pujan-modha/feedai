@@ -46,6 +46,7 @@ interface Category {
   name: string;
   slug: string;
   value: string;
+  is_parent: boolean;
   created_at: string;
   parent_id: string;
   website_name: string;
@@ -320,25 +321,6 @@ export default function AddCategory() {
     },
   ];
 
-  const table = useReactTable({
-    data: categories,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  });
-
   const filteredCategories = categories.filter(
     (data: Category) =>
       data.slug.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -349,9 +331,27 @@ export default function AddCategory() {
   );
 
   const exportToExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(columns);
+    // Prepare the data for export
+    const exportData = filteredCategories.map((category) => ({
+      "Name": category.name,
+      "Slug": category.slug,
+      "Parent Category":
+        getParentCategoryFromId(category.parent_id).name || "-",
+      "Website": category.website_name,
+      "Created At": formatDate(category.created_at),
+      "Feed URL": category.is_parent
+        ? "-"
+        : `${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${category.website_slug}/${category.slug}/`,
+    }));
+
+    // Create a worksheet
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+    // Create a workbook and add the worksheet
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Categories");
+
+    // Generate the Excel file
     XLSX.writeFile(workbook, "categories.xlsx");
   };
 

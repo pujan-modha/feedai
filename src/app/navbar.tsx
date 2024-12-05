@@ -51,7 +51,7 @@ export const Navbar = () => {
 
   return (
     <nav className="bg-gray-100 z-50 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="text-3xl font-black">
             FeedAI
@@ -104,10 +104,10 @@ export const Navbar = () => {
             </Link>
             {user?.isAdmin && (
               <Link
-                href="/signup"
+                href="/fetch-users"
                 className="hover:text-gray-600 transition-colors"
               >
-                Add User
+                Users
               </Link>
             )}
 
@@ -159,10 +159,10 @@ export const Navbar = () => {
           </Link>
           {user?.isAdmin && (
             <Link
-              href="/signup"
+              href="/fetch-users"
               className="block px-3 py-2 rounded-md hover:bg-gray-200"
             >
-              Add User
+              Users
             </Link>
           )}
           <div className="px-3 py-2">
