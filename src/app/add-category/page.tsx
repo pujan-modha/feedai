@@ -79,6 +79,12 @@ export default function AddCategory() {
   const [rowSelection, setRowSelection] = useState({});
   const { toast } = useToast();
 
+  // New state for filters
+  const [selectedWebsiteFilter, setSelectedWebsiteFilter] =
+    useState<string>("all");
+  const [selectedParentCategoryFilter, setSelectedParentCategoryFilter] =
+    useState<string>("all");
+
   useEffect(() => {
     fetchCategories();
     fetchWebsites();
@@ -321,14 +327,25 @@ export default function AddCategory() {
     },
   ];
 
-  const filteredCategories = categories.filter(
-    (data: Category) =>
+  const filteredCategories = categories.filter((data: Category) => {
+    const matchesSearch =
       data.slug.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
       getParentCategoryFromId(data.parent_id)
         .slug?.toString()
         .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
+        .includes(searchTerm.toLowerCase());
+
+    const matchesWebsite =
+      selectedWebsiteFilter === "all" ||
+      data.website_name === selectedWebsiteFilter;
+    const matchesParentCategory =
+      selectedParentCategoryFilter === "all" ||
+      (selectedParentCategoryFilter === "parent" && data.is_parent) ||
+      getParentCategoryFromId(data.parent_id).name ===
+        selectedParentCategoryFilter;
+
+    return matchesSearch && matchesWebsite && matchesParentCategory;
+  });
 
   const exportToExcel = () => {
     // Prepare the data for export
@@ -435,6 +452,43 @@ export default function AddCategory() {
             onChange={(event) => setSearchTerm(event.target.value)}
             className="max-w-sm"
           />
+          <Select
+            value={selectedWebsiteFilter}
+            onValueChange={setSelectedWebsiteFilter}
+            className="ml-4"
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by Website" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Websites</SelectItem>
+              {websites.map((website) => (
+                <SelectItem key={website.id} value={website.name}>
+                  {website.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {/* <Select
+            value={selectedParentCategoryFilter}
+            onValueChange={setSelectedParentCategoryFilter}
+            className="ml-4"
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by Parent Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="parent">Parent Categories</SelectItem>
+              {categories
+                .filter((category) => category.is_parent)
+                .map((category) => (
+                  <SelectItem key={category.id} value={category.name}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select> */}
           <Button onClick={exportToExcel} className="ml-auto">
             Export to Excel
           </Button>
