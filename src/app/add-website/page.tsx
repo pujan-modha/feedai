@@ -66,14 +66,14 @@ export default function AddWebsite() {
   const [slug, setSlug] = useState("");
   const [desc, setDesc] = useState("");
   const [author, setAuthor] = useState("");
-  const [thumb, setThumb] = useState("");
+  const [thumb, setThumb] = useState<File | null>(null);
   const [thumbPreview, setThumbPreview] = useState<string | null>(null);
 
   const [edited_website_desc, setEditedWebsiteDesc] = useState("");
   const [edited_website_author, setEditedWebsiteAuthor] = useState("");
   const [edited_website_id, setEditedWebsiteId] = useState("");
   const [edited_website_language, setEditedWebsiteLanguage] = useState("");
-  const [edited_website_thumbimage, setEditedWebsiteThumbImage] = useState("");
+  const [edited_website_thumbimage, setEditedWebsiteThumbImage] = useState<File | null>(null);
   const [edited_website_url, setEditedWebsiteUrl] = useState("");
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -200,28 +200,27 @@ export default function AddWebsite() {
     }
   };
 
+  useEffect(()=>{console.log(thumb)},[thumb]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     try {
       e.preventDefault();
       setIsLoading(true);
-      // const joined_categories = selectedCategories.join(",");
       const joined_languages = selectedLanguages.join(",");
-      console.log(name, url, joined_languages, slug, desc, author, thumb);
+      const form = new FormData();
+      form.append("name", name);
+      form.append("url", "https://" + url);
+      form.append("languages", joined_languages);
+      form.append("slug", slug);
+      form.append("description", desc);
+      form.append("author", author);
+      if (thumb) {
+        form.append("thumb", thumb);
+      }
+
       const res = await fetch("/api/add-website", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: name,
-          url: "https://" + url,
-          languages: joined_languages,
-          slug: slug,
-          description: desc,
-          author: author,
-          thumb: thumb,
-          // categories: joined_categories,
-        }),
+        body: form,
       });
       if (!res.ok) {
         const error = await res.json();
@@ -233,7 +232,7 @@ export default function AddWebsite() {
       setSelectedLanguages([]);
       setDesc("");
       setAuthor("");
-      setThumb("");
+      setThumb(null);
       setSlug("");
 
       toast({
@@ -509,7 +508,9 @@ export default function AddWebsite() {
             type="file"
             className="hover:cursor-pointer"
             onChange={(e) => {
-              setThumb(e.target.value);
+              if (e.target.files) {
+                setThumb(e.target.files[0]);
+              }
               if (e.target.files && e.target.files[0]) {
                 const reader = new FileReader();
                 reader.onload = (event) => {

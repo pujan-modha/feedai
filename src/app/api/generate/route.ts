@@ -4,6 +4,8 @@ import { XMLParser } from "fast-xml-parser";
 import * as cheerio from "cheerio";
 import { CheerioAPI } from "cheerio";
 import { current_prompt } from "@/lib/prompt";
+import path from "path";
+import { writeFile } from "fs/promises";
 
 const parser = new XMLParser({ ignoreAttributes: false });
 
@@ -205,12 +207,36 @@ async function generate_articles(
     return website.categories;
   });
   console.log(categories_arr);
-  console.log("Blockquote array", blockquote_arr);
 
   for (let i = 0; i < aritcle_count; i++) {
+
+    for (let j = 0; j < images_arr.length; j++) {
+      const filePath = path.join(
+        process.env.NEXT_PUBLIC_SITE_URL +
+          "/uploads/" +
+          selected_website[i].slug +
+          "/" +
+          images_arr[j]!.split("/").pop()
+      );
+      try {
+        const file = await fetch(images_arr[j]);
+        const buffer = await file.arrayBuffer();
+        await writeFile(filePath, Buffer.from(buffer));
+      } catch (error) {
+        console.log("Error downloading image:", error);
+      }
+    }
+
     images_arr = images_arr.map((img_link) => {
-      return selected_website[i].url + "/uploads/" + img_link.split("/").pop();
+      return (
+        process.env.NEXT_PUBLIC_SITE_URL +
+        "/uploads/" +
+        selected_website[i].slug +
+        "/" +
+        img_link?.split("/").pop()
+      );
     });
+
     try {
       const curr_prompt = current_prompt(
         selected_language[i],
@@ -279,7 +305,7 @@ async function generate_articles(
         parent_guid: parent_guid,
       };
       articles_arr.push(parsed_content);
-    } catch(error) {
+    } catch (error) {
       await prisma.tasks.update({
         where: { id: task_id },
         data: {
@@ -291,7 +317,11 @@ async function generate_articles(
       });
       await prisma.logs.create({
         data: {
-          message: "Error while processing task " + task_id + ": " + (error as Error).message,
+          message:
+            "Error while processing task " +
+            task_id +
+            ": " +
+            (error as Error).message,
           category: "task-error",
         },
       });

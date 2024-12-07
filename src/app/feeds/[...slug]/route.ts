@@ -7,12 +7,22 @@ export async function GET(
   { params }: { params: { slug: string[] } }
 ) {
   const { slug } = await params;
-  console.log(slug);
   const website_slug = slug[0];
   const category_slug = slug[1];
 
-  console.log(website_slug);
-  console.log(category_slug);
+  const language_codes = {
+    Hindi: "hi",
+    English: "en",
+    Tamil: "ta",
+    Telugu: "te",
+    Kannada: "kn",
+    Malayalam: "ml",
+    Marathi: "mr",
+    Bengali: "bn",
+    Gujarati: "gu",
+    Punjabi: "pa",
+    Urdu: "ur",
+  };
 
   // Fetch website from database
   const website = await prisma.websites.findUnique({
@@ -46,6 +56,10 @@ export async function GET(
       created_at: true,
       primary_category: true,
       secondary_category: true,
+      thumb_image: true,
+      meta_description: true,
+      meta_title: true,
+      parent_guid: true,
     },
     orderBy: {
       created_at: "desc",
@@ -60,26 +74,27 @@ export async function GET(
       .map((article) => {
         // console.log(articles.content);
         return `
-    <item>
-      <title><![CDATA[${article.title}]]></title>
-      <description><![CDATA[${article.summary}]]></description>
-      <content><![CDATA[${article.content}]]></content>
-      <pubDate>${
-        article.created_at ? new Date(article.created_at).toUTCString() : ""
-      }</pubDate>
-      ${
-        article.primary_category
-          ? `<category>${article.primary_category}</category>`
-          : ""
-      }
-      ${
-        article.secondary_category
-          ? `<category>${article.secondary_category}</category>`
-          : ""
-      }
-      ${website.author ? `<author>${website.author}</author>` : ""}
-    </item>
-  `;
+          <item>
+            <title><![CDATA[${article.title}]]></title>
+            <guid>${article.parent_guid}</guid>
+            <description><![CDATA[${article.summary}]]></description>
+            <content><![CDATA[${article.content}]]></content>
+            <pubDate>${
+              article.created_at
+                ? new Date(article.created_at)
+                : ""
+            }</pubDate>
+            <category><![CDATA[${article.secondary_category}, ${
+          article.primary_category
+        }]]></category> 
+            ${website.author ? `<author>${website.author}</author>` : ""}
+            <summary><![CDATA[${article.summary}]]></summary>
+          <thumbimage>${
+            article.thumb_image ? article.thumb_image : ""
+          }</thumbimage>
+
+            </item>
+        `;
       })
       .join("\n");
   }
@@ -90,7 +105,7 @@ export async function GET(
     <title>${website.name}</title>
     <link>${website.url}</link>
     <description>${website.description}</description>
-    <language>${website.languages}</language>
+    <language>${language_codes[website.languages]}</language>
     ${
       articles.length > 0
         ? `<lastBuildDate>${articles[0].created_at}</lastBuildDate>`
