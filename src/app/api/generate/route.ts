@@ -214,8 +214,11 @@ async function generate_articles(
       fs.mkdirSync(directoryPath, { recursive: true });
     }
   };
+  // Do the same for thumbnail image
 
   for (let i = 0; i < aritcle_count; i++) {
+    // for thumbnail too
+
     for (let j = 0; j < images_arr.length; j++) {
       const folderPath = path.join(
         process.env.NEXT_PUBLIC_SITE_URL +
@@ -227,8 +230,6 @@ async function generate_articles(
         folderPath,
         images_arr[j]!.split("/").pop() // Get only the filename
       );
-
-      console.log(filePath, "<- File");
       try {
         // Ensure the directory exists before saving the file
         ensureDirectoryExists(folderPath);
@@ -251,6 +252,15 @@ async function generate_articles(
         img_link?.split("/").pop()
       );
     });
+
+    const thumbnailFolderPath = path.join(
+      process.env.NEXT_PUBLIC_SITE_URL + "/uploads/" + selected_website[i].slug
+    );
+
+    const thumbnailFilePath = path.join(
+      thumbnailFolderPath,
+      thumbnail_image.split("/").pop() // Get only the filename
+    );
 
     try {
       const curr_prompt = current_prompt(
@@ -306,7 +316,7 @@ async function generate_articles(
             ])
             .join("")}
         `,
-        thumb_image: thumbnail_image,
+        thumb_image: thumbnailFilePath,
         seo_title: completed_content_obj.seo_title,
         meta_title: completed_content_obj.meta_title,
         meta_description: completed_content_obj.meta_description,
