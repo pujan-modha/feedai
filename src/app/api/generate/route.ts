@@ -261,6 +261,18 @@ async function generate_articles(
       thumbnailFolderPath,
       thumbnail_image.split("/").pop() // Get only the filename
     );
+    try {
+      ensureDirectoryExists(thumbnailFolderPath);
+
+      const thumbnailFile = await fetch(thumbnail_image);
+      const thumbnailBuffer = await thumbnailFile.arrayBuffer();
+
+      await writeFile(thumbnailFilePath, Buffer.from(thumbnailBuffer));
+    } catch (error) {
+      console.log("Error downloading thumbnail:", error);
+    }
+
+    thumbnail_image = thumbnailFilePath;
 
     try {
       const curr_prompt = current_prompt(
