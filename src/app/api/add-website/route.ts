@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       const bytes = await thumb.arrayBuffer();
       const buffer = Buffer.from(bytes);
       const filename = `${thumb.name}`;
-      thumbPath = `/uploads/${slug}/${filename}`;
+      thumbPath = `${process.env.NEXT_PUBLIC_SITE_URL}/uploads/${slug}/${filename}`;
       const filePath = path.join(
         process.cwd(),
         "public",
@@ -38,7 +38,6 @@ export async function POST(req: NextRequest) {
         slug,
         filename
       );
-      console.log(filePath);
       try {
         const slugDir = path.join(process.cwd(), "public", "uploads", slug);
         await mkdir(slugDir, { recursive: true });
@@ -46,9 +45,7 @@ export async function POST(req: NextRequest) {
       } catch (error) {
         console.log(error);
       }
-      console.log("ok");
     }
-    console.log("HELLo");
     const website = await prisma.websites.create({
       data: {
         name: name,

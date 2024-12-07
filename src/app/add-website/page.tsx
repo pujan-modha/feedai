@@ -73,7 +73,8 @@ export default function AddWebsite() {
   const [edited_website_author, setEditedWebsiteAuthor] = useState("");
   const [edited_website_id, setEditedWebsiteId] = useState("");
   const [edited_website_language, setEditedWebsiteLanguage] = useState("");
-  const [edited_website_thumbimage, setEditedWebsiteThumbImage] = useState<File | null>(null);
+  const [edited_website_thumbimage, setEditedWebsiteThumbImage] =
+    useState<File | null>(null);
   const [edited_website_url, setEditedWebsiteUrl] = useState("");
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -200,7 +201,9 @@ export default function AddWebsite() {
     }
   };
 
-  useEffect(()=>{console.log(thumb)},[thumb]);
+  useEffect(() => {
+    console.log(thumb);
+  }, [thumb]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     try {
@@ -263,9 +266,44 @@ export default function AddWebsite() {
       cell: ({ row }) => <div className="w-full">{row.getValue("name")}</div>,
     },
     {
+      accessorKey: "slug",
+      header: "Slug",
+      cell: ({ row }) => <div className="w-full">{row.getValue("slug")}</div>,
+    },
+    {
       accessorKey: "url",
       header: "URL",
       cell: ({ row }) => <div className="w-full">{row.getValue("url")}</div>,
+    },
+    {
+      accessorKey: "thumb",
+      header: "Default Image",
+      cell: ({ row }) => (
+        <div className="w-full">
+          {/* <img
+            src={row.getValue("thumb")}
+            alt={row.getValue("slug") + " thumbnail"}
+            className="w-16 h-8"
+          /> */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Eye className="h-4 w-4" /> View Image
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Default image for {row.getValue("slug")}</DialogTitle>
+              </DialogHeader>
+              <img
+                src={row.getValue("thumb")}
+                alt={row.getValue("slug") + " thumbnail"}
+                className="w-full h-auto"
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      ),
     },
     // {
     //   accessorKey: "slug",

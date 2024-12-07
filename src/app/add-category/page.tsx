@@ -147,6 +147,7 @@ export default function AddCategory() {
         description: `Category ${category_name} added successfully`,
       });
       fetchCategories();
+      window.location.reload();
     } catch (error) {
       console.error("Error adding category:", error);
     }
@@ -277,9 +278,7 @@ export default function AddCategory() {
       header: "Feed URL",
       cell: ({ row }) => (
         <div className="w-full">
-          {row.original.is_parent ? (
-            "-"
-          ) : (
+          {
             <a
               href={`${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${row.original.website_slug}/${row.original.slug}/`}
               target="_blank"
@@ -287,7 +286,7 @@ export default function AddCategory() {
             >
               {`${process.env.NEXT_PUBLIC_SITE_URL}/feeds/${row.original.website_slug}/${row.original.slug}/`}
             </a>
-          )}
+          }
         </div>
       ),
     },
