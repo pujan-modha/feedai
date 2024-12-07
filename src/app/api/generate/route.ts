@@ -206,7 +206,6 @@ async function generate_articles(
   const categories_arr = selected_website.map((website) => website.categories);
 
   for (let i = 0; i < article_count; i++) {
-    // Process images
     for (let j = 0; j < images_arr.length; j++) {
       const folderPath = path.join("uploads", selected_website[i].slug);
       const fileName = path.basename(images_arr[j]);
@@ -225,7 +224,6 @@ async function generate_articles(
       }
     }
 
-    // Update image URLs
     images_arr = images_arr.map((img_link) => {
       return path.join(
         "/uploads",
@@ -234,7 +232,6 @@ async function generate_articles(
       );
     });
 
-    // Process thumbnail
     const thumbnailFolderPath = path.join("uploads", selected_website[i].slug);
     const thumbnailFileName = path.basename(thumbnail_image);
     const thumbnailFilePath = path.join(thumbnailFolderPath, thumbnailFileName);
@@ -262,9 +259,10 @@ async function generate_articles(
       );
       console.log(images_arr);
       const completion_response = await completion(curr_prompt, content);
-      let completed_content_obj = JSON.parse(
-        completion_response.choices[0].message.content
-      );
+      let completed_content_obj = JSON.parse(completion_response.choices[0].message.content);
+      const usage = completion_response.usage;
+
+      console.log("Usage:", usage);
 
       const replaceBlockquotes = (obj: any): any => {
         let blockquoteIndex = 0;
@@ -289,9 +287,8 @@ async function generate_articles(
         };
         return replace(obj);
       };
-      const usage = completion_response.usage;
+
       completed_content_obj = replaceBlockquotes(completed_content_obj);
-      console.log(usage, "<- Usage");
 
       console.log(completed_content_obj);
       const parsed_content = {
@@ -334,7 +331,7 @@ async function generate_articles(
           modified_at: new Date(),
         },
       });
-      console.error(error);
+      console.log("Error while processing task:", error);
       await prisma.logs.create({
         data: {
           message:
