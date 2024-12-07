@@ -322,14 +322,20 @@ export default function GeneratedArticlesTable() {
                   <div className="col-span-full">
                     <DetailItem
                       label="Thumbnail Image"
-                      value={<img src={row.original.thumb_image} />}
+                      value={
+                        <img
+                          src={row.original.thumb_image}
+                          alt={row.original.title}
+                          className="w-full object-cover"
+                        />
+                      }
                     />
                   </div>
                   <div className="col-span-full">
-                    <DetailItem label="Summary" value={row.original.summary} />
+                    <DetailItem label="Content" value={row.original.content} />
                   </div>
                   <div className="col-span-full">
-                    <DetailItem label="Content" value={row.original.content} />
+                    <DetailItem label="Summary" value={row.original.summary} />
                   </div>
                 </div>
               </DialogContent>

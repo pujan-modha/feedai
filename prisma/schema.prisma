@@ -79,6 +79,9 @@ model generated_articles {
   primary_category_slug   String?   @db.VarChar(255)
   secondary_category_slug String?   @db.VarChar(255)
   thumb_image             String?   @db.Text
+  prompt_tokens           Int?
+  completion_tokens       Int?
+  total_tokens            Int?
 }
 
 model cron_logs {

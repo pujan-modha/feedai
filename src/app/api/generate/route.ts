@@ -101,7 +101,7 @@ export async function POST(req: Request) {
       }
       const changed_image_url = src?.replace(
         src.split("/").pop()!.split(".")[0],
-        alt || parsedFeed.rss.channel.item[i][feed_items.title]
+        alt!
       );
       if (src && changed_image_url && src !== thumbnail_image) {
         images_arr.push(changed_image_url);
@@ -130,7 +130,6 @@ export async function POST(req: Request) {
       .replace(blockquoteScriptRegex, "[BLOCKQUOTE]");
 
     if (images_arr.length === 0 || is_thumbnail_in_content) {
-      images_arr.push(thumbnail_image);
       curr_content = curr_content.replace("[IMAGE]", "");
     }
 
@@ -191,7 +190,7 @@ async function completion(prompt: string, content: string) {
 }
 
 async function generate_articles(
-  aritcle_count: number,
+  article_count: number,
   selected_language: Array<string>,
   selected_website: Array<Website>,
   prompt: string,
@@ -204,75 +203,54 @@ async function generate_articles(
   parent_guid: string
 ) {
   const articles_arr = [];
-  const categories_arr = selected_website.map((website) => {
-    return website.categories;
-  });
-  console.log(categories_arr);
+  const categories_arr = selected_website.map((website) => website.categories);
 
-  const ensureDirectoryExists = (directoryPath: string) => {
-    if (!fs.existsSync(directoryPath)) {
-      fs.mkdirSync(directoryPath, { recursive: true });
-    }
-  };
-  // Do the same for thumbnail image
-
-  for (let i = 0; i < aritcle_count; i++) {
-    // for thumbnail too
-
+  for (let i = 0; i < article_count; i++) {
+    // Process images
     for (let j = 0; j < images_arr.length; j++) {
-      const folderPath = path.join(
-        process.env.NEXT_PUBLIC_SITE_URL +
-          "/uploads/" +
-          selected_website[i].slug
-      );
+      const folderPath = path.join("uploads", selected_website[i].slug);
+      const fileName = path.basename(images_arr[j]);
+      const filePath = path.join(folderPath, fileName);
 
-      const filePath = path.join(
-        folderPath,
-        images_arr[j]!.split("/").pop() // Get only the filename
-      );
       try {
-        // Ensure the directory exists before saving the file
         ensureDirectoryExists(folderPath);
-
         const file = await fetch(images_arr[j]);
         const buffer = await file.arrayBuffer();
-
-        await writeFile(filePath, Buffer.from(buffer));
+        await writeFile(
+          path.join(process.cwd(), "public", filePath),
+          Buffer.from(buffer)
+        );
       } catch (error) {
         console.log("Error downloading image:", error);
       }
     }
 
+    // Update image URLs
     images_arr = images_arr.map((img_link) => {
-      return (
-        process.env.NEXT_PUBLIC_SITE_URL +
-        "/uploads/" +
-        selected_website[i].slug +
-        "/" +
-        img_link?.split("/").pop()
+      return path.join(
+        "/uploads",
+        selected_website[i].slug,
+        path.basename(img_link)
       );
     });
 
-    const thumbnailFolderPath = path.join(
-      process.env.NEXT_PUBLIC_SITE_URL + "/uploads/" + selected_website[i].slug
-    );
+    // Process thumbnail
+    const thumbnailFolderPath = path.join("uploads", selected_website[i].slug);
+    const thumbnailFileName = path.basename(thumbnail_image);
+    const thumbnailFilePath = path.join(thumbnailFolderPath, thumbnailFileName);
 
-    const thumbnailFilePath = path.join(
-      thumbnailFolderPath,
-      thumbnail_image.split("/").pop() // Get only the filename
-    );
     try {
       ensureDirectoryExists(thumbnailFolderPath);
-
       const thumbnailFile = await fetch(thumbnail_image);
       const thumbnailBuffer = await thumbnailFile.arrayBuffer();
-
-      await writeFile(thumbnailFilePath, Buffer.from(thumbnailBuffer));
+      await writeFile(
+        path.join(process.cwd(), "public", thumbnailFilePath),
+        Buffer.from(thumbnailBuffer)
+      );
+      thumbnail_image = "/" + thumbnailFilePath;
     } catch (error) {
       console.log("Error downloading thumbnail:", error);
     }
-
-    thumbnail_image = thumbnailFilePath;
 
     try {
       const curr_prompt = current_prompt(
@@ -311,8 +289,9 @@ async function generate_articles(
         };
         return replace(obj);
       };
-
+      const usage = completion_response.usage;
       completed_content_obj = replaceBlockquotes(completed_content_obj);
+      console.log(usage, "<- Usage");
 
       console.log(completed_content_obj);
       const parsed_content = {
@@ -328,7 +307,7 @@ async function generate_articles(
             ])
             .join("")}
         `,
-        thumb_image: thumbnailFilePath,
+        thumb_image: thumbnail_image,
         seo_title: completed_content_obj.seo_title,
         meta_title: completed_content_obj.meta_title,
         meta_description: completed_content_obj.meta_description,
@@ -340,6 +319,9 @@ async function generate_articles(
         primary_category_slug: completed_content_obj.primary_category_slug,
         secondary_category_slug: completed_content_obj.secondary_category_slug,
         parent_guid: parent_guid,
+        prompt_tokens: usage.prompt_tokens,
+        completion_tokens: usage.completion_tokens,
+        total_tokens: usage.total_tokens,
       };
       articles_arr.push(parsed_content);
     } catch (error) {
@@ -352,6 +334,7 @@ async function generate_articles(
           modified_at: new Date(),
         },
       });
+      console.error(error);
       await prisma.logs.create({
         data: {
           message:
@@ -376,3 +359,10 @@ async function generate_articles(
   }
   return articles_arr;
 }
+
+const ensureDirectoryExists = (directoryPath: string) => {
+  const fullPath = path.resolve(process.cwd(), "public", directoryPath);
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true });
+  }
+};
