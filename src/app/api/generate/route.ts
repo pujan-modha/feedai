@@ -215,15 +215,17 @@ async function generate_articles(
         ensureDirectoryExists(folderPath);
         const file = await fetch(images_arr[j]);
         const buffer = await file.arrayBuffer();
-        await writeFile(
-          path.join(process.cwd(), "public", filePath),
-          Buffer.from(buffer)
-        );
+
+        // Handling relative vs absolute paths
+        const imageSavePath = path.join(process.cwd(), "public", filePath); // Absolute path to save image
+
+        await writeFile(imageSavePath, Buffer.from(buffer));
       } catch (error) {
         console.log("Error downloading image:", error);
       }
     }
 
+    // Modify image paths to relative paths
     images_arr = images_arr.map((img_link) => {
       return path.join(
         "/uploads",
@@ -240,11 +242,16 @@ async function generate_articles(
       ensureDirectoryExists(thumbnailFolderPath);
       const thumbnailFile = await fetch(thumbnail_image);
       const thumbnailBuffer = await thumbnailFile.arrayBuffer();
-      await writeFile(
-        path.join(process.cwd(), "public", thumbnailFilePath),
-        Buffer.from(thumbnailBuffer)
-      );
-      thumbnail_image = "/" + thumbnailFilePath;
+
+      // Handling relative vs absolute paths for thumbnails
+      const thumbnailSavePath = path.join(
+        process.cwd(),
+        "public",
+        thumbnailFilePath
+      ); // Absolute path to save thumbnail
+
+      await writeFile(thumbnailSavePath, Buffer.from(thumbnailBuffer));
+      thumbnail_image = "/" + thumbnailFilePath; // Relative path for use in the website
     } catch (error) {
       console.log("Error downloading thumbnail:", error);
     }
@@ -259,7 +266,9 @@ async function generate_articles(
       );
       console.log(images_arr);
       const completion_response = await completion(curr_prompt, content);
-      let completed_content_obj = JSON.parse(completion_response.choices[0].message.content);
+      let completed_content_obj = JSON.parse(
+        completion_response.choices[0].message.content
+      );
       const usage = completion_response.usage;
 
       console.log("Usage:", usage);
