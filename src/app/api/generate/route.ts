@@ -5,6 +5,7 @@ import * as cheerio from "cheerio";
 import { CheerioAPI } from "cheerio";
 import { current_prompt } from "@/lib/prompt";
 import path from "path";
+import fs from "fs";
 import { writeFile } from "fs/promises";
 
 const parser = new XMLParser({ ignoreAttributes: false });
@@ -208,19 +209,33 @@ async function generate_articles(
   });
   console.log(categories_arr);
 
-  for (let i = 0; i < aritcle_count; i++) {
+  const ensureDirectoryExists = (directoryPath: string) => {
+    if (!fs.existsSync(directoryPath)) {
+      fs.mkdirSync(directoryPath, { recursive: true });
+    }
+  };
 
+  for (let i = 0; i < aritcle_count; i++) {
     for (let j = 0; j < images_arr.length; j++) {
-      const filePath = path.join(
+      const folderPath = path.join(
         process.env.NEXT_PUBLIC_SITE_URL +
           "/uploads/" +
-          selected_website[i].slug +
-          "/" +
-          images_arr[j]!.split("/").pop()
+          selected_website[i].slug
       );
+
+      const filePath = path.join(
+        folderPath,
+        images_arr[j]!.split("/").pop() // Get only the filename
+      );
+
+      console.log(filePath, "<- File");
       try {
+        // Ensure the directory exists before saving the file
+        ensureDirectoryExists(folderPath);
+
         const file = await fetch(images_arr[j]);
         const buffer = await file.arrayBuffer();
+
         await writeFile(filePath, Buffer.from(buffer));
       } catch (error) {
         console.log("Error downloading image:", error);
