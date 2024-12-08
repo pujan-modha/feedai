@@ -6,6 +6,10 @@ const nextConfig: import("next").NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  reactStrictMode: true,
+  images: {
+    domains: ["feedai.anvit.tech", "feedai.prakshi.in"],
+  },
 };
 
 module.exports = nextConfig;
