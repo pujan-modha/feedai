@@ -11,8 +11,8 @@ export const authConfig = {
       const isOnDashboard = nextUrl.pathname.startsWith("/");
       const isOnPublicPage =
         ["/login", "/auth/error"].includes(nextUrl.pathname) ||
-        nextUrl.pathname.startsWith("/feeds");
-
+        nextUrl.pathname.startsWith("/feeds") ||
+        nextUrl.pathname.startsWith("/uploads");
       if (isOnPublicPage) return true;
       if (isOnDashboard) return isLoggedIn;
       return true;

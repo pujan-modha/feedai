@@ -4,10 +4,11 @@ import { auth } from "./app/auth";
 
 export async function middleware(request: NextRequest) {
   const session = await auth();
-  const publicPaths = ["/login", "/auth/error"];
+  const publicPaths = ["/login", "/auth/error", "/uploads"];
   const isPublicPath =
     publicPaths.includes(request.nextUrl.pathname) ||
-    request.nextUrl.pathname.startsWith("/feeds");
+    request.nextUrl.pathname.startsWith("/feeds") ||
+    request.nextUrl.pathname.startsWith("/uploads");
 
   if (!session && !isPublicPath) {
     return NextResponse.redirect(new URL("/login", request.url));
