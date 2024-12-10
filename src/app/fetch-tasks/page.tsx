@@ -226,7 +226,9 @@ export default function TasksTable() {
     {
       accessorKey: "input_feed_language",
       header: "Input Feed Language",
-      cell: ({ row }) => <div className="text-center">{row.getValue("input_feed_language")}</div>,
+      cell: ({ row }) => (
+        <div className="text-center">{row.getValue("input_feed_language")}</div>
+      ),
     },
     {
       accessorKey: "created_at",
@@ -269,7 +271,18 @@ export default function TasksTable() {
     {
       accessorKey: "end_time",
       header: "Cron Last Run",
-      cell: ({ row }) => <div>{formatDate(row.getValue("end_time"))}</div>,
+      // if date is 1 Jan 1970 then it will display as --
+      cell: ({ row }) => {
+        const dateValue: string = row.getValue("end_time");
+        console.log(dateValue)
+        if(!dateValue) return <div className="">--</div>;
+        const formattedDate = formatDate(dateValue);
+
+        // Check if the date equals "1/1/1970, 05:30 AM" (adjust as needed for your locale/format)
+        const isEpochTime = formattedDate === "1/1/1970, 05:30 AM";
+
+        return <div>{isEpochTime ? "--" : formattedDate || "--"}</div>;
+      },
     },
     {
       accessorKey: "status",
