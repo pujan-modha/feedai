@@ -82,6 +82,7 @@ model generated_articles {
   prompt_tokens           Int?
   completion_tokens       Int?
   total_tokens            Int?
+  total_cost              Float?
 }
 
 model cron_logs {

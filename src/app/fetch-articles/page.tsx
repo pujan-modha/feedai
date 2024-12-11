@@ -265,6 +265,13 @@ export default function GeneratedArticlesTable() {
       },
     },
     {
+      accessorKey: "total_cost",
+      header: "Cost",
+      cell: ({ row }) => (
+        <div>{row.getValue("total_cost")+ " $"}</div>
+      ),
+    },
+    {
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
