@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export async function PATCH(req: NextRequest) {
+  const { name, slug, id } = await req.json();
+
   try {
-    const { name, slug, id } = await req.json();
     console.log(name, slug, id);
     if (!name || !slug) {
       return NextResponse.json({
@@ -26,6 +27,7 @@ export async function PATCH(req: NextRequest) {
       data: {
         message: "Category edited successfully",
         category: "edit-category",
+        entity_id: edited_cat?.id,
       },
     });
     return NextResponse.json({
@@ -35,8 +37,10 @@ export async function PATCH(req: NextRequest) {
   } catch (error) {
     await prisma.logs.create({
       data: {
-        message: error instanceof Error ? error.message : "An unknown error occurred",
-        category: "edit-category",
+        message:
+          error instanceof Error ? error.message : "An unknown error occurred",
+        category: "edit-category-error",
+        entity_id: id,
       },
     });
     return NextResponse.json({ status: 500, error: "Error editing category" });

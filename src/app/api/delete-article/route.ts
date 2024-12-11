@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export async function DELETE(req: NextRequest) {
+  const { id } = await req.json();
+
   try {
-    const { id } = await req.json();
     if (!id)
       return NextResponse.json(
         { error: "Article ID is required" },
@@ -25,14 +26,17 @@ export async function DELETE(req: NextRequest) {
       data: {
         message: "Article deleted successfully",
         category: "delete-article",
+        entity_id: id,
       },
     });
     return NextResponse.json({ message: "Article deleted successfully" });
   } catch (error) {
     await prisma.logs.create({
       data: {
-        message: error instanceof Error ? error.message : "An unknown error occurred",
-        category: "delete-article",
+        message:
+          error instanceof Error ? error.message : "An unknown error occurred",
+        category: "delete-article-error",
+        entity_id: id,
       },
     });
     return NextResponse.json(

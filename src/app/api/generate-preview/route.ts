@@ -261,12 +261,6 @@ async function generate_articles(
       articles_arr.push(parsed_content);
     } catch (error) {
       console.error("Error:", error);
-      await prisma.logs.create({
-        data: {
-          message: error.message,
-          category: "generate-preview",
-        },
-      })
     }
   }
   return articles_arr;

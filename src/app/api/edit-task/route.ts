@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export async function PATCH(req: NextRequest) {
+  const { id, userprompt } = await req.json();
   try {
-    const { id, userprompt } = await req.json();
     if (!id)
       return NextResponse.json(
         { error: "Task ID is required" },
@@ -19,7 +19,7 @@ export async function PATCH(req: NextRequest) {
 
     const feed_config = JSON.parse(task.feed_config!);
     feed_config["userprompt"] = userprompt;
-    
+
     await prisma.tasks.update({
       where: {
         id: parseInt(id),
@@ -32,14 +32,19 @@ export async function PATCH(req: NextRequest) {
       data: {
         message: "User prompt for task id " + id + " updated successfully",
         category: "edit-task",
+        entity_id: id,
       },
     });
-    return NextResponse.json({ message: "User prompt for task id " + id + " updated successfully" });
+    return NextResponse.json({
+      message: "User prompt for task id " + id + " updated successfully",
+    });
   } catch (error) {
     await prisma.logs.create({
       data: {
-        message: error instanceof Error ? error.message : "An unknown error occurred",
-        category: "edit-task",
+        message:
+          error instanceof Error ? error.message : "An unknown error occurred",
+        category: "edit-task-error",
+        entity_id: id,
       },
     });
     return NextResponse.json(

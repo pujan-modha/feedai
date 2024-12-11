@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+
+interface Task {
+  id: number;
+  feed_url: string | null;
+  feed_items: string | null;
+  feed_config: string | null;
+  input_feed_language: string | null;
+  articles_count: number | null;
+  status: string;
+  created_at: Date | null;
+  modified_at: Date | null;
+}
 
 export async function POST(req: Request) {
+  let createdTask: Task | null = null;
   try {
     const { task_obj } = await req.json();
 
@@ -80,35 +92,23 @@ export async function POST(req: Request) {
     };
 
     // Insert the new task into the database
-    const createdTask = await prisma.tasks.create({
+    createdTask = await prisma.tasks.create({
       data: newTaskData,
     });
     await prisma.logs.create({
       data: {
         message: "Task created successfully",
-        category: "save-task",
+        category: "save-task-error",
+        entity_id: createdTask!.id,
       },
     });
     return NextResponse.json({ task: createdTask }, { status: 201 });
   } catch (error) {
-    if (error instanceof PrismaClientKnownRequestError) {
-      // Handle specific Prisma errors if necessary
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-      await prisma.logs.create({
-          data: {
-              message: errorMessage,
-              category: "save-task",
-          },
-      });
-      return NextResponse.json(
-        { error: "Database error occurred while creating task" },
-        { status: 500 }
-      );
-    }
     await prisma.logs.create({
       data: {
-        message: error instanceof Error ? error.message : "An unknown error occurred",
-        category: "save-task",
+        message:
+          error instanceof Error ? error.message : "An unknown error occurred",
+        category: "save-task-error",
       },
     });
     return NextResponse.json(

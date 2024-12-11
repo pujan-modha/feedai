@@ -54,7 +54,7 @@ export async function DELETE(req: Request) {
     await prisma.logs.create({
       data: {
         message: (error as Error).message,
-        category: "delete-user",
+        category: "delete-user-error",
       },
     });
     return NextResponse.json(

@@ -26,7 +26,7 @@ export async function DELETE(req: Request) {
     await prisma.logs.create({
       data: {
         message: (error as Error).message,
-        category: "delete-website",
+        category: "delete-website-error",
       },
     });
     return new Response("Error deleting website", { status: 500 });

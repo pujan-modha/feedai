@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export async function PATCH(req: NextRequest) {
+  let edited_website;
   try {
     const { desc, author, languages, thumb, url, id } = await req.json();
     console.log(desc, author, id);
@@ -24,7 +25,7 @@ export async function PATCH(req: NextRequest) {
       dataToUpdate.thumb = thumb;
     }
 
-    const edited_website = await prisma.websites.update({
+    edited_website = await prisma.websites.update({
       where: {
         id: parseInt(id),
       },
@@ -34,6 +35,7 @@ export async function PATCH(req: NextRequest) {
       data: {
         message: "Website edited successfully",
         category: "edit-website",
+        entity_id: edited_website.id,
       },
     });
     return NextResponse.json({
@@ -43,8 +45,10 @@ export async function PATCH(req: NextRequest) {
   } catch (error) {
     await prisma.logs.create({
       data: {
-        message: error instanceof Error ? error.message : "An unknown error occurred",
-        category: "edit-website",
+        message:
+          error instanceof Error ? error.message : "An unknown error occurred",
+        category: "edit-website-error",
+        entity_id: edited_website?.id,
       },
     });
     return NextResponse.json({

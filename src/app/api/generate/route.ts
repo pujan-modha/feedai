@@ -271,8 +271,6 @@ async function generate_articles(
       );
       const usage = completion_response.usage;
 
-      console.log("Usage:", usage);
-
       const replaceBlockquotes = (obj: any): any => {
         let blockquoteIndex = 0;
         const replace = (item: any): any => {
@@ -346,9 +344,12 @@ async function generate_articles(
           message:
             "Error while processing task " +
             task_id +
+            "for website " +
+            selected_website[i].name +
             ": " +
             (error as Error).message,
           category: "task-error",
+          entity_id: task_id,
         },
       });
       continue;

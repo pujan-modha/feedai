@@ -10,13 +10,6 @@ export async function POST(req: NextRequest) {
         { error: "Name, Slug, and Website are required" },
         { status: 400 }
       );
-    console.log(
-      typeof name,
-      typeof slug,
-      typeof parent_category_id,
-      typeof is_parent,
-      typeof website_id
-    );
 
     const given_website = await prisma.websites.findFirst({
       where: {
@@ -78,6 +71,7 @@ export async function POST(req: NextRequest) {
       data: {
         message: "Category added successfully",
         category: "add-category",
+        entity_id: category.id,
       },
     });
     return NextResponse.json({
@@ -87,8 +81,8 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     await prisma.logs.create({
       data: {
-        message: (error instanceof Error) ? error.message : 'Unknown error',
-        category: "add-category",
+        message: error instanceof Error ? error.message : "Unknown error",
+        category: "add-category-error",
       },
     });
     return NextResponse.json(

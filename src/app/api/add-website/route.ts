@@ -65,8 +65,9 @@ export async function POST(req: NextRequest) {
     }
     await prisma.logs.create({
       data: {
-        message: "Website added successfully",
+        message: "Website "+ name +" added successfully",
         category: "add-website",
+        entity_id: website.id
       },
     });
     return NextResponse.json({
@@ -77,7 +78,8 @@ export async function POST(req: NextRequest) {
     await prisma.logs.create({
       data: {
         message: (error as Error).message,
-        category: "add-website",
+        category: "add-website-error",
+
       },
     });
     return NextResponse.json(

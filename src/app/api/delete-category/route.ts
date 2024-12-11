@@ -62,8 +62,9 @@ export async function DELETE(req: NextRequest) {
 
     await prisma.logs.create({
       data: {
-        message: "Category deleted successfully",
+        message: "Category " + delete_category.name + " deleted successfully",
         category: "delete-category",
+        entity_id: category_id,
       },
     });
     return NextResponse.json({ deleted_category: delete_category });
@@ -71,7 +72,7 @@ export async function DELETE(req: NextRequest) {
     await prisma.logs.create({
       data: {
         message: (error as Error).message,
-        category: "delete-category",
+        category: "delete-category-error",
       },
     });
     return NextResponse.json(
