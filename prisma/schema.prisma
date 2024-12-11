@@ -54,8 +54,8 @@ model tasks {
   status         String?   @db.VarChar(255)
   error_count    Int?      @default(0)
   sucess_count   Int?      @default(0)
-  latest_guids   String?   @db.Text
   input_feed_language String? @db.VarChar(255)
+  error_message  String?   @db.Text
 }
 
 model generated_articles {

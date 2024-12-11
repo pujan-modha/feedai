@@ -11,6 +11,12 @@ export async function GET() {
         message: "Cron job started",
       },
     });
+    await prisma.tasks.updateMany({
+      data: {
+        status: "idle",
+      },
+    });
+
     for (
       let i = 0;
       i < parseInt(process.env.NEXT_PUBLIC_MAX_TASKS || "2");
