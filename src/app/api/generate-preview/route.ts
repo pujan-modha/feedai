@@ -144,22 +144,57 @@ export async function POST(req: Request) {
 
 async function completion(prompt: string, content: string) {
   const openai_key = process.env.OPENAI_API_KEY;
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${openai_key}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: prompt },
-        { role: "user", content: content },
-      ],
-      temperature: 0.1,
-    }),
-  });
-  return response.json();
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${openai_key}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: prompt },
+          { role: "user", content: content },
+        ],
+        temperature: 0.1,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorResponse = await response.json();
+
+      // Check for specific error related to quota exhaustion
+      if (
+        response.status === 429 ||
+        errorResponse.error?.type === "insufficient_quota"
+      ) {
+        console.log("OpenAI API key is exhausted or quota exceeded.");
+        await prisma.logs.create({
+          data: {
+            message: "OpenAI API key is exhausted or quota exceeded.",
+            category: "api-error",
+          },
+        });
+        throw new Error("OpenAI API quota exhausted.");
+      }
+
+      // Log other API errors
+      console.log("Error from OpenAI API:", errorResponse.error.message);
+      throw new Error(`OpenAI API error: ${errorResponse.error.message}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.log("Error during OpenAI API request:", error);
+    await prisma.logs.create({
+      data: {
+        message: `Error during OpenAI API request: ${(error as Error).message}`,
+        category: "api-error",
+      },
+    });
+    throw error;
+  }
 }
 
 async function generate_articles(

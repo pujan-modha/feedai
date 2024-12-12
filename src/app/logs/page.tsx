@@ -71,6 +71,13 @@ export default function Logs() {
       ),
     },
     {
+      accessorKey: "entity_id",
+      header: "Object Id",
+      cell: ({ row }) => (
+        <div className="w-full">{row.getValue("entity_id") || "N/A"}</div>
+      ),
+    },
+    {
       accessorKey: "created_at",
       header: "Logged at",
       cell: ({ row }) => (

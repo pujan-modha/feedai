@@ -7,6 +7,7 @@ import { current_prompt } from "@/lib/prompt";
 import path from "path";
 import fs from "fs";
 import { writeFile } from "fs/promises";
+import { calculateCost } from "@/lib/calculate_cost";
 
 const parser = new XMLParser({ ignoreAttributes: false });
 
@@ -171,22 +172,52 @@ export async function POST(req: Request) {
 
 async function completion(prompt: string, content: string) {
   const openai_key = process.env.OPENAI_API_KEY;
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${openai_key}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: prompt },
-        { role: "user", content: content },
-      ],
-      temperature: 0.1,
-    }),
-  });
-  return response.json();
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${openai_key}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: prompt },
+          { role: "user", content: content },
+        ],
+        temperature: 0.1,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorResponse = await response.json();
+      if (
+        response.status === 429 ||
+        errorResponse.error?.type === "insufficient_quota"
+      ) {
+        console.log("OpenAI API key is exhausted or quota exceeded.");
+        await prisma.logs.create({
+          data: {
+            message: "OpenAI API key is exhausted or quota exceeded.",
+            category: "api-error",
+          },
+        });
+        throw new Error("OpenAI API quota exhausted.");
+      }
+      throw new Error(`OpenAI API error: ${errorResponse.error.message}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.log("Error during OpenAI API request:", error);
+    await prisma.logs.create({
+      data: {
+        message: `Error during OpenAI API request: ${(error as Error).message}`,
+        category: "api-error",
+      },
+    });
+    throw error;
+  }
 }
 
 async function generate_articles(
@@ -243,7 +274,6 @@ async function generate_articles(
       const thumbnailFile = await fetch(thumbnail_image);
       const thumbnailBuffer = await thumbnailFile.arrayBuffer();
 
-      // Handling relative vs absolute paths for thumbnails
       const thumbnailSavePath = path.join(
         process.cwd(),
         "public",
@@ -326,6 +356,7 @@ async function generate_articles(
         prompt_tokens: usage.prompt_tokens,
         completion_tokens: usage.completion_tokens,
         total_tokens: usage.total_tokens,
+        total_cost: calculateCost(usage.completion_tokens, usage.prompt_tokens),
       };
       articles_arr.push(parsed_content);
     } catch (error) {
@@ -344,7 +375,7 @@ async function generate_articles(
           message:
             "Error while processing task " +
             task_id +
-            "for website " +
+            " for website " +
             selected_website[i].name +
             ": " +
             (error as Error).message,
