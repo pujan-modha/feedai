@@ -47,6 +47,7 @@ interface XMLAttributes {
   guid: string;
   link: string;
   description: string;
+  thumbnailimage: string;
   // category: string;
   // author: string;
   pubDate: string;
@@ -65,7 +66,7 @@ export default function FeedAI() {
     title: "",
     guid: "",
     link: "",
-    // thumbnailimage: "",
+    thumbnailimage: "",
     description: "",
     // author: "",
     pubDate: "",
@@ -116,7 +117,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     "Article Title",
     "Article GUID",
     "Article URL",
-    // "Thumbnail Image",
+    "Thumbnail Image",
     "Article Description",
     // "Article Category",
     // "Article Author",
@@ -130,7 +131,7 @@ Ensure all output articles are SEO-friendly and adhere to Google News and search
     "Article Title": "title",
     "Article GUID": "guid",
     "Article URL": "link",
-    // "Thumbnail Image": "thumbnailimage",
+    "Thumbnail Image": "thumbnailimage",
     "Article Description": "description",
     // "Article Category": "category",
     // "Article Author": "author",
