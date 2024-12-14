@@ -67,6 +67,8 @@ type GeneratedArticle = {
   primary_category: string | null;
   secondary_category: string | null;
   website_slug: string;
+  thumb_image: string;
+  total_cost: number;
 };
 
 import { DataTable } from "@/components/datatable/datatable";
@@ -250,7 +252,13 @@ export default function GeneratedArticlesTable() {
       accessorKey: "thumb_image",
       header: "Thumbnail Image",
       cell: ({ row }) => (
-        <a href={row.getValue("thumb_image")}>{row.getValue("thumb_image")}</a>
+        <div>
+          <img
+            src={row.getValue("thumb_image")}
+            alt={row.getValue("title")}
+            className="w-20 h-full"
+          />
+        </div>
       ),
     },
     {
@@ -398,11 +406,11 @@ export default function GeneratedArticlesTable() {
     },
   });
 
-  const filteredData = data.filter(
-    (data) =>
-      data.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      data.task_id.toString().includes(searchTerm)
-  );
+  // const filteredData = data.filter(
+  //   (data) =>
+  //     data.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     data.task_id.toString().includes(searchTerm)
+  // );
 
   // Update WebsiteFilter component
   const WebsiteFilter = () => {
@@ -413,10 +421,16 @@ export default function GeneratedArticlesTable() {
           const parsed_value = JSON.parse(value);
           setSelectedWebsite(parsed_value.name);
           setSelected_id(parsed_value.id);
-          setColumnFilters((prev) => [
-            ...prev.filter((f) => f.id !== "website_slug"),
-            { id: "website_slug", value: parsed_value.slug },
-          ]);
+          if (parsed_value.name === "All Websites") {
+            setColumnFilters((prev) =>
+              prev.filter((f) => f.id !== "website_slug")
+            );
+          } else {
+            setColumnFilters((prev) => [
+              ...prev.filter((f) => f.id !== "website_slug"),
+              { id: "website_slug", value: parsed_value.slug },
+            ]);
+          }
         }}
         disabled={isLoading}
       >
@@ -426,6 +440,15 @@ export default function GeneratedArticlesTable() {
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
+          <SelectItem
+            value={JSON.stringify({
+              slug: null,
+              id: null,
+              name: "All Websites",
+            })}
+          >
+            All Websites
+          </SelectItem>
           {websites
             .filter((website) => website) // Remove null/undefined
             .map((website) => (
@@ -450,22 +473,35 @@ export default function GeneratedArticlesTable() {
     return (
       <Select
         value={selectedCategory || undefined}
-        disabled={!selectedWebsite || isLoading}
+        disabled={isLoading}
         onValueChange={(value: string) => {
           const parsed_value = JSON.parse(value);
           setSelectedCategory(parsed_value.name);
-          setColumnFilters((prev) => [
-            ...prev.filter((f) => f.id !== "category"),
-            { id: "category", value: parsed_value.slug },
-          ]);
+          if (parsed_value.name === "All Categories") {
+            setColumnFilters((prev) => prev.filter((f) => f.id !== "category"));
+          } else {
+            setColumnFilters((prev) => [
+              ...prev.filter((f) => f.id !== "category"),
+              { id: "category", value: parsed_value.slug },
+            ]);
+          }
         }}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Select Category">
-            {selectedCategory}
+            {selectedCategory || "All Categories"}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
+          <SelectItem
+            value={JSON.stringify({
+              slug: null,
+              id: null,
+              name: "All Categories",
+            })}
+          >
+            All Categories
+          </SelectItem>
           {availableCategories.map((category) => (
             <SelectItem
               key={category.id}
@@ -537,9 +573,9 @@ export default function GeneratedArticlesTable() {
         <DataTable
           columns={columns}
           data={
-            selectedWebsite
+            selectedWebsite === "All Websites" || !selectedWebsite
               ? table.getFilteredRowModel().rows.map((row) => row.original)
-              : []
+              : table.getFilteredRowModel().rows.map((row) => row.original)
           }
           sortValue={sorting[0]?.id}
         />
@@ -557,55 +593,55 @@ function DetailItem({ label, value }) {
   );
 }
 
-function ArticleComponent({ article }: { article: Article }) {
-  return (
-    <>
-      <Card className="w-full max-w-full mx-auto">
-        <CardHeader>
-          <CardTitle>{article.title}</CardTitle>
-          <div className="flex space-x-2 mt-2">
-            <Badge variant="default">{article.primary_category}</Badge>
-            <Badge variant="outline">{article.secondary_category}</Badge>
-          </div>
-          <span className="font-semibold">Thumbnail</span>
-          <img
-            src={article.thumbnail_image}
-            alt={article.title}
-            className="w-full object-cover"
-          />
-        </CardHeader>
+// function ArticleComponent({ article }: { article: Article }) {
+//   return (
+//     <>
+//       <Card className="w-full max-w-full mx-auto">
+//         <CardHeader>
+//           <CardTitle>{article.title}</CardTitle>
+//           <div className="flex space-x-2 mt-2">
+//             <Badge variant="default">{article.primary_category}</Badge>
+//             <Badge variant="outline">{article.secondary_category}</Badge>
+//           </div>
+//           <span className="font-semibold">Thumbnail</span>
+//           <img
+//             src={article.thumbnail_image}
+//             alt={article.title}
+//             className="w-full object-cover"
+//           />
+//         </CardHeader>
 
-        <CardContent>
-          <div
-            className="prose max-w-none mb-8 bg-gray-200 p-4 rounded-lg"
-            dangerouslySetInnerHTML={{ __html: article.content }}
-          />
-          <div className="mt-8 space-y-4">
-            <div>
-              <h3 className="text-lg font-semibold">SEO-Friendly Title</h3>
-              <p>{article.seo_title}</p>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">Meta Information</h3>
-              <ul className="list-disc pl-5">
-                <li>
-                  <strong>Title:</strong> {article.meta_title}
-                </li>
-                <li>
-                  <strong>Description:</strong> {article.meta_description}
-                </li>
-                <li>
-                  <strong>Keywords:</strong> {article.meta_keywords.join(", ")}
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">Summary</h3>
-              <p>{article.summary}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </>
-  );
-}
+//         <CardContent>
+//           <div
+//             className="prose max-w-none mb-8 bg-gray-200 p-4 rounded-lg"
+//             dangerouslySetInnerHTML={{ __html: article.content }}
+//           />
+//           <div className="mt-8 space-y-4">
+//             <div>
+//               <h3 className="text-lg font-semibold">SEO-Friendly Title</h3>
+//               <p>{article.seo_title}</p>
+//             </div>
+//             <div>
+//               <h3 className="text-lg font-semibold">Meta Information</h3>
+//               <ul className="list-disc pl-5">
+//                 <li>
+//                   <strong>Title:</strong> {article.meta_title}
+//                 </li>
+//                 <li>
+//                   <strong>Description:</strong> {article.meta_description}
+//                 </li>
+//                 <li>
+//                   <strong>Keywords:</strong> {article.meta_keywords.join(", ")}
+//                 </li>
+//               </ul>
+//             </div>
+//             <div>
+//               <h3 className="text-lg font-semibold">Summary</h3>
+//               <p>{article.summary}</p>
+//             </div>
+//           </div>
+//         </CardContent>
+//       </Card>
+//     </>
+//   );
+// }

@@ -30,16 +30,10 @@ export async function POST(req: NextRequest) {
       const bytes = await thumb.arrayBuffer();
       const buffer = Buffer.from(bytes);
       const filename = `${thumb.name}`;
-      thumbPath = `${process.env.NEXT_PUBLIC_SITE_URL}/uploads/${slug}/${filename}`;
-      const filePath = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        slug,
-        filename
-      );
+      thumbPath = `${process.env.NEXT_PUBLIC_SITE_URL}/api/uploads/${slug}/${filename}`;
+      const filePath = path.join(process.cwd(), "uploads", slug, filename);
       try {
-        const slugDir = path.join(process.cwd(), "public", "uploads", slug);
+        const slugDir = path.join(process.cwd(), "uploads", slug);
         await mkdir(slugDir, { recursive: true });
         await writeFile(filePath, buffer);
       } catch (error) {
@@ -57,7 +51,7 @@ export async function POST(req: NextRequest) {
         thumb: thumbPath,
       },
     });
-    const slugDir = path.join(process.cwd(), "public", "uploads", slug);
+    const slugDir = path.join(process.cwd(), "uploads", slug);
     try {
       await mkdir(slugDir, { recursive: true });
     } catch (error) {
@@ -65,9 +59,9 @@ export async function POST(req: NextRequest) {
     }
     await prisma.logs.create({
       data: {
-        message: "Website "+ name +" added successfully",
+        message: "Website " + name + " added successfully",
         category: "add-website",
-        entity_id: website.id
+        entity_id: website.id,
       },
     });
     return NextResponse.json({
@@ -79,7 +73,6 @@ export async function POST(req: NextRequest) {
       data: {
         message: (error as Error).message,
         category: "add-website-error",
-
       },
     });
     return NextResponse.json(

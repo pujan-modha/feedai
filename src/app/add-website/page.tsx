@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -73,9 +72,14 @@ export default function AddWebsite() {
   const [edited_website_author, setEditedWebsiteAuthor] = useState("");
   const [edited_website_id, setEditedWebsiteId] = useState("");
   const [edited_website_language, setEditedWebsiteLanguage] = useState("");
-  const [edited_website_thumbimage, setEditedWebsiteThumbImage] =
-    useState<File | null>(null);
+  useState<File | null>(null);
   const [edited_website_url, setEditedWebsiteUrl] = useState("");
+  const [editedWebsiteThumb, setEditedWebsiteThumb] = useState<File | null>(
+    null
+  );
+  const [editedThumbPreview, setEditedThumbPreview] = useState<string | null>(
+    null
+  );
 
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -94,6 +98,10 @@ export default function AddWebsite() {
   useEffect(() => {
     fetchWebsites();
   }, []);
+
+  useEffect(() => {
+    console.log(editedWebsiteThumb);
+  }, [editedWebsiteThumb]);
 
   useEffect(() => {
     if (name != "") setSlug(`${name.toLowerCase().replaceAll(" ", "-")}`);
@@ -173,7 +181,7 @@ export default function AddWebsite() {
           desc: descInput.value,
           author: authorInput.value,
           languages: edited_website_language,
-          thumb: edited_website_thumbimage,
+          thumb: editedWebsiteThumb,
           url: edited_website_url,
           id: edited_website_id,
         }),
@@ -219,6 +227,7 @@ export default function AddWebsite() {
       form.append("author", author);
       if (thumb) {
         form.append("thumb", thumb);
+        console.log("Appended thumb");
       }
 
       const res = await fetch("/api/add-website", {
@@ -280,28 +289,11 @@ export default function AddWebsite() {
       header: "Default Image",
       cell: ({ row }) => (
         <div className="w-full">
-          {/* <img
+          <img
             src={row.getValue("thumb")}
             alt={row.getValue("slug") + " thumbnail"}
-            className="w-16 h-8"
-          /> */}
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <Eye className="h-4 w-4" /> View Image
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Default image for {row.getValue("slug")}</DialogTitle>
-              </DialogHeader>
-              <img
-                src={row.getValue("thumb")}
-                alt={row.getValue("slug") + " thumbnail"}
-                className="w-full h-auto"
-              />
-            </DialogContent>
-          </Dialog>
+            className="w-20 h-full"
+          />
         </div>
       ),
     },
@@ -357,6 +349,8 @@ export default function AddWebsite() {
                   setEditedWebsiteUrl(row.getValue("url"));
                   setEditedWebsiteAuthor(row.original["author"]);
                   setEditedWebsiteId(row.getValue("id"));
+                  setEditedWebsiteThumb(null);
+                  setEditedThumbPreview(row.original["thumb"]);
                   setDialogOpen(true);
                 }}
               >
@@ -397,6 +391,7 @@ export default function AddWebsite() {
                   <Label htmlFor="website_desc">Edit Website Description</Label>
                   <Textarea
                     id="website_desc"
+                    name="desc"
                     defaultValue={edited_website_desc}
                   />
 
@@ -404,22 +399,43 @@ export default function AddWebsite() {
                   <Input
                     type="file"
                     id="website_thumb"
-                    placeholder="/placeholder.svg"
-                    //image type only png or jpg
-                    accept=".png, .jpg, .jpeg, .svg, .gif, .webp,"
+                    name="thumb"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setEditedWebsiteThumb(file);
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          setEditedThumbPreview(event.target?.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    accept=".png, .jpg, .jpeg, .svg, .gif, .webp"
                   />
+                  {editedThumbPreview && (
+                    <div className="mt-2">
+                      <img
+                        src={editedThumbPreview}
+                        alt="Edited Thumbnail preview"
+                        className="max-w-xs h-auto"
+                      />
+                    </div>
+                  )}
 
                   <Label htmlFor="website_url">Edit Website URL</Label>
                   <Input
                     defaultValue={edited_website_url}
                     type="text"
                     id="website_url"
+                    name="url"
                   />
 
                   <Label htmlFor="website_author">Edit Website Author</Label>
                   <Input
                     type="text"
                     id="website_author"
+                    name="author"
                     defaultValue={edited_website_author}
                   />
                 </div>

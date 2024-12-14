@@ -248,7 +248,7 @@ async function generate_articles(
         const buffer = await file.arrayBuffer();
 
         // Handling relative vs absolute paths
-        const imageSavePath = path.join(process.cwd(), "public", filePath); // Absolute path to save image
+        const imageSavePath = path.join(process.cwd(), filePath); // Absolute path to save image
 
         await writeFile(imageSavePath, Buffer.from(buffer));
       } catch (error) {
@@ -265,7 +265,7 @@ async function generate_articles(
       );
     });
 
-    const thumbnailFolderPath = path.join("uploads", selected_website[i].slug);
+    const thumbnailFolderPath = path.join(process.cwd(),"uploads", selected_website[i].slug);
     const thumbnailFileName = path.basename(thumbnail_image);
     const thumbnailFilePath = path.join(thumbnailFolderPath, thumbnailFileName);
 
@@ -274,11 +274,7 @@ async function generate_articles(
       const thumbnailFile = await fetch(thumbnail_image);
       const thumbnailBuffer = await thumbnailFile.arrayBuffer();
 
-      const thumbnailSavePath = path.join(
-        process.cwd(),
-        "public",
-        thumbnailFilePath
-      ); // Absolute path to save thumbnail
+      const thumbnailSavePath = path.join(process.cwd(), thumbnailFilePath); // Absolute path to save thumbnail
 
       await writeFile(thumbnailSavePath, Buffer.from(thumbnailBuffer));
       thumbnail_image = "/" + thumbnailFilePath; // Relative path for use in the website
@@ -399,7 +395,7 @@ async function generate_articles(
 }
 
 const ensureDirectoryExists = (directoryPath: string) => {
-  const fullPath = path.resolve(process.cwd(), "public", directoryPath);
+  const fullPath = path.resolve(process.cwd(), directoryPath);
   if (!fs.existsSync(fullPath)) {
     fs.mkdirSync(fullPath, { recursive: true });
   }
