@@ -50,7 +50,8 @@ export async function POST(req: Request) {
   let is_thumbnail_in_content = false;
 
   console.log(feed_items.content);
-  for (let i = 0; i < articles_count; i++) {
+  //replace 4 with article_count
+  for (let i = 0; i < 4; i++) {
     if (typeof parsedFeed.rss.channel.item[i].guid === "string") {
       parsedFeed.rss.channel.item[i].guid = parsedFeed.rss.channel.item[i].guid;
     } else {
