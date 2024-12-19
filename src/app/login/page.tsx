@@ -26,7 +26,8 @@ export default function LoginForm() {
   }, [state, router]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
+    <div className="flex flex-col items-center justify-center h-screen px-4">
+      <h1 className="text-3xl font-bold mb-4">Log in</h1>
       <form action={formAction} className="space-y-4 w-full max-w-sm">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>

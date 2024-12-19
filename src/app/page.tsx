@@ -95,7 +95,7 @@ export default function FeedAI() {
     `Rewrite the input article while retaining all factual information without altering any facts.
 The output must be in language specified by the user.
 The output article should appear as if written by a human, not a machine.
-The length of the rewritten article should be between 400 and 1500 words.
+The length of the rewritten article should be about 500 words.
 Add proper headings and subheadings with H1, H2, and H3 tags according to Google News standards.
 
 SEO Optimization:

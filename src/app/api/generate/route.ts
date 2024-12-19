@@ -181,12 +181,12 @@ async function completion(prompt: string, content: string) {
         "Authorization": `Bearer ${openai_key}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: prompt },
           { role: "user", content: content },
         ],
-        temperature: 0.1,
+        temperature: 0,
       }),
     });
 
@@ -239,7 +239,11 @@ async function generate_articles(
 
   for (let i = 0; i < article_count; i++) {
     for (let j = 0; j < images_arr.length; j++) {
-      const folderPath = path.join("uploads", selected_website[i].slug);
+      const folderPath = path.join(
+        process.cwd(),
+        "uploads",
+        selected_website[i].slug
+      );
       const fileName = path.basename(images_arr[j]);
       const filePath = path.join(folderPath, fileName);
 
@@ -248,25 +252,24 @@ async function generate_articles(
         const file = await fetch(images_arr[j]);
         const buffer = await file.arrayBuffer();
 
-        // Handling relative vs absolute paths
-        const imageSavePath = path.join(process.cwd(), filePath); // Absolute path to save image
-
-        await writeFile(imageSavePath, Buffer.from(buffer));
+        await writeFile(filePath, Buffer.from(buffer));
       } catch (error) {
         console.log("Error downloading image:", error);
       }
     }
 
-    // Modify image paths to relative paths
+    // Modify image paths to the API route format
     images_arr = images_arr.map((img_link) => {
-      return path.join(
-        "/uploads",
-        selected_website[i].slug,
-        path.basename(img_link)
-      );
+      return `/api/uploads/${selected_website[i].slug}/${path.basename(
+        img_link
+      )}`;
     });
 
-    const thumbnailFolderPath = path.join(process.cwd(),"uploads", selected_website[i].slug);
+    const thumbnailFolderPath = path.join(
+      process.cwd(),
+      "uploads",
+      selected_website[i].slug
+    );
     const thumbnailFileName = path.basename(thumbnail_image);
     const thumbnailFilePath = path.join(thumbnailFolderPath, thumbnailFileName);
 
@@ -274,11 +277,8 @@ async function generate_articles(
       ensureDirectoryExists(thumbnailFolderPath);
       const thumbnailFile = await fetch(thumbnail_image);
       const thumbnailBuffer = await thumbnailFile.arrayBuffer();
-
-      const thumbnailSavePath = path.join(process.cwd(), thumbnailFilePath); // Absolute path to save thumbnail
-
-      await writeFile(thumbnailSavePath, Buffer.from(thumbnailBuffer));
-      thumbnail_image = "/" + thumbnailFilePath; // Relative path for use in the website
+      await writeFile(thumbnailFilePath, Buffer.from(thumbnailBuffer));
+      thumbnail_image = `/api/uploads/${selected_website[i].slug}/${thumbnailFileName}`;
     } catch (error) {
       console.log("Error downloading thumbnail:", error);
     }
@@ -396,8 +396,7 @@ async function generate_articles(
 }
 
 const ensureDirectoryExists = (directoryPath: string) => {
-  const fullPath = path.resolve(process.cwd(), directoryPath);
-  if (!fs.existsSync(fullPath)) {
-    fs.mkdirSync(fullPath, { recursive: true });
+  if (!fs.existsSync(directoryPath)) {
+    fs.mkdirSync(directoryPath, { recursive: true });
   }
 };

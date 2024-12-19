@@ -68,7 +68,11 @@ export const Navbar = () => {
               )}
             </button>
           </div>
-          <div className="hidden md:flex md:items-center md:space-x-6">
+          <div
+            className={`hidden md:${
+              user ? "flex" : "hidden"
+            } md:items-center md:space-x-6`}
+          >
             <Link href="/" className="hover:text-gray-600 transition-colors">
               Home
             </Link>
